@@ -121,7 +121,7 @@ const KanbanBoard = () => {
                           </div>
                           <span className="text-[10px] text-muted-foreground">{assignee?.name.split(' ')[0]}</span>
                         </div>
-                        <span className="text-[10px] text-muted-foreground">{task.end_date.slice(5)}</span>
+                        <span className="text-[10px] text-muted-foreground">{task.due_date.slice(5)}</span>
                       </div>
                     </motion.div>
                   );
