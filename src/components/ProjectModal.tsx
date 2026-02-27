@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanies, useCreateProject, useUpdateProject, useDeleteProject } from '@/hooks/useSupabaseData';
-import { X, Pencil, Trash2, Save } from 'lucide-react';
+import { X, Pencil, Trash2, Save, Calendar as CalendarIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { format, parseISO } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import StyledDropdown from '@/components/StyledDropdown';
 
 type ProjectStatus = 'planning' | 'ongoing' | 'completed' | 'archived';
 type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -87,7 +91,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
 
   const isEditable = mode === 'edit' || mode === 'create';
   const company = companies.find(c => c.id === form.company_id);
-  const inputCls = 'w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
+  const inputCls = 'w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
   const labelCls = 'text-xs font-medium text-muted-foreground mb-1.5 block';
 
   return (
@@ -111,9 +115,8 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
                 <div>
                   <label className={labelCls}>Company</label>
                   {isEditable ? (
-                    <select value={form.company_id} onChange={e => setForm(f => ({ ...f, company_id: e.target.value }))} className={inputCls}>
-                      {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
+                    <StyledDropdown value={form.company_id} onChange={(v) => setForm(f => ({ ...f, company_id: v }))}
+                      options={companies.map(c => ({ value: c.id, label: c.name }))} placeholder="Select company..." />
                   ) : (
                     <p className="text-sm text-foreground">{company?.name}</p>
                   )}
@@ -140,13 +143,35 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>Start Date</label>
-                    {isEditable ? <input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} className={inputCls} />
-                      : <p className="text-sm text-foreground">{form.start_date}</p>}
+                    {isEditable ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button type="button" className={cn(inputCls, 'flex items-center justify-between text-left', !form.start_date && 'text-muted-foreground')}>
+                            <span>{form.start_date ? format(parseISO(form.start_date), 'dd MMM yyyy') : 'Pick a date'}</span>
+                            <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-xl" align="start">
+                          <Calendar mode="single" selected={form.start_date ? parseISO(form.start_date) : undefined} onSelect={(d) => setForm(f => ({ ...f, start_date: d ? format(d, 'yyyy-MM-dd') : '' }))} initialFocus className="p-3 pointer-events-auto rounded-xl" />
+                        </PopoverContent>
+                      </Popover>
+                    ) : <p className="text-sm text-foreground">{form.start_date}</p>}
                   </div>
                   <div>
                     <label className={labelCls}>End Date</label>
-                    {isEditable ? <input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} className={inputCls} />
-                      : <p className="text-sm text-foreground">{form.end_date}</p>}
+                    {isEditable ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button type="button" className={cn(inputCls, 'flex items-center justify-between text-left', !form.end_date && 'text-muted-foreground')}>
+                            <span>{form.end_date ? format(parseISO(form.end_date), 'dd MMM yyyy') : 'Pick a date'}</span>
+                            <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-xl" align="start">
+                          <Calendar mode="single" selected={form.end_date ? parseISO(form.end_date) : undefined} onSelect={(d) => setForm(f => ({ ...f, end_date: d ? format(d, 'yyyy-MM-dd') : '' }))} initialFocus className="p-3 pointer-events-auto rounded-xl" />
+                        </PopoverContent>
+                      </Popover>
+                    ) : <p className="text-sm text-foreground">{form.end_date}</p>}
                   </div>
                 </div>
 
@@ -154,9 +179,8 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
                   <div>
                     <label className={labelCls}>Priority</label>
                     {isEditable ? (
-                      <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value as TaskPriority }))} className={inputCls}>
-                        {priorityOptions.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                      </select>
+                      <StyledDropdown value={form.priority} onChange={(v) => setForm(f => ({ ...f, priority: v as TaskPriority }))}
+                        options={priorityOptions.map(p => ({ value: p.value, label: p.label }))} />
                     ) : (
                       <span className={cn('text-sm capitalize', priorityOptions.find(p => p.value === form.priority)?.cls)}>{form.priority}</span>
                     )}
@@ -164,9 +188,8 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
                   <div>
                     <label className={labelCls}>Status</label>
                     {isEditable ? (
-                      <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as ProjectStatus }))} className={inputCls}>
-                        {statusOptions.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                      </select>
+                      <StyledDropdown value={form.status} onChange={(v) => setForm(f => ({ ...f, status: v as ProjectStatus }))}
+                        options={statusOptions} />
                     ) : (
                       <span className="text-sm capitalize">{form.status}</span>
                     )}

@@ -6,6 +6,7 @@ import { Pencil, Trash2, Save, UserPlus, KeyRound, Eye, EyeOff } from 'lucide-re
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import StyledDropdown from '@/components/StyledDropdown';
 
 type UserRole = 'super_admin' | 'admin' | 'member';
 const roleOptions: UserRole[] = ['super_admin', 'admin', 'member'];
@@ -134,19 +135,14 @@ const MemberPage = () => {
         {isSuperAdmin && (
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
-            <select value={form.role || 'member'} onChange={e => setForm((f: any) => ({ ...f, role: e.target.value }))} className={cn(inputCls, 'w-full appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E")] bg-[length:16px] bg-[right_8px_center] bg-no-repeat pr-8')}>
-              {roleOptions.map(r => (
-                <option key={r} value={r}>{r === 'super_admin' ? 'Super Admin' : r === 'admin' ? 'Admin' : 'Member'}</option>
-              ))}
-            </select>
+            <StyledDropdown value={form.role || 'member'} onChange={(v) => setForm((f: any) => ({ ...f, role: v }))}
+              options={roleOptions.map(r => ({ value: r, label: r === 'super_admin' ? 'Super Admin' : r === 'admin' ? 'Admin' : 'Member' }))} />
           </div>
         )}
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
-          <select value={form.division || activeDivision} onChange={e => setForm((f: any) => ({ ...f, division: e.target.value }))} className={cn(inputCls, 'w-full appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E")] bg-[length:16px] bg-[right_8px_center] bg-no-repeat pr-8')}>
-            <option value="creative">Creative</option>
-            <option value="developer">Developer</option>
-          </select>
+          <StyledDropdown value={form.division || activeDivision} onChange={(v) => setForm((f: any) => ({ ...f, division: v }))}
+            options={[{ value: 'creative', label: 'Creative' }, { value: 'developer', label: 'Developer' }]} />
         </div>
       </div>
       <div className="flex gap-2">
@@ -260,18 +256,13 @@ const MemberPage = () => {
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
-                <select value={addForm.role || 'member'} onChange={e => setAddForm((f: any) => ({ ...f, role: e.target.value }))} className={cn(inputCls, 'w-full appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E")] bg-[length:16px] bg-[right_8px_center] bg-no-repeat pr-8')}>
-                  {roleOptions.map(r => (
-                    <option key={r} value={r}>{r === 'super_admin' ? 'Super Admin' : r === 'admin' ? 'Admin' : 'Member'}</option>
-                  ))}
-                </select>
+                <StyledDropdown value={addForm.role || 'member'} onChange={(v) => setAddForm((f: any) => ({ ...f, role: v }))}
+                  options={roleOptions.map(r => ({ value: r, label: r === 'super_admin' ? 'Super Admin' : r === 'admin' ? 'Admin' : 'Member' }))} />
               </div>
               <div className="col-span-2">
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
-                <select value={addForm.division || 'creative'} onChange={e => setAddForm((f: any) => ({ ...f, division: e.target.value }))} className={cn(inputCls, 'w-full appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E")] bg-[length:16px] bg-[right_8px_center] bg-no-repeat pr-8')}>
-                  <option value="creative">Creative</option>
-                  <option value="developer">Developer</option>
-                </select>
+                <StyledDropdown value={addForm.division || 'creative'} onChange={(v) => setAddForm((f: any) => ({ ...f, division: v }))}
+                  options={[{ value: 'creative', label: 'Creative' }, { value: 'developer', label: 'Developer' }]} />
               </div>
             </div>
             <button onClick={handleAdd} disabled={createMember.isPending}
