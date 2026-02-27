@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMembers, useUpdateProfile, useUpdateUserRole, useCreateMember, useDeleteMember, useCompanies } from '@/hooks/useSupabaseData';
+import { useMembers, useUpdateProfile, useUpdateUserRole, useCreateMember, useDeleteMember, useResetMemberPassword } from '@/hooks/useSupabaseData';
 import { motion } from 'framer-motion';
-import { Pencil, Trash2, Save, Plus, UserPlus } from 'lucide-react';
+import { Pencil, Trash2, Save, UserPlus, KeyRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -13,17 +13,19 @@ const roleOptions: UserRole[] = ['super_admin', 'admin', 'member'];
 const MemberPage = () => {
   const { user, activeDivision, isAdmin, isSuperAdmin } = useAuth();
   const { data: allMembers = [] } = useMembers();
-  const { data: companies = [] } = useCompanies();
   const updateProfile = useUpdateProfile();
   const updateRole = useUpdateUserRole();
   const createMember = useCreateMember();
   const deleteMember = useDeleteMember();
+  const resetPassword = useResetMemberPassword();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<any>({});
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [addForm, setAddForm] = useState<any>({ division: 'creative', role: 'member' });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [resetPasswordId, setResetPasswordId] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
 
   if (!user) return null;
 
@@ -44,7 +46,6 @@ const MemberPage = () => {
           name: form.name,
           position: form.position,
           division: form.division,
-          company_id: form.company_id,
         });
         if (form.role && isSuperAdmin) {
           await updateRole.mutateAsync({ userId: editingId, role: form.role });
@@ -84,6 +85,22 @@ const MemberPage = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!resetPasswordId || !newPassword.trim()) return;
+    if (newPassword.length < 6) {
+      toast.error('Password minimal 6 karakter');
+      return;
+    }
+    try {
+      await resetPassword.mutateAsync({ userId: resetPasswordId, newPassword });
+      toast.success('Password berhasil direset');
+      setResetPasswordId(null);
+      setNewPassword('');
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal reset password');
+    }
+  };
+
   const startEdit = (member: any) => {
     setEditingId(member.id);
     setForm({ ...member });
@@ -95,6 +112,7 @@ const MemberPage = () => {
   };
 
   const memberToDelete = allMembers.find(m => m.id === deleteConfirmId);
+  const memberToReset = allMembers.find(m => m.id === resetPasswordId);
 
   const renderForm = (isInline = false) => (
     <div className={cn('space-y-3', isInline ? 'border border-border rounded-lg p-4' : 'glass-card rounded-xl p-5 mb-4')}>
@@ -126,13 +144,6 @@ const MemberPage = () => {
           <select value={form.division || activeDivision} onChange={e => setForm((f: any) => ({ ...f, division: e.target.value }))} className={cn(inputCls, 'w-full')}>
             <option value="creative">Creative</option>
             <option value="developer">Developer</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Company</label>
-          <select value={form.company_id || ''} onChange={e => setForm((f: any) => ({ ...f, company_id: e.target.value || null }))} className={cn(inputCls, 'w-full')}>
-            <option value="">No company</option>
-            {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
       </div>
@@ -181,7 +192,7 @@ const MemberPage = () => {
                   <p className="text-[11px] text-muted-foreground/70">{member.email}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <span className={cn(
                   'text-[10px] font-medium px-2.5 py-1 rounded-full capitalize',
                   member.role === 'admin' || member.role === 'super_admin' ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'
@@ -190,16 +201,22 @@ const MemberPage = () => {
                 </span>
                 <span className="text-xs text-muted-foreground capitalize">{member.division}</span>
                 {(isSuperAdmin || (isAdmin && member.role !== 'super_admin')) && (
-                  <button onClick={() => startEdit(member)}
-                    className="p-1.5 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground ml-2">
+                  <button onClick={() => startEdit(member)} title="Edit"
+                    className="p-1.5 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                 )}
                 {isSuperAdmin && member.id !== user.id && (
-                  <button onClick={() => setDeleteConfirmId(member.id)}
-                    className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <>
+                    <button onClick={() => setResetPasswordId(member.id)} title="Reset Password"
+                      className="p-1.5 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
+                      <KeyRound className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setDeleteConfirmId(member.id)} title="Delete"
+                      className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </>
                 )}
               </div>
             </motion.div>
@@ -241,18 +258,11 @@ const MemberPage = () => {
                   ))}
                 </select>
               </div>
-              <div>
+              <div className="col-span-2">
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
                 <select value={addForm.division || 'creative'} onChange={e => setAddForm((f: any) => ({ ...f, division: e.target.value }))} className={cn(inputCls, 'w-full')}>
                   <option value="creative">Creative</option>
                   <option value="developer">Developer</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Company</label>
-                <select value={addForm.company_id || ''} onChange={e => setAddForm((f: any) => ({ ...f, company_id: e.target.value || null }))} className={cn(inputCls, 'w-full')}>
-                  <option value="">No company</option>
-                  {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
             </div>
@@ -260,6 +270,35 @@ const MemberPage = () => {
               className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 mt-2">
               <UserPlus className="w-4 h-4" /> {createMember.isPending ? 'Creating...' : 'Create Member'}
             </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={!!resetPasswordId} onOpenChange={() => { setResetPasswordId(null); setNewPassword(''); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Set password baru untuk <strong>{memberToReset?.name}</strong> ({memberToReset?.email})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Password Baru *</label>
+              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                className={cn(inputCls, 'w-full')} placeholder="Min 6 karakter" />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { setResetPasswordId(null); setNewPassword(''); }}
+                className="px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
+                Batal
+              </button>
+              <button onClick={handleResetPassword} disabled={resetPassword.isPending || newPassword.length < 6}
+                className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+                {resetPassword.isPending ? 'Resetting...' : 'Reset Password'}
+              </button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

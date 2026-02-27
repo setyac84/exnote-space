@@ -222,3 +222,16 @@ export function useDeleteMember() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['members'] }),
   });
 }
+
+export function useResetMemberPassword() {
+  return useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
+      const { data, error } = await supabase.functions.invoke('reset-member-password', {
+        body: { user_id: userId, new_password: newPassword },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+  });
+}
