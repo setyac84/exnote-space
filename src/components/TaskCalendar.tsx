@@ -8,6 +8,7 @@ const statusColor: Record<string, string> = {
   todo: 'bg-muted-foreground/20 border-l-muted-foreground', doing: 'bg-info/10 border-l-info',
   review: 'bg-warning/10 border-l-warning', done: 'bg-success/10 border-l-success',
 };
+const statusLabel: Record<string, string> = { todo: 'To Do', doing: 'Doing', review: 'Review', done: 'Done' };
 const priorityDot: Record<string, string> = { low: 'bg-muted-foreground', medium: 'bg-info', high: 'bg-warning', urgent: 'bg-destructive' };
 
 interface TaskCalendarProps {
@@ -40,8 +41,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], onTask
 
   const getTasksForDay = (day: Date) => tasks.filter(t => {
     const due = t.due_date ? new Date(t.due_date) : null;
-    const req = t.request_date ? new Date(t.request_date) : null;
-    return (due && isSameDay(due, day)) || (req && isSameDay(req, day));
+    return due && isSameDay(due, day);
   });
 
   const navigate = (dir: 'prev' | 'next') => {
@@ -92,10 +92,11 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], onTask
                     return (
                       <div key={task.id} onClick={() => onTaskClick(task)}
                         className={cn('border-l-2 rounded-r-md px-1.5 py-1 cursor-pointer hover:opacity-80 transition-opacity', statusColor[task.status])}>
-                        <p className="text-[10px] font-medium text-foreground leading-tight line-clamp-2">{task.title}</p>
-                        <div className="flex items-center gap-1 mt-0.5">
+                        <p className="text-[10px] font-medium text-foreground leading-tight line-clamp-1">{task.title}</p>
+                        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                           <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', priorityDot[task.priority])} />
-                          <span className="text-[9px] text-muted-foreground truncate">{assignee?.name?.split(' ')[0] || ''}</span>
+                          <span className="text-[8px] text-muted-foreground">{statusLabel[task.status]}</span>
+                          {assignee && <span className="text-[8px] text-muted-foreground">· {assignee.name?.split(' ')[0]}</span>}
                         </div>
                       </div>
                     );
