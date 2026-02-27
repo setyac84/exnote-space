@@ -88,7 +88,7 @@ const ProjectCard = ({ project, index, onClick, onNavigate }: ProjectCardProps) 
             onClick={(e) => { e.stopPropagation(); onNavigate(); }}
             className="flex items-center gap-1 text-primary hover:underline text-[10px] font-medium"
           >
-            Kanban <ArrowRight className="w-3 h-3" />
+            Lihat Tasks <ArrowRight className="w-3 h-3" />
           </button>
         )}
       </div>

@@ -8,8 +8,9 @@ import AppLayout from "@/components/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
-import KanbanBoard from "./pages/KanbanBoard";
 import TaskListPage from "./pages/TaskListPage";
+import CompanyPage from "./pages/CompanyPage";
+import MemberPage from "./pages/MemberPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,8 +26,9 @@ const App = () => (
             <Route path="/" element={<Login />} />
             <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
             <Route path="/projects" element={<AppLayout><Projects /></AppLayout>} />
-            <Route path="/kanban" element={<AppLayout><KanbanBoard /></AppLayout>} />
             <Route path="/tasks" element={<AppLayout><TaskListPage /></AppLayout>} />
+            <Route path="/company" element={<AppLayout><CompanyPage /></AppLayout>} />
+            <Route path="/members" element={<AppLayout><MemberPage /></AppLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -3,12 +3,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   FolderKanban,
-  KanbanSquare,
   LogOut,
   Briefcase,
-  ChevronDown,
   Palette,
   Code2,
+  Building2,
+  ListTodo,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Division } from '@/types';
@@ -22,7 +23,9 @@ const Sidebar = () => {
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/projects', icon: FolderKanban, label: 'Projects' },
-    { to: '/kanban', icon: KanbanSquare, label: 'Kanban Board' },
+    { to: '/tasks', icon: ListTodo, label: 'Tasks' },
+    { to: '/company', icon: Building2, label: 'Company' },
+    { to: '/members', icon: Users, label: 'Member' },
   ];
 
   const divisionOptions: { value: Division; label: string; icon: typeof Palette }[] = [

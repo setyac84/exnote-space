@@ -80,7 +80,7 @@ const Projects = () => {
             project={project}
             index={i}
             onClick={() => handleCardClick(project)}
-            onNavigate={() => navigate(`/kanban?project=${project.id}`)}
+            onNavigate={() => navigate(`/tasks?project=${project.id}`)}
           />
         ))}
       </div>

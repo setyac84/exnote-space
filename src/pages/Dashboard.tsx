@@ -2,16 +2,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { mockProjects, mockTasks, mockUsers } from '@/data/mock';
 import { Task } from '@/types';
 import { motion } from 'framer-motion';
-import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users } from 'lucide-react';
+import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import TaskModal from '@/components/TaskModal';
+import ProjectModal from '@/components/ProjectModal';
+import { Project } from '@/types';
 
 const Dashboard = () => {
   const { user, activeDivision } = useAuth();
   const navigate = useNavigate();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [tasks, setTasks] = useState(mockTasks);
+  const [showCreateProject, setShowCreateProject] = useState(false);
+  const [showCreateTask, setShowCreateTask] = useState(false);
+  const [projects, setProjects] = useState(mockProjects);
 
   if (!user) return null;
 
@@ -45,13 +50,31 @@ const Dashboard = () => {
   return (
     <div className="max-w-5xl">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">
-          {isAdmin ? `Dashboard ${activeDivision === 'creative' ? 'Creative' : 'Developer'}` : 'My Dashboard'}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {isAdmin ? `Ringkasan progress divisi ${activeDivision}` : 'Ringkasan task yang di-assign ke Anda'}
-        </p>
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            {isAdmin ? `Dashboard ${activeDivision === 'creative' ? 'Creative' : 'Developer'}` : 'My Dashboard'}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isAdmin ? `Ringkasan progress divisi ${activeDivision}` : 'Ringkasan task yang di-assign ke Anda'}
+          </p>
+        </div>
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowCreateProject(true)}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> New Project
+            </button>
+            <button
+              onClick={() => setShowCreateTask(true)}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> New Task
+            </button>
+          </div>
+        )}
       </motion.div>
 
       {/* Stats - Clickable */}
@@ -160,6 +183,38 @@ const Dashboard = () => {
         onClose={() => setSelectedTask(null)}
         onUpdate={handleUpdateTask}
         readOnly={!isAdmin}
+      />
+
+      {/* Create Task Modal */}
+      <TaskModal
+        task={null}
+        division={activeDivision}
+        isOpen={showCreateTask}
+        onClose={() => setShowCreateTask(false)}
+        onUpdate={(t: Task) => {
+          setTasks(prev => [...prev, t]);
+          setShowCreateTask(false);
+        }}
+        mode="create"
+        projectId=""
+      />
+
+      {/* Create Project Modal */}
+      <ProjectModal
+        project={null}
+        division={activeDivision}
+        isOpen={showCreateProject}
+        onClose={() => setShowCreateProject(false)}
+        onSave={(data: any) => {
+          const newProject: Project = {
+            ...data,
+            id: `p${Date.now()}`,
+            created_at: new Date().toISOString().split('T')[0],
+            tasks: [],
+          };
+          setProjects(prev => [...prev, newProject]);
+        }}
+        mode="create"
       />
     </div>
   );
