@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Task, Division, TaskStatus, TaskPriority } from '@/types';
-import { mockUsers } from '@/data/mock';
+import { mockUsers, mockProjects } from '@/data/mock';
 import { X, Calendar, Flag, User, Link, AlertTriangle, Pencil, Trash2, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -44,6 +44,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const divisionMembers = mockUsers.filter(u => u.division === division);
+  const divisionProjects = mockProjects.filter(p => p.division === division);
 
   useEffect(() => {
     setMode(initialMode);
@@ -55,7 +56,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
         status: 'todo',
         priority: 'medium',
         assignee_id: divisionMembers[0]?.id || '',
-        project_id: projectId || '',
+        project_id: projectId || divisionProjects[0]?.id || '',
         request_date: new Date().toISOString().split('T')[0],
         due_date: '',
       });
@@ -87,6 +88,8 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
         due_date: form.due_date || '',
         moodboard_link: form.moodboard_link,
         aspect_ratio: form.aspect_ratio,
+        result_link: form.result_link,
+        content_asset_link: form.content_asset_link,
         repo_link: form.repo_link,
         environment: form.environment,
         bug_severity: form.bug_severity,
@@ -165,6 +168,25 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                     />
                   ) : (
                     <p className="text-sm text-foreground">{displayTask.description}</p>
+                  )}
+                </div>
+
+                {/* Project Selection */}
+                <div>
+                  <label className={labelCls}>Project</label>
+                  {isEditable ? (
+                    <select
+                      value={form.project_id || ''}
+                      onChange={e => setForm(f => ({ ...f, project_id: e.target.value }))}
+                      className={inputCls}
+                    >
+                      <option value="">Pilih Project</option>
+                      {divisionProjects.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-sm text-foreground">{divisionProjects.find(p => p.id === displayTask.project_id)?.name || '-'}</p>
                   )}
                 </div>
 
@@ -257,7 +279,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                   </div>
                 </div>
 
-                {/* Division-specific fields */}
+                {/* Creative fields */}
                 {division === 'creative' && (
                   <div className="border-t border-border pt-4">
                     <p className="text-xs font-medium text-muted-foreground mb-3">Detail Creative</p>
@@ -272,22 +294,43 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                             <label className={labelCls}>Aspect Ratio</label>
                             <input value={form.aspect_ratio || ''} onChange={e => setForm(f => ({ ...f, aspect_ratio: e.target.value }))} className={inputCls} placeholder="16:9" />
                           </div>
+                          <div>
+                            <label className={labelCls}>Result Link</label>
+                            <input value={form.result_link || ''} onChange={e => setForm(f => ({ ...f, result_link: e.target.value }))} className={inputCls} placeholder="https://..." />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Content Asset Link</label>
+                            <input value={form.content_asset_link || ''} onChange={e => setForm(f => ({ ...f, content_asset_link: e.target.value }))} className={inputCls} placeholder="https://drive.google.com/..." />
+                          </div>
                         </>
                       ) : (
                         <>
                           {displayTask.moodboard_link && (
                             <div className="flex items-center gap-2 text-sm">
                               <Link className="w-3.5 h-3.5 text-muted-foreground" />
-                              <a href={displayTask.moodboard_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{displayTask.moodboard_link as string}</a>
+                              <a href={displayTask.moodboard_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">Moodboard</a>
                             </div>
                           )}
                           {displayTask.aspect_ratio && <p className="text-sm text-foreground">Aspect Ratio: {displayTask.aspect_ratio as string}</p>}
+                          {displayTask.result_link && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Link className="w-3.5 h-3.5 text-muted-foreground" />
+                              <a href={displayTask.result_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">Result Link</a>
+                            </div>
+                          )}
+                          {displayTask.content_asset_link && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Link className="w-3.5 h-3.5 text-muted-foreground" />
+                              <a href={displayTask.content_asset_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">Content Asset</a>
+                            </div>
+                          )}
                         </>
                       )}
                     </div>
                   </div>
                 )}
 
+                {/* Developer fields */}
                 {division === 'developer' && (
                   <div className="border-t border-border pt-4">
                     <p className="text-xs font-medium text-muted-foreground mb-3">Detail Developer</p>

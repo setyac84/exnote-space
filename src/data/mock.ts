@@ -7,6 +7,7 @@ export const mockCompanies: Company[] = [
 ];
 
 export const mockUsers: User[] = [
+  { id: '0', name: 'Super Admin', email: 'super@company.com', role: 'super_admin', division: 'creative', company_id: 'c1' },
   { id: '1', name: 'Andi Wijaya', email: 'andi@company.com', role: 'admin', division: 'creative', company_id: 'c1' },
   { id: '2', name: 'Budi Santoso', email: 'budi@company.com', role: 'member', division: 'creative', company_id: 'c1' },
   { id: '3', name: 'Citra Dewi', email: 'citra@company.com', role: 'member', division: 'creative', company_id: 'c1' },

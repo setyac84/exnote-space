@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { Division } from '@/types';
 
 const Sidebar = () => {
-  const { user, logout, activeDivision, setActiveDivision } = useAuth();
+  const { user, logout, activeDivision, setActiveDivision, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
 
   if (!user) return null;
@@ -38,9 +38,11 @@ const Sidebar = () => {
     navigate('/');
   };
 
+  // Super admin and regular admin can switch divisions
+  const canSwitchDivision = isSuperAdmin || user.role === 'admin';
+
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-60 bg-sidebar border-r border-sidebar-border flex flex-col z-50">
-      {/* Logo */}
       <div className="h-14 flex items-center gap-3 px-5 border-b border-sidebar-border">
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
           <Briefcase className="w-4 h-4 text-primary-foreground" />
@@ -48,8 +50,8 @@ const Sidebar = () => {
         <span className="font-bold text-foreground text-sm">ProjectHub</span>
       </div>
 
-      {/* Division Switcher - only for admins */}
-      {user.role === 'admin' && (
+      {/* Division Switcher - super_admin sees both, admin sees both */}
+      {canSwitchDivision && (
         <div className="px-3 pt-4 pb-2">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-2">Divisi</p>
           <div className="space-y-1">
@@ -72,7 +74,6 @@ const Sidebar = () => {
         </div>
       )}
 
-      {/* Navigation */}
       <nav className="flex-1 px-3 pt-4">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-2">Menu</p>
         <div className="space-y-1">
@@ -96,7 +97,6 @@ const Sidebar = () => {
         </div>
       </nav>
 
-      {/* User Info */}
       <div className="p-3 border-t border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-2">
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">
@@ -104,7 +104,7 @@ const Sidebar = () => {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
-            <p className="text-[11px] text-muted-foreground capitalize">{user.role} · {user.division}</p>
+            <p className="text-[11px] text-muted-foreground capitalize">{user.role === 'super_admin' ? 'Super Admin' : user.role} · {user.division}</p>
           </div>
           <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground transition-colors">
             <LogOut className="w-4 h-4" />

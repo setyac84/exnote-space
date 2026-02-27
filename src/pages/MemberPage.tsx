@@ -5,13 +5,14 @@ import { Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const MemberPage = () => {
-  const { user, activeDivision } = useAuth();
+  const { user, activeDivision, isAdmin, isSuperAdmin } = useAuth();
   if (!user) return null;
 
-  const isAdmin = user.role === 'admin';
-  const members = isAdmin
-    ? mockUsers.filter(u => u.division === activeDivision)
-    : mockUsers.filter(u => u.division === user.division);
+  const members = isSuperAdmin
+    ? mockUsers.filter(u => u.role !== 'super_admin')
+    : isAdmin
+      ? mockUsers.filter(u => u.division === activeDivision)
+      : mockUsers.filter(u => u.division === user.division);
 
   return (
     <div className="max-w-3xl">

@@ -1,5 +1,5 @@
 export type Division = 'creative' | 'developer';
-export type UserRole = 'admin' | 'member';
+export type UserRole = 'super_admin' | 'admin' | 'member';
 export type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type ProjectStatus = 'planning' | 'ongoing' | 'completed' | 'archived';
@@ -49,6 +49,8 @@ export interface Task {
   moodboard_link?: string;
   aspect_ratio?: string;
   brand_guidelines?: string;
+  result_link?: string;
+  content_asset_link?: string;
   // Developer fields
   repo_link?: string;
   environment?: 'staging' | 'production';
