@@ -6,7 +6,7 @@ import TaskModal from '@/components/TaskModal';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useSearchParams } from 'react-router-dom';
-import { GripVertical, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 const columns: { status: TaskStatus; label: string; className: string }[] = [
   { status: 'todo', label: 'To Do', className: 'kanban-col-todo' },
@@ -28,6 +28,7 @@ const KanbanBoard = () => {
   const projectFilter = searchParams.get('project');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [tasks, setTasks] = useState(mockTasks);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const isAdmin = user?.role === 'admin';
 
   const filteredTasks = useMemo(() => {
@@ -36,15 +37,8 @@ const KanbanBoard = () => {
       const project = mockProjects.find(p => p.id === t.project_id);
       return project?.division === activeDivision;
     });
-
-    if (projectFilter) {
-      filtered = filtered.filter(t => t.project_id === projectFilter);
-    }
-
-    if (!isAdmin) {
-      filtered = filtered.filter(t => t.assignee_id === user.id);
-    }
-
+    if (projectFilter) filtered = filtered.filter(t => t.project_id === projectFilter);
+    if (!isAdmin) filtered = filtered.filter(t => t.assignee_id === user.id);
     return filtered;
   }, [tasks, activeDivision, projectFilter, isAdmin, user]);
 
@@ -53,22 +47,38 @@ const KanbanBoard = () => {
   const currentProject = projectFilter ? mockProjects.find(p => p.id === projectFilter) : null;
 
   const handleUpdateTask = (updated: Task) => {
-    setTasks(prev => prev.map(t => t.id === updated.id ? updated : t));
-    setSelectedTask(updated);
+    setTasks(prev => {
+      const exists = prev.find(t => t.id === updated.id);
+      if (exists) return prev.map(t => t.id === updated.id ? updated : t);
+      return [...prev, updated];
+    });
+    setSelectedTask(null);
   };
 
-  // Members can only update their own tasks, not change to Done/Archive
-  const isReadOnly = !isAdmin;
+  const handleDeleteTask = (id: string) => {
+    setTasks(prev => prev.filter(t => t.id !== id));
+    setSelectedTask(null);
+  };
 
   return (
     <div>
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
-          {currentProject ? currentProject.name : 'Kanban Board'}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {currentProject ? currentProject.description : `Semua task divisi ${activeDivision}`}
-        </p>
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            {currentProject ? currentProject.name : 'Kanban Board'}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {currentProject ? currentProject.description : `Semua task divisi ${activeDivision}`}
+          </p>
+        </div>
+        {isAdmin && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Tambah Task
+          </button>
+        )}
       </motion.div>
 
       <div className="grid grid-cols-4 gap-4">
@@ -132,13 +142,26 @@ const KanbanBoard = () => {
         })}
       </div>
 
+      {/* View/Edit Task Modal */}
       <TaskModal
         task={selectedTask}
         division={activeDivision}
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
         onUpdate={handleUpdateTask}
-        readOnly={isReadOnly}
+        onDelete={isAdmin ? handleDeleteTask : undefined}
+        readOnly={!isAdmin}
+      />
+
+      {/* Create Task Modal */}
+      <TaskModal
+        task={null}
+        division={activeDivision}
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onUpdate={handleUpdateTask}
+        mode="create"
+        projectId={projectFilter || ''}
       />
     </div>
   );

@@ -1,15 +1,23 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { mockProjects, mockTasks, mockUsers } from '@/data/mock';
+import { Task } from '@/types';
 import { motion } from 'framer-motion';
 import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import TaskModal from '@/components/TaskModal';
 
 const Dashboard = () => {
   const { user, activeDivision } = useAuth();
+  const navigate = useNavigate();
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [tasks, setTasks] = useState(mockTasks);
+
   if (!user) return null;
 
   const isAdmin = user.role === 'admin';
   const divisionProjects = mockProjects.filter(p => p.division === activeDivision);
-  const divisionTasks = mockTasks.filter(t => {
+  const divisionTasks = tasks.filter(t => {
     const project = mockProjects.find(p => p.id === t.project_id);
     return project?.division === activeDivision;
   });
@@ -23,11 +31,16 @@ const Dashboard = () => {
   const divisionMembers = mockUsers.filter(u => u.division === activeDivision);
 
   const stats = [
-    { label: 'Total Projects', value: divisionProjects.length, icon: FolderKanban, color: 'text-primary' },
-    { label: 'To Do', value: todoCount, icon: Clock, color: 'text-info' },
-    { label: 'In Progress', value: doingCount, icon: AlertTriangle, color: 'text-warning' },
-    { label: 'Done', value: doneCount, icon: CheckCircle2, color: 'text-success' },
+    { label: 'Total Projects', value: divisionProjects.length, icon: FolderKanban, color: 'text-primary', onClick: () => navigate('/projects') },
+    { label: 'To Do', value: todoCount, icon: Clock, color: 'text-info', onClick: () => navigate('/tasks?status=todo') },
+    { label: 'In Progress', value: doingCount, icon: AlertTriangle, color: 'text-warning', onClick: () => navigate('/tasks?status=doing') },
+    { label: 'Done', value: doneCount, icon: CheckCircle2, color: 'text-success', onClick: () => navigate('/tasks?status=done') },
   ];
+
+  const handleUpdateTask = (updated: Task) => {
+    setTasks(prev => prev.map(t => t.id === updated.id ? updated : t));
+    setSelectedTask(updated);
+  };
 
   return (
     <div className="max-w-5xl">
@@ -41,7 +54,7 @@ const Dashboard = () => {
         </p>
       </motion.div>
 
-      {/* Stats */}
+      {/* Stats - Clickable */}
       <div className="grid grid-cols-4 gap-4 mb-8">
         {stats.map((stat, i) => (
           <motion.div
@@ -49,7 +62,8 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08 }}
-            className="glass-card rounded-xl p-4"
+            onClick={stat.onClick}
+            className="glass-card rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all"
           >
             <div className="flex items-center justify-between mb-2">
               <stat.icon className={`w-5 h-5 ${stat.color}`} />
@@ -60,7 +74,7 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Member Activity - Admin only */}
+      {/* Member Activity - Admin only, clickable */}
       {isAdmin && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -79,7 +93,11 @@ const Dashboard = () => {
               const memberPending = memberTasks.filter(t => t.status !== 'done').length;
 
               return (
-                <div key={member.id} className="flex items-center justify-between py-2">
+                <div
+                  key={member.id}
+                  onClick={() => navigate(`/tasks?member=${member.id}`)}
+                  className="flex items-center justify-between py-2 px-2 rounded-lg cursor-pointer hover:bg-secondary/50 transition-colors"
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">
                       {member.name.split(' ').map(n => n[0]).join('')}
@@ -100,7 +118,7 @@ const Dashboard = () => {
         </motion.div>
       )}
 
-      {/* Urgent Tasks */}
+      {/* Urgent Tasks - Clickable */}
       {urgentCount > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -116,7 +134,11 @@ const Dashboard = () => {
             {myTasks.filter(t => t.priority === 'urgent' || t.priority === 'high').map(task => {
               const assignee = mockUsers.find(u => u.id === task.assignee_id);
               return (
-                <div key={task.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-secondary/50">
+                <div
+                  key={task.id}
+                  onClick={() => setSelectedTask(task)}
+                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-secondary/50 cursor-pointer hover:bg-secondary/80 transition-colors"
+                >
                   <div>
                     <p className="text-sm text-foreground">{task.title}</p>
                     <p className="text-[11px] text-muted-foreground">{assignee?.name} · {task.due_date}</p>
@@ -130,6 +152,15 @@ const Dashboard = () => {
           </div>
         </motion.div>
       )}
+
+      <TaskModal
+        task={selectedTask}
+        division={activeDivision}
+        isOpen={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onUpdate={handleUpdateTask}
+        readOnly={!isAdmin}
+      />
     </div>
   );
 };
