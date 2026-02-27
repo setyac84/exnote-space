@@ -283,7 +283,7 @@ const Dashboard = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-foreground">{member.name}</p>
-                      <p className="text-[11px] text-muted-foreground">{member.email} · <span className="capitalize">{member.role}</span></p>
+                      <p className="text-[11px] text-muted-foreground">{member.position || 'No position'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 text-xs">
