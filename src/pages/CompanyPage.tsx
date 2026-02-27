@@ -7,7 +7,7 @@ import { Plus, Pencil, Trash2, Save, X, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const CompanyPage = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [companies, setCompanies] = useState(initialCompanies);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -15,7 +15,6 @@ const CompanyPage = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   if (!user) return null;
-  const isAdmin = user.role === 'admin';
 
   const inputCls = 'w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
 
