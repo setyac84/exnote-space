@@ -119,7 +119,7 @@ const Dashboard = () => {
                 <div key={task.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-secondary/50">
                   <div>
                     <p className="text-sm text-foreground">{task.title}</p>
-                    <p className="text-[11px] text-muted-foreground">{assignee?.name} · {task.end_date}</p>
+                    <p className="text-[11px] text-muted-foreground">{assignee?.name} · {task.due_date}</p>
                   </div>
                   <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${task.priority === 'urgent' ? 'bg-destructive/15 text-destructive' : 'bg-warning/15 text-warning'}`}>
                     {task.priority}

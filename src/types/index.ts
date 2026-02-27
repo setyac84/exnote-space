@@ -4,6 +4,13 @@ export type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type ProjectStatus = 'planning' | 'ongoing' | 'completed' | 'archived';
 
+export interface Company {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -22,6 +29,9 @@ export interface Project {
   division: Division;
   company_id: string;
   created_at: string;
+  start_date: string;
+  end_date: string;
+  priority: TaskPriority;
   tasks: Task[];
 }
 
@@ -33,8 +43,8 @@ export interface Task {
   priority: TaskPriority;
   assignee_id: string;
   project_id: string;
-  start_date: string;
-  end_date: string;
+  request_date: string;
+  due_date: string;
   // Creative fields
   moodboard_link?: string;
   aspect_ratio?: string;

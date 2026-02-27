@@ -121,15 +121,15 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, readOnly }: Task
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Start Date</p>
-                      <p className="text-sm text-foreground">{task.start_date}</p>
+                      <p className="text-[10px] text-muted-foreground">Request Date</p>
+                      <p className="text-sm text-foreground">{task.request_date}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
                     <div>
-                      <p className="text-[10px] text-muted-foreground">End Date</p>
-                      <p className="text-sm text-foreground">{task.end_date}</p>
+                      <p className="text-[10px] text-muted-foreground">Due Date</p>
+                      <p className="text-sm text-foreground">{task.due_date}</p>
                     </div>
                   </div>
                 </div>
