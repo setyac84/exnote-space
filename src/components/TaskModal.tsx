@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Task, Division, TaskStatus, TaskPriority } from '@/types';
 import { mockUsers } from '@/data/mock';
-import { X, Calendar, Flag, User, Link, AlertTriangle } from 'lucide-react';
+import { X, Calendar, Flag, User, Link, AlertTriangle, Pencil, Trash2, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -19,24 +19,93 @@ const statusOptions: { value: TaskStatus; label: string }[] = [
   { value: 'done', label: 'Done' },
 ];
 
+const priorityOptions: { value: TaskPriority; label: string }[] = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+  { value: 'urgent', label: 'Urgent' },
+];
+
 interface TaskModalProps {
   task: Task | null;
   division: Division;
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (task: Task) => void;
+  onDelete?: (id: string) => void;
   readOnly?: boolean;
+  mode?: 'view' | 'edit' | 'create';
+  projectId?: string;
 }
 
-const TaskModal = ({ task, division, isOpen, onClose, onUpdate, readOnly }: TaskModalProps) => {
-  if (!task) return null;
+const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOnly, mode: initialMode = 'view', projectId }: TaskModalProps) => {
+  const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
+  const [form, setForm] = useState<Partial<Task>>({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const assignee = mockUsers.find(u => u.id === task.assignee_id);
   const divisionMembers = mockUsers.filter(u => u.division === division);
 
-  const handleStatusChange = (status: TaskStatus) => {
-    onUpdate({ ...task, status });
+  useEffect(() => {
+    setMode(initialMode);
+    setShowDeleteConfirm(false);
+    if (initialMode === 'create') {
+      setForm({
+        title: '',
+        description: '',
+        status: 'todo',
+        priority: 'medium',
+        assignee_id: divisionMembers[0]?.id || '',
+        project_id: projectId || '',
+        request_date: new Date().toISOString().split('T')[0],
+        due_date: '',
+      });
+    } else if (task) {
+      setForm({ ...task });
+    }
+  }, [task, initialMode, isOpen]);
+
+  if (!isOpen) return null;
+  if (initialMode !== 'create' && !task) return null;
+
+  const isEditable = mode === 'edit' || mode === 'create';
+  const assignee = mockUsers.find(u => u.id === (form.assignee_id || task?.assignee_id));
+  const inputCls = 'w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
+  const labelCls = 'text-xs font-medium text-muted-foreground mb-1.5 block';
+
+  const handleSave = () => {
+    if (!form.title?.trim()) return;
+    if (mode === 'create') {
+      const newTask: Task = {
+        id: `t${Date.now()}`,
+        title: form.title || '',
+        description: form.description || '',
+        status: (form.status as TaskStatus) || 'todo',
+        priority: (form.priority as TaskPriority) || 'medium',
+        assignee_id: form.assignee_id || '',
+        project_id: form.project_id || projectId || '',
+        request_date: form.request_date || '',
+        due_date: form.due_date || '',
+        moodboard_link: form.moodboard_link,
+        aspect_ratio: form.aspect_ratio,
+        repo_link: form.repo_link,
+        environment: form.environment,
+        bug_severity: form.bug_severity,
+      };
+      onUpdate(newTask);
+    } else {
+      onUpdate({ ...task!, ...form } as Task);
+    }
+    onClose();
   };
+
+  const handleDelete = () => {
+    if (task && onDelete) {
+      onDelete(task.id);
+      onClose();
+    }
+  };
+
+  const displayTask = { ...task, ...form };
 
   return (
     <AnimatePresence>
@@ -60,14 +129,25 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, readOnly }: Task
               {/* Header */}
               <div className="flex items-start justify-between p-6 pb-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full', priorityColors[task.priority])}>
-                      {task.priority.toUpperCase()}
-                    </span>
-                  </div>
-                  <h2 className="text-lg font-semibold text-foreground">{task.title}</h2>
+                  {!isEditable && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full', priorityColors[displayTask.priority as TaskPriority])}>
+                        {(displayTask.priority as string)?.toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  {isEditable ? (
+                    <input
+                      value={form.title || ''}
+                      onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                      className={cn(inputCls, 'text-lg font-semibold')}
+                      placeholder="Judul task..."
+                    />
+                  ) : (
+                    <h2 className="text-lg font-semibold text-foreground">{displayTask.title}</h2>
+                  )}
                 </div>
-                <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors p-1">
+                <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors p-1 ml-2">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -75,102 +155,234 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, readOnly }: Task
               <div className="px-6 pb-6 space-y-5">
                 {/* Description */}
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Deskripsi</p>
-                  <p className="text-sm text-foreground">{task.description}</p>
+                  <label className={labelCls}>Deskripsi</label>
+                  {isEditable ? (
+                    <textarea
+                      value={form.description || ''}
+                      onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                      className={cn(inputCls, 'min-h-[60px] resize-none')}
+                      placeholder="Deskripsi task..."
+                    />
+                  ) : (
+                    <p className="text-sm text-foreground">{displayTask.description}</p>
+                  )}
                 </div>
 
-                {/* Status */}
+                {/* Status - Dropdown */}
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Status</p>
-                  <div className="flex gap-2">
-                    {statusOptions.map(opt => (
-                      <button
-                        key={opt.value}
-                        disabled={readOnly}
-                        onClick={() => handleStatusChange(opt.value)}
-                        className={cn(
-                          'text-xs px-3 py-1.5 rounded-lg transition-colors',
-                          task.status === opt.value
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-                          readOnly && 'opacity-60 cursor-not-allowed'
-                        )}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
+                  <label className={labelCls}>Status</label>
+                  {isEditable || !readOnly ? (
+                    <select
+                      value={form.status || displayTask.status || 'todo'}
+                      onChange={e => {
+                        const newStatus = e.target.value as TaskStatus;
+                        setForm(f => ({ ...f, status: newStatus }));
+                        if (!isEditable && task) {
+                          onUpdate({ ...task, status: newStatus });
+                        }
+                      }}
+                      className={inputCls}
+                      disabled={readOnly && !isEditable}
+                    >
+                      {statusOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="text-sm text-foreground capitalize">{displayTask.status}</span>
+                  )}
                 </div>
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Assignee</p>
-                      <p className="text-sm text-foreground">{assignee?.name || 'Unassigned'}</p>
-                    </div>
+                  <div>
+                    <label className={labelCls}>Assignee</label>
+                    {isEditable ? (
+                      <select
+                        value={form.assignee_id || ''}
+                        onChange={e => setForm(f => ({ ...f, assignee_id: e.target.value }))}
+                        className={inputCls}
+                      >
+                        {divisionMembers.map(m => (
+                          <option key={m.id} value={m.id}>{m.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm text-foreground">{assignee?.name || 'Unassigned'}</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Flag className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Priority</p>
-                      <p className="text-sm text-foreground capitalize">{task.priority}</p>
-                    </div>
+                  <div>
+                    <label className={labelCls}>Priority</label>
+                    {isEditable ? (
+                      <select
+                        value={form.priority || 'medium'}
+                        onChange={e => setForm(f => ({ ...f, priority: e.target.value as TaskPriority }))}
+                        className={inputCls}
+                      >
+                        {priorityOptions.map(p => (
+                          <option key={p.value} value={p.value}>{p.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Flag className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm text-foreground capitalize">{displayTask.priority}</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Request Date</p>
-                      <p className="text-sm text-foreground">{task.request_date}</p>
-                    </div>
+                  <div>
+                    <label className={labelCls}>Request Date</label>
+                    {isEditable ? (
+                      <input type="date" value={form.request_date || ''} onChange={e => setForm(f => ({ ...f, request_date: e.target.value }))} className={inputCls} />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm text-foreground">{displayTask.request_date}</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Due Date</p>
-                      <p className="text-sm text-foreground">{task.due_date}</p>
-                    </div>
+                  <div>
+                    <label className={labelCls}>Due Date</label>
+                    {isEditable ? (
+                      <input type="date" value={form.due_date || ''} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} className={inputCls} />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm text-foreground">{displayTask.due_date}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Division-specific fields */}
-                {division === 'creative' && (task.moodboard_link || task.aspect_ratio || task.brand_guidelines) && (
+                {division === 'creative' && (
                   <div className="border-t border-border pt-4">
                     <p className="text-xs font-medium text-muted-foreground mb-3">Detail Creative</p>
-                    <div className="space-y-2">
-                      {task.moodboard_link && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Link className="w-3.5 h-3.5 text-muted-foreground" />
-                          <a href={task.moodboard_link} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{task.moodboard_link}</a>
-                        </div>
-                      )}
-                      {task.aspect_ratio && (
-                        <p className="text-sm text-foreground">Aspect Ratio: {task.aspect_ratio}</p>
+                    <div className="space-y-3">
+                      {isEditable ? (
+                        <>
+                          <div>
+                            <label className={labelCls}>Moodboard Link</label>
+                            <input value={form.moodboard_link || ''} onChange={e => setForm(f => ({ ...f, moodboard_link: e.target.value }))} className={inputCls} placeholder="https://..." />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Aspect Ratio</label>
+                            <input value={form.aspect_ratio || ''} onChange={e => setForm(f => ({ ...f, aspect_ratio: e.target.value }))} className={inputCls} placeholder="16:9" />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {displayTask.moodboard_link && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Link className="w-3.5 h-3.5 text-muted-foreground" />
+                              <a href={displayTask.moodboard_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{displayTask.moodboard_link as string}</a>
+                            </div>
+                          )}
+                          {displayTask.aspect_ratio && <p className="text-sm text-foreground">Aspect Ratio: {displayTask.aspect_ratio as string}</p>}
+                        </>
                       )}
                     </div>
                   </div>
                 )}
 
-                {division === 'developer' && (task.repo_link || task.environment || task.bug_severity) && (
+                {division === 'developer' && (
                   <div className="border-t border-border pt-4">
                     <p className="text-xs font-medium text-muted-foreground mb-3">Detail Developer</p>
-                    <div className="space-y-2">
-                      {task.repo_link && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Link className="w-3.5 h-3.5 text-muted-foreground" />
-                          <a href={task.repo_link} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{task.repo_link}</a>
-                        </div>
+                    <div className="space-y-3">
+                      {isEditable ? (
+                        <>
+                          <div>
+                            <label className={labelCls}>Repository Link</label>
+                            <input value={form.repo_link || ''} onChange={e => setForm(f => ({ ...f, repo_link: e.target.value }))} className={inputCls} placeholder="https://github.com/..." />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Environment</label>
+                            <select value={form.environment || ''} onChange={e => setForm(f => ({ ...f, environment: e.target.value as any }))} className={inputCls}>
+                              <option value="">-</option>
+                              <option value="staging">Staging</option>
+                              <option value="production">Production</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className={labelCls}>Bug Severity</label>
+                            <select value={form.bug_severity || ''} onChange={e => setForm(f => ({ ...f, bug_severity: e.target.value as any }))} className={inputCls}>
+                              <option value="">-</option>
+                              <option value="low">Low</option>
+                              <option value="medium">Medium</option>
+                              <option value="high">High</option>
+                              <option value="critical">Critical</option>
+                            </select>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {displayTask.repo_link && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Link className="w-3.5 h-3.5 text-muted-foreground" />
+                              <a href={displayTask.repo_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{displayTask.repo_link as string}</a>
+                            </div>
+                          )}
+                          {displayTask.environment && <p className="text-sm text-foreground capitalize">Environment: {displayTask.environment as string}</p>}
+                          {displayTask.bug_severity && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <AlertTriangle className="w-3.5 h-3.5 text-warning" />
+                              <span className="capitalize">Bug Severity: {displayTask.bug_severity as string}</span>
+                            </div>
+                          )}
+                        </>
                       )}
-                      {task.environment && (
-                        <p className="text-sm text-foreground capitalize">Environment: {task.environment}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 pt-4 border-t border-border">
+                  {mode === 'view' && !readOnly && (
+                    <>
+                      <button
+                        onClick={() => setMode('edit')}
+                        className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        <Pencil className="w-3.5 h-3.5" /> Edit
+                      </button>
+                      {onDelete && (
+                        <button
+                          onClick={() => setShowDeleteConfirm(true)}
+                          className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Hapus
+                        </button>
                       )}
-                      {task.bug_severity && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <AlertTriangle className="w-3.5 h-3.5 text-warning" />
-                          <span className="capitalize">Bug Severity: {task.bug_severity}</span>
-                        </div>
+                    </>
+                  )}
+                  {isEditable && (
+                    <>
+                      <button
+                        onClick={handleSave}
+                        disabled={!form.title?.trim()}
+                        className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                      >
+                        <Save className="w-3.5 h-3.5" /> Save
+                      </button>
+                      {mode === 'edit' && (
+                        <button onClick={() => { setMode('view'); setForm(task ? { ...task } : {}); }} className="px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
+                          Batal
+                        </button>
                       )}
+                    </>
+                  )}
+                </div>
+
+                {/* Delete Confirmation */}
+                {showDeleteConfirm && (
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                    <p className="text-sm text-foreground mb-3">Yakin ingin menghapus task ini?</p>
+                    <div className="flex gap-2">
+                      <button onClick={handleDelete} className="px-3 py-1.5 text-sm rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90">Ya, Hapus</button>
+                      <button onClick={() => setShowDeleteConfirm(false)} className="px-3 py-1.5 text-sm rounded-lg bg-secondary text-secondary-foreground">Batal</button>
                     </div>
                   </div>
                 )}
