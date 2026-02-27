@@ -7,13 +7,13 @@ export const mockCompanies: Company[] = [
 ];
 
 export const mockUsers: User[] = [
-  { id: '0', name: 'Super Admin', email: 'super@company.com', role: 'super_admin', division: 'creative', company_id: 'c1' },
-  { id: '1', name: 'Andi Wijaya', email: 'andi@company.com', role: 'admin', division: 'creative', company_id: 'c1' },
-  { id: '2', name: 'Budi Santoso', email: 'budi@company.com', role: 'member', division: 'creative', company_id: 'c1' },
-  { id: '3', name: 'Citra Dewi', email: 'citra@company.com', role: 'member', division: 'creative', company_id: 'c1' },
-  { id: '4', name: 'Dimas Prasetyo', email: 'dimas@company.com', role: 'admin', division: 'developer', company_id: 'c1' },
-  { id: '5', name: 'Eka Putri', email: 'eka@company.com', role: 'member', division: 'developer', company_id: 'c1' },
-  { id: '6', name: 'Fajar Rahman', email: 'fajar@company.com', role: 'member', division: 'developer', company_id: 'c1' },
+  { id: '0', name: 'Super Admin', email: 'super@company.com', role: 'super_admin', division: 'creative', company_id: 'c1', position: 'Chief Executive Officer' },
+  { id: '1', name: 'Andi Wijaya', email: 'andi@company.com', role: 'admin', division: 'creative', company_id: 'c1', position: 'Creative Director' },
+  { id: '2', name: 'Budi Santoso', email: 'budi@company.com', role: 'member', division: 'creative', company_id: 'c1', position: 'Graphic Designer' },
+  { id: '3', name: 'Citra Dewi', email: 'citra@company.com', role: 'member', division: 'creative', company_id: 'c1', position: 'UI/UX Designer' },
+  { id: '4', name: 'Dimas Prasetyo', email: 'dimas@company.com', role: 'admin', division: 'developer', company_id: 'c1', position: 'Tech Lead' },
+  { id: '5', name: 'Eka Putri', email: 'eka@company.com', role: 'member', division: 'developer', company_id: 'c1', position: 'Backend Developer' },
+  { id: '6', name: 'Fajar Rahman', email: 'fajar@company.com', role: 'member', division: 'developer', company_id: 'c1', position: 'Frontend Developer' },
 ];
 
 export const mockTasks: Task[] = [

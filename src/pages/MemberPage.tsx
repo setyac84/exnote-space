@@ -72,6 +72,10 @@ const MemberPage = () => {
           <input value={form.email || ''} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="email@company.com" />
         </div>
         <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Jabatan</label>
+          <input value={form.position || ''} onChange={e => setForm(f => ({ ...f, position: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="e.g. UI/UX Designer" />
+        </div>
+        <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
           <select value={form.role || 'member'} onChange={e => setForm(f => ({ ...f, role: e.target.value as UserRole }))} className={cn(inputCls, 'w-full')}>
             {roleOptions.filter(r => isSuperAdmin ? true : r !== 'super_admin').map(r => (
@@ -139,7 +143,8 @@ const MemberPage = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">{member.name}</p>
-                  <p className="text-xs text-muted-foreground">{member.email}</p>
+                  <p className="text-xs text-muted-foreground">{member.position || 'No position'}</p>
+                  <p className="text-[11px] text-muted-foreground/70">{member.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
