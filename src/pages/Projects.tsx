@@ -18,7 +18,7 @@ const Projects = () => {
 
   if (!user) return null;
 
-  const divisionProjects = isSuperAdmin ? projects : projects.filter(p => p.division === activeDivision);
+  const divisionProjects = projects.filter(p => p.division === activeDivision);
   const visibleProjects = isAdmin
     ? divisionProjects
     : divisionProjects.filter(p => p.tasks.some(t => t.assignee_id === user.id));

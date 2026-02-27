@@ -83,22 +83,18 @@ const Dashboard = () => {
 
   if (!user) return null;
 
-  const divisionProjects = isSuperAdmin ? mockProjects : mockProjects.filter(p => p.division === activeDivision);
-  const divisionTasks = isSuperAdmin
-    ? tasks
-    : tasks.filter(t => {
-        const project = mockProjects.find(p => p.id === t.project_id);
-        return project?.division === activeDivision;
-      });
+  const divisionProjects = mockProjects.filter(p => p.division === activeDivision);
+  const divisionTasks = tasks.filter(t => {
+    const project = mockProjects.find(p => p.id === t.project_id);
+    return project?.division === activeDivision;
+  });
 
   const myTasks = isAdmin ? divisionTasks : divisionTasks.filter(t => t.assignee_id === user.id);
   const todoCount = myTasks.filter(t => t.status === 'todo').length;
   const doingCount = myTasks.filter(t => t.status === 'doing').length;
   const doneCount = myTasks.filter(t => t.status === 'done').length;
 
-  const divisionMembers = isSuperAdmin
-    ? members.filter(m => m.role !== 'super_admin')
-    : members.filter(u => u.division === activeDivision);
+  const divisionMembers = members.filter(u => u.division === activeDivision && u.role !== 'super_admin');
 
   const stats = [
     { label: 'Total Projects', value: divisionProjects.length, icon: FolderKanban, color: 'text-primary', onClick: () => navigate('/projects') },

@@ -18,11 +18,9 @@ const MemberPage = () => {
 
   if (!user) return null;
 
-  const visibleMembers = isSuperAdmin
-    ? members.filter(u => u.role !== 'super_admin')
-    : isAdmin
-      ? members.filter(u => u.division === activeDivision)
-      : members.filter(u => u.division === user.division);
+  const visibleMembers = isAdmin
+    ? members.filter(u => u.division === activeDivision && u.role !== 'super_admin')
+    : members.filter(u => u.division === user.division);
 
   const inputCls = 'bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
 

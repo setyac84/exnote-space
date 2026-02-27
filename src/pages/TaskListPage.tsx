@@ -87,13 +87,10 @@ const TaskListPage = () => {
 
   const filteredTasks = useMemo(() => {
     if (!user) return [];
-    let filtered = tasks;
-    if (!isSuperAdmin) {
-      filtered = filtered.filter(t => {
-        const project = mockProjects.find(p => p.id === t.project_id);
-        return project?.division === activeDivision;
-      });
-    }
+    let filtered = tasks.filter(t => {
+      const project = mockProjects.find(p => p.id === t.project_id);
+      return project?.division === activeDivision;
+    });
     if (!isAdmin) filtered = filtered.filter(t => t.assignee_id === user.id);
     if (statusFilter) filtered = filtered.filter(t => t.status === statusFilter);
     if (memberFilter) filtered = filtered.filter(t => t.assignee_id === memberFilter);
