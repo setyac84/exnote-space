@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMembers, useUpdateProfile, useUpdateUserRole, useCreateMember, useDeleteMember, useResetMemberPassword } from '@/hooks/useSupabaseData';
 import { motion } from 'framer-motion';
-import { Pencil, Trash2, Save, UserPlus, KeyRound } from 'lucide-react';
+import { Pencil, Trash2, Save, UserPlus, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -26,6 +26,8 @@ const MemberPage = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [resetPasswordId, setResetPasswordId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
+  const [showAddPassword, setShowAddPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   if (!user) return null;
 
@@ -243,7 +245,13 @@ const MemberPage = () => {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Password *</label>
-              <input type="password" value={addForm.password || ''} onChange={e => setAddForm((f: any) => ({ ...f, password: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="Min 6 characters" />
+              <div className="relative">
+                <input type={showAddPassword ? 'text' : 'password'} value={addForm.password || ''} onChange={e => setAddForm((f: any) => ({ ...f, password: e.target.value }))} className={cn(inputCls, 'w-full pr-10')} placeholder="Min 6 characters" />
+                <button type="button" onClick={() => setShowAddPassword(!showAddPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                  {showAddPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -286,8 +294,14 @@ const MemberPage = () => {
           <div className="space-y-3 mt-2">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Password Baru *</label>
-              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                className={cn(inputCls, 'w-full')} placeholder="Min 6 karakter" />
+              <div className="relative">
+                <input type={showResetPassword ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                  className={cn(inputCls, 'w-full pr-10')} placeholder="Min 6 karakter" />
+                <button type="button" onClick={() => setShowResetPassword(!showResetPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                  {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div className="flex gap-2 justify-end">
               <button onClick={() => { setResetPasswordId(null); setNewPassword(''); }}
