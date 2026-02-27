@@ -100,6 +100,11 @@ const TaskListPage = () => {
       filtered = filtered.filter(t => priorities.includes(t.priority));
     }
     if (projectFilter) filtered = filtered.filter(t => t.project_id === projectFilter);
+    filtered.sort((a, b) => {
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return new Date(b.due_date).getTime() - new Date(a.due_date).getTime();
+    });
     return filtered;
   }, [tasks, activeDivision, isAdmin, isSuperAdmin, user, statusFilter, memberFilter, priorityFilter, projectFilter]);
 
@@ -201,13 +206,13 @@ const TaskListPage = () => {
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
-                  <span className="text-sm text-foreground truncate font-medium">{task.title}</span>
+                  <span className="text-sm text-foreground font-medium">{task.title}</span>
                 </div>
                 <span className="text-xs text-muted-foreground line-clamp-2">{task.description}</span>
                 <span className={cn('text-xs capitalize', priorityLabel[task.priority])}>{task.priority}</span>
                 <span className="text-xs text-muted-foreground">{formatDate(task.due_date)}</span>
                 <span className="text-xs text-muted-foreground truncate">{assignee?.name.split(' ')[0]}</span>
-                <span className="text-[10px] text-muted-foreground truncate">{projectName} · {companyName}</span>
+                <span className="text-[10px] text-muted-foreground">{projectName} · {companyName}</span>
                 <InlineStatusDropdown
                   value={task.status}
                   onChange={(s) => handleStatusChange(task.id, s)}
@@ -253,7 +258,7 @@ const TaskListPage = () => {
                   <span>{formatDate(task.due_date)}</span>
                 </div>
 
-                <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/50 truncate">
+                <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/50">
                   {projectName} · {companyName}
                 </p>
               </motion.div>

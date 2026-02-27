@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Task, Division, TaskStatus, TaskPriority } from '@/types';
-import { mockUsers, mockProjects } from '@/data/mock';
-import { X, Calendar, Flag, User, Link, AlertTriangle, Pencil, Trash2, Save } from 'lucide-react';
+import { mockUsers, mockProjects, mockCompanies } from '@/data/mock';
+import { X, Calendar, Flag, User, Link, AlertTriangle, Pencil, Trash2, Save, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/formatDate';
@@ -26,6 +26,55 @@ const priorityOptions: { value: TaskPriority; label: string }[] = [
   { value: 'high', label: 'High' },
   { value: 'urgent', label: 'Urgent' },
 ];
+
+// Custom dropdown component matching InlineStatusDropdown style
+const ModalDropdown = <T extends string>({
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: { value: T; label: string }[];
+  placeholder?: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const selected = options.find(o => o.value === value);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground hover:border-primary/40 transition-colors"
+      >
+        <span className={!selected ? 'text-muted-foreground' : ''}>{selected?.label || placeholder || 'Pilih...'}</span>
+        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-[70] py-1 max-h-[200px] overflow-y-auto">
+            {options.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                className={cn(
+                  'w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 transition-colors',
+                  value === opt.value && 'font-medium bg-secondary/30'
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 interface TaskModalProps {
   task: Task | null;
@@ -71,8 +120,15 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
 
   const isEditable = mode === 'edit' || mode === 'create';
   const assignee = mockUsers.find(u => u.id === (form.assignee_id || task?.assignee_id));
-  const inputCls = 'w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
+  const inputCls = 'w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
   const labelCls = 'text-xs font-medium text-muted-foreground mb-1.5 block';
+
+  const getProjectWithCompany = (projectId: string) => {
+    const project = divisionProjects.find(p => p.id === projectId);
+    if (!project) return '-';
+    const company = mockCompanies.find(c => c.id === project.company_id);
+    return company ? `${project.name} · ${company.name}` : project.name;
+  };
 
   const handleSave = () => {
     if (!form.title?.trim()) return;
@@ -111,6 +167,12 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
   };
 
   const displayTask = { ...task, ...form };
+
+  const projectOptions = divisionProjects.map(p => {
+    const company = mockCompanies.find(c => c.id === p.company_id);
+    return { value: p.id, label: company ? `${p.name} · ${company.name}` : p.name };
+  });
+  const assigneeOptions = divisionMembers.map(m => ({ value: m.id, label: m.name }));
 
   return (
     <AnimatePresence>
@@ -152,18 +214,14 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                 <div>
                   <label className={labelCls}>Project</label>
                   {isEditable ? (
-                    <select
+                    <ModalDropdown
                       value={form.project_id || ''}
-                      onChange={e => setForm(f => ({ ...f, project_id: e.target.value }))}
-                      className={inputCls}
-                    >
-                      <option value="">Pilih Project</option>
-                      {divisionProjects.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => setForm(f => ({ ...f, project_id: v }))}
+                      options={projectOptions}
+                      placeholder="Pilih Project"
+                    />
                   ) : (
-                    <p className="text-sm text-foreground">{divisionProjects.find(p => p.id === displayTask.project_id)?.name || '-'}</p>
+                    <p className="text-sm text-foreground">{getProjectWithCompany(displayTask.project_id as string)}</p>
                   )}
                 </div>
 
@@ -172,11 +230,12 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                   <div>
                     <label className={labelCls}>Assignee</label>
                     {isEditable ? (
-                      <select value={form.assignee_id || ''} onChange={e => setForm(f => ({ ...f, assignee_id: e.target.value }))} className={inputCls}>
-                        {divisionMembers.map(m => (
-                          <option key={m.id} value={m.id}>{m.name}</option>
-                        ))}
-                      </select>
+                      <ModalDropdown
+                        value={form.assignee_id || ''}
+                        onChange={(v) => setForm(f => ({ ...f, assignee_id: v }))}
+                        options={assigneeOptions}
+                        placeholder="Pilih Assignee"
+                      />
                     ) : (
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-muted-foreground" />
@@ -187,11 +246,11 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                   <div>
                     <label className={labelCls}>Priority</label>
                     {isEditable ? (
-                      <select value={form.priority || 'medium'} onChange={e => setForm(f => ({ ...f, priority: e.target.value as TaskPriority }))} className={inputCls}>
-                        {priorityOptions.map(p => (
-                          <option key={p.value} value={p.value}>{p.label}</option>
-                        ))}
-                      </select>
+                      <ModalDropdown
+                        value={(form.priority as TaskPriority) || 'medium'}
+                        onChange={(v) => setForm(f => ({ ...f, priority: v as TaskPriority }))}
+                        options={priorityOptions}
+                      />
                     ) : (
                       <div className="flex items-center gap-2">
                         <Flag className="w-4 h-4 text-muted-foreground" />
@@ -227,22 +286,17 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                 <div>
                   <label className={labelCls}>Status</label>
                   {isEditable || !readOnly ? (
-                    <select
-                      value={form.status || displayTask.status || 'todo'}
-                      onChange={e => {
-                        const newStatus = e.target.value as TaskStatus;
+                    <ModalDropdown
+                      value={(form.status as TaskStatus) || (displayTask.status as TaskStatus) || 'todo'}
+                      onChange={(v) => {
+                        const newStatus = v as TaskStatus;
                         setForm(f => ({ ...f, status: newStatus }));
                         if (!isEditable && task) {
                           onUpdate({ ...task, status: newStatus });
                         }
                       }}
-                      className={inputCls}
-                      disabled={readOnly && !isEditable}
-                    >
-                      {statusOptions.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                      options={statusOptions}
+                    />
                   ) : (
                     <span className="text-sm text-foreground capitalize">{displayTask.status}</span>
                   )}
@@ -345,21 +399,29 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                           </div>
                           <div>
                             <label className={labelCls}>Environment</label>
-                            <select value={form.environment || ''} onChange={e => setForm(f => ({ ...f, environment: e.target.value as any }))} className={inputCls}>
-                              <option value="">-</option>
-                              <option value="staging">Staging</option>
-                              <option value="production">Production</option>
-                            </select>
+                            <ModalDropdown
+                              value={form.environment || ''}
+                              onChange={(v) => setForm(f => ({ ...f, environment: v as any }))}
+                              options={[
+                                { value: '', label: '-' },
+                                { value: 'staging', label: 'Staging' },
+                                { value: 'production', label: 'Production' },
+                              ]}
+                            />
                           </div>
                           <div>
                             <label className={labelCls}>Bug Severity</label>
-                            <select value={form.bug_severity || ''} onChange={e => setForm(f => ({ ...f, bug_severity: e.target.value as any }))} className={inputCls}>
-                              <option value="">-</option>
-                              <option value="low">Low</option>
-                              <option value="medium">Medium</option>
-                              <option value="high">High</option>
-                              <option value="critical">Critical</option>
-                            </select>
+                            <ModalDropdown
+                              value={form.bug_severity || ''}
+                              onChange={(v) => setForm(f => ({ ...f, bug_severity: v as any }))}
+                              options={[
+                                { value: '', label: '-' },
+                                { value: 'low', label: 'Low' },
+                                { value: 'medium', label: 'Medium' },
+                                { value: 'high', label: 'High' },
+                                { value: 'critical', label: 'Critical' },
+                              ]}
+                            />
                           </div>
                         </>
                       ) : (

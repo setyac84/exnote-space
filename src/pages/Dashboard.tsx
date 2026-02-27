@@ -155,7 +155,13 @@ const Dashboard = () => {
     setShowDeleteMember(null);
   };
 
-  const highPriorityTasks = myTasks.filter(t => t.priority === 'urgent' || t.priority === 'high');
+  const highPriorityTasks = myTasks
+    .filter(t => t.priority === 'urgent' || t.priority === 'high')
+    .sort((a, b) => {
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return new Date(b.due_date).getTime() - new Date(a.due_date).getTime();
+    });
 
   return (
     <div className="max-w-5xl">
@@ -317,27 +323,30 @@ const Dashboard = () => {
             <button onClick={() => navigate('/tasks?priority=high,urgent')} className="text-xs text-primary hover:underline">Lihat Semua</button>
           </div>
           {/* Table header matching tasks page */}
-          <div className="grid grid-cols-[1fr_1.2fr_80px_80px_100px_110px] gap-2 px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wide border-b border-border">
+          <div className="grid grid-cols-[1fr_1.2fr_80px_80px_100px_120px_110px] gap-2 px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wide border-b border-border">
             <span>Task</span>
             <span>Description</span>
             <span>Priority</span>
             <span>Due Date</span>
             <span>Assignee</span>
+            <span>Project · Company</span>
             <span>Status</span>
           </div>
           {highPriorityTasks.map(task => {
             const assignee = mockUsers.find(u => u.id === task.assignee_id);
+            const { projectName, companyName } = getProjectCompany(task.project_id);
             return (
               <div key={task.id} onClick={() => setSelectedTask(task)}
-                className="grid grid-cols-[1fr_1.2fr_80px_80px_100px_110px] gap-2 px-3 py-2.5 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors items-center">
+                className="grid grid-cols-[1fr_1.2fr_80px_80px_100px_120px_110px] gap-2 px-3 py-2.5 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors items-center">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
-                  <span className="text-sm text-foreground truncate font-medium">{task.title}</span>
+                  <span className="text-sm text-foreground font-medium">{task.title}</span>
                 </div>
-                <span className="text-xs text-muted-foreground line-clamp-1">{task.description}</span>
+                <span className="text-xs text-muted-foreground line-clamp-2">{task.description}</span>
                 <span className={cn('text-xs capitalize', priorityLabel[task.priority])}>{task.priority}</span>
                 <span className="text-xs text-muted-foreground">{formatDate(task.due_date)}</span>
                 <span className="text-xs text-muted-foreground truncate">{assignee?.name.split(' ')[0]}</span>
+                <span className="text-[10px] text-muted-foreground">{projectName} · {companyName}</span>
                 <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} />
               </div>
             );
