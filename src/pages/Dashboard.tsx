@@ -169,7 +169,7 @@ const Dashboard = () => {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            {isSuperAdmin ? 'Super Admin Dashboard' : isAdmin ? `Dashboard ${activeDivision === 'creative' ? 'Creative' : 'Developer'}` : 'My Dashboard'}
+            Hello, {user.name.split(' ')[0]} 👋
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isSuperAdmin ? 'Semua divisi & project' : isAdmin ? `Ringkasan progress divisi ${activeDivision}` : 'Ringkasan task yang di-assign ke Anda'}
