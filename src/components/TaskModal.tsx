@@ -283,7 +283,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
             className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50" onClick={onClose} />
           <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div className="glass-card rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex items-start justify-between p-6 pb-4">
                 <div className="flex-1 min-w-0">
