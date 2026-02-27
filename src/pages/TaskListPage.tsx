@@ -37,7 +37,7 @@ const statusDot: Record<TaskStatus, string> = {
   done: 'border-success bg-success',
 };
 
-const InlineStatusDropdown = ({ value, onChange }: { value: TaskStatus; onChange: (s: TaskStatus) => void }) => {
+const InlineStatusDropdown = ({ value, onChange, dropUp = false }: { value: TaskStatus; onChange: (s: TaskStatus) => void; dropUp?: boolean }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative" onClick={e => e.stopPropagation()}>
@@ -52,7 +52,10 @@ const InlineStatusDropdown = ({ value, onChange }: { value: TaskStatus; onChange
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-50 py-1 min-w-[120px]">
+          <div className={cn(
+            'absolute left-0 bg-popover border border-border rounded-xl shadow-lg z-50 py-1 min-w-[120px]',
+            dropUp ? 'bottom-full mb-1' : 'top-full mt-1'
+          )}>
             {(Object.keys(statusLabel) as TaskStatus[]).map(s => (
               <button
                 key={s}
@@ -236,7 +239,7 @@ const TaskListPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
                 onClick={() => setSelectedTask(task)}
-                className="glass-card rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all"
+                className="glass-card rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all overflow-visible"
               >
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] text-muted-foreground">
@@ -261,7 +264,7 @@ const TaskListPage = () => {
                 </div>
 
                 <div className="flex items-center justify-end pt-2 border-t border-border/50">
-                  <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} />
+                  <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} dropUp />
                 </div>
               </motion.div>
             );
