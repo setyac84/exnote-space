@@ -53,7 +53,7 @@ const InlineStatusDropdown = ({ value, onChange, dropUp = false }: { value: Task
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className={cn(
-            'absolute left-0 bg-popover border border-border rounded-xl shadow-lg z-50 py-1 min-w-[120px]',
+            'absolute right-0 bg-popover border border-border rounded-xl shadow-lg z-50 py-1 min-w-[120px]',
             dropUp ? 'bottom-full mb-1' : 'top-full mt-1'
           )}>
             {(Object.keys(statusLabel) as TaskStatus[]).map(s => (
