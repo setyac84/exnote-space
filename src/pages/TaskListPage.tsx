@@ -182,15 +182,15 @@ const TaskListPage = () => {
 
       {viewMode === 'list' ? (
         <div className="glass-card rounded-xl overflow-hidden">
-          {/* Header: task > description > priority > due date > assignee > project-company > status */}
-          <div className="grid grid-cols-[1fr_1.5fr_90px_90px_110px_140px_110px] gap-2 px-4 py-2.5 border-b border-border text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+          {/* Header: project-company > task > description > priority > due date > status > assignee */}
+          <div className="grid grid-cols-[140px_1fr_1.5fr_90px_90px_110px_110px] gap-2 px-4 py-2.5 border-b border-border text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+            <span>Project · Company</span>
             <span>Task</span>
             <span>Description</span>
             <span>Priority</span>
             <span>Due Date</span>
-            <span>Assignee</span>
-            <span>Project · Company</span>
             <span>Status</span>
+            <span>Assignee</span>
           </div>
           {filteredTasks.map((task, i) => {
             const assignee = mockUsers.find(u => u.id === task.assignee_id);
@@ -202,8 +202,9 @@ const TaskListPage = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: i * 0.03 }}
                 onClick={() => setSelectedTask(task)}
-                className="grid grid-cols-[1fr_1.5fr_90px_90px_110px_140px_110px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors items-center"
+                className="grid grid-cols-[140px_1fr_1.5fr_90px_90px_110px_110px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors items-center"
               >
+                <span className="text-[10px] text-muted-foreground">{projectName} · {companyName}</span>
                 <div className="flex items-center gap-2 min-w-0">
                   <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
                   <span className="text-sm text-foreground font-medium">{task.title}</span>
@@ -211,12 +212,11 @@ const TaskListPage = () => {
                 <span className="text-xs text-muted-foreground line-clamp-2">{task.description}</span>
                 <span className={cn('text-xs capitalize', priorityLabel[task.priority])}>{task.priority}</span>
                 <span className="text-xs text-muted-foreground">{formatDate(task.due_date)}</span>
-                <span className="text-xs text-muted-foreground truncate">{assignee?.name.split(' ')[0]}</span>
-                <span className="text-[10px] text-muted-foreground">{projectName} · {companyName}</span>
                 <InlineStatusDropdown
                   value={task.status}
                   onChange={(s) => handleStatusChange(task.id, s)}
                 />
+                <span className="text-xs text-muted-foreground truncate">{assignee?.name.split(' ')[0]}</span>
               </motion.div>
             );
           })}
