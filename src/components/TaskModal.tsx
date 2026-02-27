@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useProjects, useMembers, useCompanies, useCreateTask, useUpdateTask } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
-import { X, Calendar, Flag, User, Link, AlertTriangle, Trash2, ChevronDown, Save, Pencil, Image } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Flag, User, Link, AlertTriangle, Trash2, ChevronDown, Save, Pencil, Image } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/formatDate';
+import { format, parseISO } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -327,17 +330,37 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                   <div>
                     <label className={labelCls}>Request Date</label>
                     {isEditable ? (
-                      <input type="date" value={form.request_date || ''} onChange={e => setForm((f: any) => ({ ...f, request_date: e.target.value }))} className={inputCls} />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button type="button" className={cn(inputCls, 'flex items-center justify-between text-left', !form.request_date && 'text-muted-foreground')}>
+                            <span>{form.request_date ? format(parseISO(form.request_date), 'dd MMM yyyy') : 'Pick a date'}</span>
+                            <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-xl" align="start" sideOffset={4}>
+                          <Calendar mode="single" selected={form.request_date ? parseISO(form.request_date) : undefined} onSelect={(d) => setForm((f: any) => ({ ...f, request_date: d ? format(d, 'yyyy-MM-dd') : '' }))} initialFocus className="p-3 pointer-events-auto rounded-xl" />
+                        </PopoverContent>
+                      </Popover>
                     ) : (
-                      <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-muted-foreground" /><p className="text-sm text-foreground">{formatDate(form.request_date)}</p></div>
+                      <div className="flex items-center gap-2"><CalendarIcon className="w-4 h-4 text-muted-foreground" /><p className="text-sm text-foreground">{formatDate(form.request_date)}</p></div>
                     )}
                   </div>
                   <div>
                     <label className={labelCls}>Due Date</label>
                     {isEditable ? (
-                      <input type="date" value={form.due_date || ''} onChange={e => setForm((f: any) => ({ ...f, due_date: e.target.value }))} className={inputCls} />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button type="button" className={cn(inputCls, 'flex items-center justify-between text-left', !form.due_date && 'text-muted-foreground')}>
+                            <span>{form.due_date ? format(parseISO(form.due_date), 'dd MMM yyyy') : 'Pick a date'}</span>
+                            <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 rounded-xl" align="start" sideOffset={4}>
+                          <Calendar mode="single" selected={form.due_date ? parseISO(form.due_date) : undefined} onSelect={(d) => setForm((f: any) => ({ ...f, due_date: d ? format(d, 'yyyy-MM-dd') : '' }))} initialFocus className="p-3 pointer-events-auto rounded-xl" />
+                        </PopoverContent>
+                      </Popover>
                     ) : (
-                      <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-muted-foreground" /><p className="text-sm text-foreground">{formatDate(form.due_date)}</p></div>
+                      <div className="flex items-center gap-2"><CalendarIcon className="w-4 h-4 text-muted-foreground" /><p className="text-sm text-foreground">{formatDate(form.due_date)}</p></div>
                     )}
                   </div>
                 </div>
