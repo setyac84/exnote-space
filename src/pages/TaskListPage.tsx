@@ -276,7 +276,7 @@ const TaskListPage = () => {
                 </div>
 
                 <div className="flex items-center justify-end pt-2 border-t border-border/50">
-                  <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} dropUp />
+                  <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} />
                 </div>
               </motion.div>
             );
