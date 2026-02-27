@@ -52,7 +52,7 @@ const ModalDropdown = <T extends string>({ value, onChange, options, placeholder
           <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-[70] py-1 max-h-[200px] overflow-y-auto">
             {options.map(opt => (
               <button key={opt.value} type="button" onClick={() => { onChange(opt.value); setOpen(false); }}
-                className={cn('w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 transition-colors', value === opt.value && 'font-medium bg-secondary/30')}>
+                className={cn('w-full text-left px-3 py-2 text-sm rounded-lg mx-auto transition-colors hover:bg-accent hover:text-accent-foreground', value === opt.value && 'font-medium bg-accent/60 text-accent-foreground')}>
                 {opt.label}
               </button>
             ))}
