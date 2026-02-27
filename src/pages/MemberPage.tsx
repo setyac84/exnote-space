@@ -134,7 +134,7 @@ const MemberPage = () => {
         {isSuperAdmin && (
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
-            <select value={form.role || 'member'} onChange={e => setForm((f: any) => ({ ...f, role: e.target.value }))} className={cn(inputCls, 'w-full')}>
+            <select value={form.role || 'member'} onChange={e => setForm((f: any) => ({ ...f, role: e.target.value }))} className={cn(inputCls, 'w-full appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E")] bg-[length:16px] bg-[right_8px_center] bg-no-repeat pr-8')}>
               {roleOptions.map(r => (
                 <option key={r} value={r}>{r === 'super_admin' ? 'Super Admin' : r === 'admin' ? 'Admin' : 'Member'}</option>
               ))}
@@ -143,7 +143,7 @@ const MemberPage = () => {
         )}
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
-          <select value={form.division || activeDivision} onChange={e => setForm((f: any) => ({ ...f, division: e.target.value }))} className={cn(inputCls, 'w-full')}>
+          <select value={form.division || activeDivision} onChange={e => setForm((f: any) => ({ ...f, division: e.target.value }))} className={cn(inputCls, 'w-full appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E")] bg-[length:16px] bg-[right_8px_center] bg-no-repeat pr-8')}>
             <option value="creative">Creative</option>
             <option value="developer">Developer</option>
           </select>
@@ -160,7 +160,7 @@ const MemberPage = () => {
   );
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Members</h1>
@@ -260,7 +260,7 @@ const MemberPage = () => {
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
-                <select value={addForm.role || 'member'} onChange={e => setAddForm((f: any) => ({ ...f, role: e.target.value }))} className={cn(inputCls, 'w-full')}>
+                <select value={addForm.role || 'member'} onChange={e => setAddForm((f: any) => ({ ...f, role: e.target.value }))} className={cn(inputCls, 'w-full appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E")] bg-[length:16px] bg-[right_8px_center] bg-no-repeat pr-8')}>
                   {roleOptions.map(r => (
                     <option key={r} value={r}>{r === 'super_admin' ? 'Super Admin' : r === 'admin' ? 'Admin' : 'Member'}</option>
                   ))}
@@ -268,7 +268,7 @@ const MemberPage = () => {
               </div>
               <div className="col-span-2">
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
-                <select value={addForm.division || 'creative'} onChange={e => setAddForm((f: any) => ({ ...f, division: e.target.value }))} className={cn(inputCls, 'w-full')}>
+                <select value={addForm.division || 'creative'} onChange={e => setAddForm((f: any) => ({ ...f, division: e.target.value }))} className={cn(inputCls, 'w-full appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E")] bg-[length:16px] bg-[right_8px_center] bg-no-repeat pr-8')}>
                   <option value="creative">Creative</option>
                   <option value="developer">Developer</option>
                 </select>
