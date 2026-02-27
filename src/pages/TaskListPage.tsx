@@ -76,7 +76,7 @@ const InlineStatusDropdown = ({ value, onChange }: { value: TaskStatus; onChange
 const TaskListPage = () => {
   const { user, activeDivision, isAdmin, isSuperAdmin } = useAuth();
   const [searchParams] = useSearchParams();
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('card');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [tasks, setTasks] = useState(mockTasks);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -239,11 +239,13 @@ const TaskListPage = () => {
                 className="glass-card rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
+                  <p className="text-[10px] text-muted-foreground">
+                    {projectName} · {companyName}
+                  </p>
+                  <div className="flex items-center gap-1.5">
                     <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
                     <span className={cn('text-[10px] font-medium capitalize', priorityLabel[task.priority])}>{task.priority}</span>
                   </div>
-                  <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} />
                 </div>
                 <h3 className="text-sm font-medium text-foreground mb-1">{task.title}</h3>
                 <p className="text-xs text-muted-foreground mb-3">{task.description}</p>
@@ -258,9 +260,9 @@ const TaskListPage = () => {
                   <span>{formatDate(task.due_date)}</span>
                 </div>
 
-                <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/50">
-                  {projectName} · {companyName}
-                </p>
+                <div className="flex items-center justify-end pt-2 border-t border-border/50">
+                  <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} />
+                </div>
               </motion.div>
             );
           })}
