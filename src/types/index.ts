@@ -19,6 +19,7 @@ export interface User {
   role: UserRole;
   division: Division;
   company_id: string;
+  position?: string;
 }
 
 export interface Project {
