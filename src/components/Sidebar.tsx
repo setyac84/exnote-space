@@ -97,7 +97,7 @@ const Sidebar = () => {
         </div>
       </nav>
 
-      <div className="p-3 border-t border-sidebar-border">
+      <div className="p-3 border-t border-sidebar-border space-y-2">
         <div className="flex items-center gap-3 px-2 py-2">
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">
             {user.name.split(' ').map(n => n[0]).join('')}
@@ -106,10 +106,14 @@ const Sidebar = () => {
             <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
             <p className="text-[11px] text-muted-foreground capitalize">{user.role === 'super_admin' ? 'Super Admin' : user.role} · {user.division}</p>
           </div>
-          <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground transition-colors">
-            <LogOut className="w-4 h-4" />
-          </button>
         </div>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </button>
       </div>
     </aside>
   );

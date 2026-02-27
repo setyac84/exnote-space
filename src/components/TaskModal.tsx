@@ -4,6 +4,7 @@ import { mockUsers, mockProjects } from '@/data/mock';
 import { X, Calendar, Flag, User, Link, AlertTriangle, Pencil, Trash2, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/formatDate';
 
 const priorityColors: Record<TaskPriority, string> = {
   low: 'text-muted-foreground bg-muted',
@@ -88,6 +89,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
         due_date: form.due_date || '',
         moodboard_link: form.moodboard_link,
         aspect_ratio: form.aspect_ratio,
+        brand_guidelines: form.brand_guidelines,
         result_link: form.result_link,
         content_asset_link: form.content_asset_link,
         repo_link: form.repo_link,
@@ -139,16 +141,6 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                       </span>
                     </div>
                   )}
-                  {isEditable ? (
-                    <input
-                      value={form.title || ''}
-                      onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                      className={cn(inputCls, 'text-lg font-semibold')}
-                      placeholder="Judul task..."
-                    />
-                  ) : (
-                    <h2 className="text-lg font-semibold text-foreground">{displayTask.title}</h2>
-                  )}
                 </div>
                 <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors p-1 ml-2">
                   <X className="w-5 h-5" />
@@ -156,22 +148,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
               </div>
 
               <div className="px-6 pb-6 space-y-5">
-                {/* Description */}
-                <div>
-                  <label className={labelCls}>Deskripsi</label>
-                  {isEditable ? (
-                    <textarea
-                      value={form.description || ''}
-                      onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                      className={cn(inputCls, 'min-h-[60px] resize-none')}
-                      placeholder="Deskripsi task..."
-                    />
-                  ) : (
-                    <p className="text-sm text-foreground">{displayTask.description}</p>
-                  )}
-                </div>
-
-                {/* Project Selection */}
+                {/* 1. Project Selection */}
                 <div>
                   <label className={labelCls}>Project</label>
                   {isEditable ? (
@@ -190,7 +167,63 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                   )}
                 </div>
 
-                {/* Status - Dropdown */}
+                {/* 2. Assignee, Priority, Request Date, Due Date */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Assignee</label>
+                    {isEditable ? (
+                      <select value={form.assignee_id || ''} onChange={e => setForm(f => ({ ...f, assignee_id: e.target.value }))} className={inputCls}>
+                        {divisionMembers.map(m => (
+                          <option key={m.id} value={m.id}>{m.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm text-foreground">{assignee?.name || 'Unassigned'}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className={labelCls}>Priority</label>
+                    {isEditable ? (
+                      <select value={form.priority || 'medium'} onChange={e => setForm(f => ({ ...f, priority: e.target.value as TaskPriority }))} className={inputCls}>
+                        {priorityOptions.map(p => (
+                          <option key={p.value} value={p.value}>{p.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Flag className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm text-foreground capitalize">{displayTask.priority}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className={labelCls}>Request Date</label>
+                    {isEditable ? (
+                      <input type="date" value={form.request_date || ''} onChange={e => setForm(f => ({ ...f, request_date: e.target.value }))} className={inputCls} />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm text-foreground">{formatDate(displayTask.request_date as string)}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className={labelCls}>Due Date</label>
+                    {isEditable ? (
+                      <input type="date" value={form.due_date || ''} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} className={inputCls} />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm text-foreground">{formatDate(displayTask.due_date as string)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status */}
                 <div>
                   <label className={labelCls}>Status</label>
                   {isEditable || !readOnly ? (
@@ -215,71 +248,35 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                   )}
                 </div>
 
-                {/* Details Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className={labelCls}>Assignee</label>
-                    {isEditable ? (
-                      <select
-                        value={form.assignee_id || ''}
-                        onChange={e => setForm(f => ({ ...f, assignee_id: e.target.value }))}
-                        className={inputCls}
-                      >
-                        {divisionMembers.map(m => (
-                          <option key={m.id} value={m.id}>{m.name}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <p className="text-sm text-foreground">{assignee?.name || 'Unassigned'}</p>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className={labelCls}>Priority</label>
-                    {isEditable ? (
-                      <select
-                        value={form.priority || 'medium'}
-                        onChange={e => setForm(f => ({ ...f, priority: e.target.value as TaskPriority }))}
-                        className={inputCls}
-                      >
-                        {priorityOptions.map(p => (
-                          <option key={p.value} value={p.value}>{p.label}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Flag className="w-4 h-4 text-muted-foreground" />
-                        <p className="text-sm text-foreground capitalize">{displayTask.priority}</p>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className={labelCls}>Request Date</label>
-                    {isEditable ? (
-                      <input type="date" value={form.request_date || ''} onChange={e => setForm(f => ({ ...f, request_date: e.target.value }))} className={inputCls} />
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <p className="text-sm text-foreground">{displayTask.request_date}</p>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className={labelCls}>Due Date</label>
-                    {isEditable ? (
-                      <input type="date" value={form.due_date || ''} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} className={inputCls} />
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <p className="text-sm text-foreground">{displayTask.due_date}</p>
-                      </div>
-                    )}
-                  </div>
+                {/* 3. Task Title & Description */}
+                <div>
+                  <label className={labelCls}>Judul Task</label>
+                  {isEditable ? (
+                    <input
+                      value={form.title || ''}
+                      onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                      className={cn(inputCls, 'font-semibold')}
+                      placeholder="Judul task..."
+                    />
+                  ) : (
+                    <h2 className="text-lg font-semibold text-foreground">{displayTask.title}</h2>
+                  )}
+                </div>
+                <div>
+                  <label className={labelCls}>Deskripsi</label>
+                  {isEditable ? (
+                    <textarea
+                      value={form.description || ''}
+                      onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                      className={cn(inputCls, 'min-h-[60px] resize-none')}
+                      placeholder="Deskripsi task..."
+                    />
+                  ) : (
+                    <p className="text-sm text-foreground">{displayTask.description}</p>
+                  )}
                 </div>
 
-                {/* Creative fields */}
+                {/* 4. Creative fields */}
                 {division === 'creative' && (
                   <div className="border-t border-border pt-4">
                     <p className="text-xs font-medium text-muted-foreground mb-3">Detail Creative</p>
@@ -287,41 +284,46 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                       {isEditable ? (
                         <>
                           <div>
-                            <label className={labelCls}>Moodboard Link</label>
-                            <input value={form.moodboard_link || ''} onChange={e => setForm(f => ({ ...f, moodboard_link: e.target.value }))} className={inputCls} placeholder="https://..." />
+                            <label className={labelCls}>Content Asset Link</label>
+                            <input value={form.content_asset_link || ''} onChange={e => setForm(f => ({ ...f, content_asset_link: e.target.value }))} className={inputCls} placeholder="https://drive.google.com/..." />
                           </div>
                           <div>
-                            <label className={labelCls}>Aspect Ratio</label>
-                            <input value={form.aspect_ratio || ''} onChange={e => setForm(f => ({ ...f, aspect_ratio: e.target.value }))} className={inputCls} placeholder="16:9" />
+                            <label className={labelCls}>Moodboard Link</label>
+                            <input value={form.moodboard_link || ''} onChange={e => setForm(f => ({ ...f, moodboard_link: e.target.value }))} className={inputCls} placeholder="https://pinterest.com/..." />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Visual Direction</label>
+                            <input value={form.brand_guidelines || ''} onChange={e => setForm(f => ({ ...f, brand_guidelines: e.target.value }))} className={inputCls} placeholder="Modern, minimalist, bold colors..." />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Deliverables</label>
+                            <input value={form.aspect_ratio || ''} onChange={e => setForm(f => ({ ...f, aspect_ratio: e.target.value }))} className={inputCls} placeholder="16:9, 1:1, A4 poster..." />
                           </div>
                           <div>
                             <label className={labelCls}>Result Link</label>
                             <input value={form.result_link || ''} onChange={e => setForm(f => ({ ...f, result_link: e.target.value }))} className={inputCls} placeholder="https://..." />
                           </div>
-                          <div>
-                            <label className={labelCls}>Content Asset Link</label>
-                            <input value={form.content_asset_link || ''} onChange={e => setForm(f => ({ ...f, content_asset_link: e.target.value }))} className={inputCls} placeholder="https://drive.google.com/..." />
-                          </div>
                         </>
                       ) : (
                         <>
+                          {displayTask.content_asset_link && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Link className="w-3.5 h-3.5 text-muted-foreground" />
+                              <a href={displayTask.content_asset_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">Content Asset</a>
+                            </div>
+                          )}
                           {displayTask.moodboard_link && (
                             <div className="flex items-center gap-2 text-sm">
                               <Link className="w-3.5 h-3.5 text-muted-foreground" />
                               <a href={displayTask.moodboard_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">Moodboard</a>
                             </div>
                           )}
-                          {displayTask.aspect_ratio && <p className="text-sm text-foreground">Aspect Ratio: {displayTask.aspect_ratio as string}</p>}
+                          {displayTask.brand_guidelines && <p className="text-sm text-foreground">Visual Direction: {displayTask.brand_guidelines as string}</p>}
+                          {displayTask.aspect_ratio && <p className="text-sm text-foreground">Deliverables: {displayTask.aspect_ratio as string}</p>}
                           {displayTask.result_link && (
                             <div className="flex items-center gap-2 text-sm">
                               <Link className="w-3.5 h-3.5 text-muted-foreground" />
                               <a href={displayTask.result_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">Result Link</a>
-                            </div>
-                          )}
-                          {displayTask.content_asset_link && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Link className="w-3.5 h-3.5 text-muted-foreground" />
-                              <a href={displayTask.content_asset_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">Content Asset</a>
                             </div>
                           )}
                         </>
