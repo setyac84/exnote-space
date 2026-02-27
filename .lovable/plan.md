@@ -1,43 +1,33 @@
 
 
-## Plan: Add Company Entity + Enhanced Project CRUD
+## Plan
 
-### 1. Add Company type and mock data
-**`src/types/index.ts`** — Add `Company` interface with `id`, `name`, `description`, `created_at`
+### 1. Change date format to "18 March" (day first)
+- Update `src/lib/formatDate.ts`: change format from `'MMMM d'` to `'d MMMM'`
 
-**`src/data/mock.ts`** — Add `mockCompanies` array, add `company_name` field reference. Add `start_date`, `end_date`, `priority` fields to `Project` interface.
+### 2. Improve dropdown styling in TaskModal
+- Replace native `<select>` elements in `TaskModal.tsx` with custom styled dropdowns matching the `InlineStatusDropdown` pattern used on the task list page (rounded, dark popover with border, hover states)
+- Apply to: Project, Assignee, Priority, Status selects
 
-### 2. Update Project interface
-**`src/types/index.ts`** — Extend `Project` with:
-- `start_date: string`
-- `end_date: string`  
-- `priority: TaskPriority`
+### 3. Show company name alongside project in TaskModal
+- In view mode, display "Project Name · Company Name" instead of just project name
+- Look up company from the selected project's `company_id`
 
-Update `mockProjects` in mock.ts with these new fields and company references.
+### 4. Sort tasks by due date (newest first)
+- In `TaskListPage.tsx`, add `.sort()` to `filteredTasks` by `due_date` descending
+- In `Dashboard.tsx`, sort `highPriorityTasks` the same way
 
-### 3. Create Project CRUD modal
-**`src/components/ProjectModal.tsx`** — New component with:
-- Form fields: Company (dropdown from mockCompanies), Project Name, Description, Start Date, End Date, Priority (dropdown), Status (dropdown)
-- Three modes: **view**, **edit**, **create**
-- Buttons: Save, Edit, Delete (with confirmation)
-- Opens from Projects page and Dashboard
+### 5. Wrap task title text (remove truncate)
+- `TaskListPage.tsx` list view: remove `truncate` from task title, allow text wrapping
+- `TaskListPage.tsx` card view: allow title to wrap
 
-### 4. Update Projects page with Create button
-**`src/pages/Projects.tsx`** — Add "Tambah Project" button (admin only), integrate ProjectModal for create/view/edit. Manage local state for adding/editing/deleting projects.
+### 6. Wrap project · company text
+- `TaskListPage.tsx` list view: remove `truncate` from project/company column, allow wrapping
+- Dashboard high priority section: add project · company column with wrapping
 
-### 5. Update ProjectCard to show new fields
-**`src/components/ProjectCard.tsx`** — Display company name, priority badge, start/end dates.
-
-### 6. Update Dashboard
-**`src/pages/Dashboard.tsx`** — When clicking on a project-related stat, open relevant view. Show company info where relevant.
-
-### Files to create
-- `src/components/ProjectModal.tsx`
-
-### Files to modify
-- `src/types/index.ts`
-- `src/data/mock.ts`
-- `src/pages/Projects.tsx`
-- `src/components/ProjectCard.tsx`
+### Files to modify:
+- `src/lib/formatDate.ts`
+- `src/components/TaskModal.tsx`
+- `src/pages/TaskListPage.tsx`
 - `src/pages/Dashboard.tsx`
 
