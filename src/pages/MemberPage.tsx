@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMembers, useUpdateProfile, useUpdateUserRole } from '@/hooks/useSupabaseData';
+import { useMembers, useUpdateProfile, useUpdateUserRole, useCreateMember, useDeleteMember, useCompanies } from '@/hooks/useSupabaseData';
 import { motion } from 'framer-motion';
-import { Pencil, Trash2, Save } from 'lucide-react';
+import { Pencil, Trash2, Save, Plus, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 type UserRole = 'super_admin' | 'admin' | 'member';
 const roleOptions: UserRole[] = ['super_admin', 'admin', 'member'];
@@ -11,35 +13,74 @@ const roleOptions: UserRole[] = ['super_admin', 'admin', 'member'];
 const MemberPage = () => {
   const { user, activeDivision, isAdmin, isSuperAdmin } = useAuth();
   const { data: allMembers = [] } = useMembers();
+  const { data: companies = [] } = useCompanies();
   const updateProfile = useUpdateProfile();
   const updateRole = useUpdateUserRole();
+  const createMember = useCreateMember();
+  const deleteMember = useDeleteMember();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<any>({});
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [addForm, setAddForm] = useState<any>({ division: 'creative', role: 'member' });
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   if (!user) return null;
 
-  const visibleMembers = isAdmin
-    ? allMembers.filter(u => u.division === activeDivision && u.role !== 'super_admin')
-    : allMembers.filter(u => u.division === user.division);
+  const visibleMembers = isSuperAdmin
+    ? allMembers
+    : isAdmin
+      ? allMembers.filter(u => u.division === activeDivision && u.role !== 'super_admin')
+      : allMembers.filter(u => u.division === user.division);
 
   const inputCls = 'bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
 
   const handleSave = async () => {
     if (!form.name?.trim()) return;
     if (editingId) {
-      await updateProfile.mutateAsync({
-        id: editingId,
-        name: form.name,
-        position: form.position,
-        division: form.division,
-        company_id: form.company_id,
-      });
-      if (form.role) {
-        await updateRole.mutateAsync({ userId: editingId, role: form.role });
+      try {
+        await updateProfile.mutateAsync({
+          id: editingId,
+          name: form.name,
+          position: form.position,
+          division: form.division,
+          company_id: form.company_id,
+        });
+        if (form.role && isSuperAdmin) {
+          await updateRole.mutateAsync({ userId: editingId, role: form.role });
+        }
+        toast.success('Member berhasil diupdate');
+        setEditingId(null);
+        setForm({});
+      } catch (err: any) {
+        toast.error(err.message || 'Gagal update member');
       }
-      setEditingId(null);
-      setForm({});
+    }
+  };
+
+  const handleAdd = async () => {
+    if (!addForm.email?.trim() || !addForm.password?.trim() || !addForm.name?.trim()) {
+      toast.error('Email, password, dan nama wajib diisi');
+      return;
+    }
+    try {
+      await createMember.mutateAsync(addForm);
+      toast.success('Member baru berhasil ditambahkan');
+      setShowAddDialog(false);
+      setAddForm({ division: 'creative', role: 'member' });
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menambahkan member');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirmId) return;
+    try {
+      await deleteMember.mutateAsync(deleteConfirmId);
+      toast.success('Member berhasil dihapus');
+      setDeleteConfirmId(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menghapus member');
     }
   };
 
@@ -52,6 +93,8 @@ const MemberPage = () => {
     setEditingId(null);
     setForm({});
   };
+
+  const memberToDelete = allMembers.find(m => m.id === deleteConfirmId);
 
   const renderForm = (isInline = false) => (
     <div className={cn('space-y-3', isInline ? 'border border-border rounded-lg p-4' : 'glass-card rounded-xl p-5 mb-4')}>
@@ -68,19 +111,28 @@ const MemberPage = () => {
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Position</label>
           <input value={form.position || ''} onChange={e => setForm((f: any) => ({ ...f, position: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="e.g. UI/UX Designer" />
         </div>
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
-          <select value={form.role || 'member'} onChange={e => setForm((f: any) => ({ ...f, role: e.target.value }))} className={cn(inputCls, 'w-full')}>
-            {roleOptions.filter(r => isSuperAdmin ? true : r !== 'super_admin').map(r => (
-              <option key={r} value={r}>{r === 'super_admin' ? 'Super Admin' : r}</option>
-            ))}
-          </select>
-        </div>
+        {isSuperAdmin && (
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
+            <select value={form.role || 'member'} onChange={e => setForm((f: any) => ({ ...f, role: e.target.value }))} className={cn(inputCls, 'w-full')}>
+              {roleOptions.map(r => (
+                <option key={r} value={r}>{r === 'super_admin' ? 'Super Admin' : r === 'admin' ? 'Admin' : 'Member'}</option>
+              ))}
+            </select>
+          </div>
+        )}
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
           <select value={form.division || activeDivision} onChange={e => setForm((f: any) => ({ ...f, division: e.target.value }))} className={cn(inputCls, 'w-full')}>
             <option value="creative">Creative</option>
             <option value="developer">Developer</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Company</label>
+          <select value={form.company_id || ''} onChange={e => setForm((f: any) => ({ ...f, company_id: e.target.value || null }))} className={cn(inputCls, 'w-full')}>
+            <option value="">No company</option>
+            {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
       </div>
@@ -103,6 +155,12 @@ const MemberPage = () => {
             {isSuperAdmin ? 'All members' : `${activeDivision} division members`}
           </p>
         </div>
+        {isSuperAdmin && (
+          <button onClick={() => setShowAddDialog(true)}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+            <UserPlus className="w-4 h-4" /> Add Member
+          </button>
+        )}
       </motion.div>
 
       <div className="space-y-3">
@@ -115,7 +173,7 @@ const MemberPage = () => {
               className="glass-card rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary">
-                  {member.name.split(' ').map((n: string) => n[0]).join('')}
+                  {member.name?.split(' ').map((n: string) => n[0]).join('') || '?'}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">{member.name}</p>
@@ -131,10 +189,16 @@ const MemberPage = () => {
                   {member.role === 'super_admin' ? 'Super Admin' : member.role}
                 </span>
                 <span className="text-xs text-muted-foreground capitalize">{member.division}</span>
-                {isAdmin && (
+                {(isSuperAdmin || (isAdmin && member.role !== 'super_admin')) && (
                   <button onClick={() => startEdit(member)}
                     className="p-1.5 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground ml-2">
                     <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {isSuperAdmin && member.id !== user.id && (
+                  <button onClick={() => setDeleteConfirmId(member.id)}
+                    className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
@@ -143,6 +207,84 @@ const MemberPage = () => {
         })}
         {visibleMembers.length === 0 && <div className="text-center py-20 text-muted-foreground text-sm">No members found.</div>}
       </div>
+
+      {/* Add Member Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Member</DialogTitle>
+            <DialogDescription>Buat akun member baru. Member akan bisa login dengan email dan password yang ditentukan.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Name *</label>
+              <input value={addForm.name || ''} onChange={e => setAddForm((f: any) => ({ ...f, name: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="Full name" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Email *</label>
+              <input type="email" value={addForm.email || ''} onChange={e => setAddForm((f: any) => ({ ...f, email: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="email@example.com" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Password *</label>
+              <input type="password" value={addForm.password || ''} onChange={e => setAddForm((f: any) => ({ ...f, password: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="Min 6 characters" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Position</label>
+                <input value={addForm.position || ''} onChange={e => setAddForm((f: any) => ({ ...f, position: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="e.g. Designer" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
+                <select value={addForm.role || 'member'} onChange={e => setAddForm((f: any) => ({ ...f, role: e.target.value }))} className={cn(inputCls, 'w-full')}>
+                  {roleOptions.map(r => (
+                    <option key={r} value={r}>{r === 'super_admin' ? 'Super Admin' : r === 'admin' ? 'Admin' : 'Member'}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
+                <select value={addForm.division || 'creative'} onChange={e => setAddForm((f: any) => ({ ...f, division: e.target.value }))} className={cn(inputCls, 'w-full')}>
+                  <option value="creative">Creative</option>
+                  <option value="developer">Developer</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Company</label>
+                <select value={addForm.company_id || ''} onChange={e => setAddForm((f: any) => ({ ...f, company_id: e.target.value || null }))} className={cn(inputCls, 'w-full')}>
+                  <option value="">No company</option>
+                  {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
+            <button onClick={handleAdd} disabled={createMember.isPending}
+              className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 mt-2">
+              <UserPlus className="w-4 h-4" /> {createMember.isPending ? 'Creating...' : 'Create Member'}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete Member</DialogTitle>
+            <DialogDescription>
+              Apakah kamu yakin ingin menghapus <strong>{memberToDelete?.name}</strong>? Akun dan semua data terkait akan dihapus permanen.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end mt-2">
+            <button onClick={() => setDeleteConfirmId(null)}
+              className="px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
+              Batal
+            </button>
+            <button onClick={handleDelete} disabled={deleteMember.isPending}
+              className="px-4 py-2 text-sm rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50">
+              {deleteMember.isPending ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

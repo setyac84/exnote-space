@@ -193,3 +193,32 @@ export function useUpdateUserRole() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['members'] }),
   });
 }
+
+export function useCreateMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      email: string; password: string; name: string;
+      position?: string; division?: string; company_id?: string; role?: string;
+    }) => {
+      const { data, error } = await supabase.functions.invoke('create-member', { body: input });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['members'] }),
+  });
+}
+
+export function useDeleteMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { data, error } = await supabase.functions.invoke('delete-member', { body: { user_id: userId } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['members'] }),
+  });
+}
