@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Briefcase, ArrowRight, Loader2 } from 'lucide-react';
+import { Briefcase, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const { login, signup, user, loading: authLoading } = useAuth();
@@ -14,6 +14,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already logged in
   if (user && !authLoading) {
@@ -80,9 +81,15 @@ const Login = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg bg-input border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                placeholder="••••••••" />
+              <div className="relative">
+                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                  className="w-full h-10 px-3 pr-10 rounded-lg bg-input border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  placeholder="••••••••" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {error && <p className="text-destructive text-sm">{error}</p>}
