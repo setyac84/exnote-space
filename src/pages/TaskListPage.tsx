@@ -6,7 +6,7 @@ import TaskModal from '@/components/TaskModal';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useSearchParams } from 'react-router-dom';
-import { List, LayoutGrid, Plus } from 'lucide-react';
+import { List, LayoutGrid, Plus, ChevronDown } from 'lucide-react';
 
 const priorityDot: Record<string, string> = {
   low: 'bg-muted-foreground',
@@ -29,8 +29,51 @@ const statusLabel: Record<TaskStatus, string> = {
   done: 'Done',
 };
 
+const statusDot: Record<TaskStatus, string> = {
+  todo: 'border-muted-foreground',
+  doing: 'border-info',
+  review: 'border-warning',
+  done: 'border-success bg-success',
+};
+
+const InlineStatusDropdown = ({ value, onChange }: { value: TaskStatus; onChange: (s: TaskStatus) => void }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative" onClick={e => e.stopPropagation()}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <span className={cn('w-3 h-3 rounded-full border-2 shrink-0', statusDot[value])} />
+        {statusLabel[value]}
+        <ChevronDown className="w-3 h-3" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-50 py-1 min-w-[120px]">
+            {(Object.keys(statusLabel) as TaskStatus[]).map(s => (
+              <button
+                key={s}
+                onClick={() => { onChange(s); setOpen(false); }}
+                className={cn(
+                  'w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary/50 transition-colors',
+                  value === s && 'font-medium'
+                )}
+              >
+                <span className={cn('w-3 h-3 rounded-full border-2 shrink-0', statusDot[s])} />
+                {statusLabel[s]}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 const TaskListPage = () => {
-  const { user, activeDivision } = useAuth();
+  const { user, activeDivision, isAdmin, isSuperAdmin } = useAuth();
   const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -42,14 +85,15 @@ const TaskListPage = () => {
   const priorityFilter = searchParams.get('priority');
   const projectFilter = searchParams.get('project');
 
-  const isAdmin = user?.role === 'admin';
-
   const filteredTasks = useMemo(() => {
     if (!user) return [];
-    let filtered = tasks.filter(t => {
-      const project = mockProjects.find(p => p.id === t.project_id);
-      return project?.division === activeDivision;
-    });
+    let filtered = tasks;
+    if (!isSuperAdmin) {
+      filtered = filtered.filter(t => {
+        const project = mockProjects.find(p => p.id === t.project_id);
+        return project?.division === activeDivision;
+      });
+    }
     if (!isAdmin) filtered = filtered.filter(t => t.assignee_id === user.id);
     if (statusFilter) filtered = filtered.filter(t => t.status === statusFilter);
     if (memberFilter) filtered = filtered.filter(t => t.assignee_id === memberFilter);
@@ -59,7 +103,7 @@ const TaskListPage = () => {
     }
     if (projectFilter) filtered = filtered.filter(t => t.project_id === projectFilter);
     return filtered;
-  }, [tasks, activeDivision, isAdmin, user, statusFilter, memberFilter, priorityFilter, projectFilter]);
+  }, [tasks, activeDivision, isAdmin, isSuperAdmin, user, statusFilter, memberFilter, priorityFilter, projectFilter]);
 
   if (!user) return null;
 
@@ -70,6 +114,10 @@ const TaskListPage = () => {
       return [...prev, updated];
     });
     setSelectedTask(null);
+  };
+
+  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
   };
 
   const handleDelete = (id: string) => {
@@ -84,7 +132,6 @@ const TaskListPage = () => {
     return { projectName: project.name, companyName: company?.name || '-' };
   };
 
-  // Build title
   let title = 'Semua Task';
   if (statusFilter) title = `Task: ${statusLabel[statusFilter]}`;
   if (memberFilter) {
@@ -132,15 +179,15 @@ const TaskListPage = () => {
 
       {viewMode === 'list' ? (
         <div className="glass-card rounded-xl overflow-hidden">
-          {/* Header */}
-          <div className="grid grid-cols-[1fr_150px_120px_100px_90px_90px_100px] gap-2 px-4 py-2.5 border-b border-border text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+          {/* Header: task > description > priority > due date > assignee > project-company > status */}
+          <div className="grid grid-cols-[1fr_1.5fr_90px_90px_110px_140px_110px] gap-2 px-4 py-2.5 border-b border-border text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
             <span>Task</span>
-            <span>Project - Company</span>
-            <span>Assignee</span>
-            <span>Priority</span>
-            <span>Status</span>
-            <span>Due Date</span>
             <span>Description</span>
+            <span>Priority</span>
+            <span>Due Date</span>
+            <span>Assignee</span>
+            <span>Project · Company</span>
+            <span>Status</span>
           </div>
           {filteredTasks.map((task, i) => {
             const assignee = mockUsers.find(u => u.id === task.assignee_id);
@@ -152,18 +199,21 @@ const TaskListPage = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: i * 0.03 }}
                 onClick={() => setSelectedTask(task)}
-                className="grid grid-cols-[1fr_150px_120px_100px_90px_90px_100px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors items-center"
+                className="grid grid-cols-[1fr_1.5fr_90px_90px_110px_140px_110px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors items-center"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
-                  <span className="text-sm text-foreground truncate">{task.title}</span>
+                  <span className="text-sm text-foreground truncate font-medium">{task.title}</span>
                 </div>
-                <span className="text-[10px] text-muted-foreground truncate">{projectName} · {companyName}</span>
-                <span className="text-xs text-muted-foreground truncate">{assignee?.name.split(' ')[0]}</span>
+                <span className="text-xs text-muted-foreground line-clamp-2">{task.description}</span>
                 <span className={cn('text-xs capitalize', priorityLabel[task.priority])}>{task.priority}</span>
-                <span className="text-xs text-muted-foreground">{statusLabel[task.status]}</span>
                 <span className="text-xs text-muted-foreground">{task.due_date?.slice(5)}</span>
-                <span className="text-[10px] text-muted-foreground truncate">{task.description}</span>
+                <span className="text-xs text-muted-foreground truncate">{assignee?.name.split(' ')[0]}</span>
+                <span className="text-[10px] text-muted-foreground truncate">{projectName} · {companyName}</span>
+                <InlineStatusDropdown
+                  value={task.status}
+                  onChange={(s) => handleStatusChange(task.id, s)}
+                />
               </motion.div>
             );
           })}
@@ -185,13 +235,15 @@ const TaskListPage = () => {
                 onClick={() => setSelectedTask(task)}
                 className="glass-card rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
-                  <span className={cn('text-[10px] font-medium capitalize', priorityLabel[task.priority])}>{task.priority}</span>
-                  <span className="text-[10px] text-muted-foreground ml-auto">{statusLabel[task.status]}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
+                    <span className={cn('text-[10px] font-medium capitalize', priorityLabel[task.priority])}>{task.priority}</span>
+                  </div>
+                  <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} />
                 </div>
                 <h3 className="text-sm font-medium text-foreground mb-1">{task.title}</h3>
-                <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{task.description}</p>
+                <p className="text-xs text-muted-foreground mb-3">{task.description}</p>
 
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-2">
                   <div className="flex items-center gap-1.5">
@@ -215,7 +267,6 @@ const TaskListPage = () => {
         </div>
       )}
 
-      {/* View/Edit Task Modal */}
       <TaskModal
         task={selectedTask}
         division={activeDivision}
@@ -226,7 +277,6 @@ const TaskListPage = () => {
         readOnly={!isAdmin}
       />
 
-      {/* Create Task Modal */}
       <TaskModal
         task={null}
         division={activeDivision}

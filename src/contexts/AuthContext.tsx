@@ -8,6 +8,8 @@ interface AuthContextType {
   logout: () => void;
   activeDivision: Division;
   setActiveDivision: (d: Division) => void;
+  isSuperAdmin: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -28,8 +30,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => setUser(null);
 
+  const isSuperAdmin = user?.role === 'super_admin';
+  const isAdmin = user?.role === 'admin' || isSuperAdmin;
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, activeDivision, setActiveDivision }}>
+    <AuthContext.Provider value={{ user, login, logout, activeDivision, setActiveDivision, isSuperAdmin, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
