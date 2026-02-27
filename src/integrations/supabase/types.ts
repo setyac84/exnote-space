@@ -244,6 +244,14 @@ export type Database = {
       }
       is_admin_or_above: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      project_in_user_scope: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_has_task_in_project: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_division: "creative" | "developer"
