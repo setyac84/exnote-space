@@ -5,6 +5,7 @@ import { mockProjects, mockTasks, mockUsers, mockCompanies } from '@/data/mock';
 import { Task, User as UserType, UserRole } from '@/types';
 import { motion } from 'framer-motion';
 import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users, Plus, Pencil, Trash2, Save, X, ChevronDown } from 'lucide-react';
+import TaskCalendar from '@/components/TaskCalendar';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import TaskModal from '@/components/TaskModal';
@@ -312,6 +313,9 @@ const Dashboard = () => {
           </div>
         </motion.div>
       )}
+
+      {/* Task Calendar */}
+      <TaskCalendar tasks={myTasks} onTaskClick={setSelectedTask} />
 
       {/* High Priority Tasks - Same view as Tasks page */}
       {highPriorityTasks.length > 0 && (
