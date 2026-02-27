@@ -265,17 +265,17 @@ const TaskListPage = () => {
                 <h3 className="text-sm font-medium text-foreground mb-1">{task.title}</h3>
                 <p className="text-xs text-muted-foreground mb-3">{task.description}</p>
 
-                <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-2">
+                <div className="flex items-center text-[10px] text-muted-foreground mb-2">
                   <div className="flex items-center gap-1.5">
                     <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-bold text-primary">
                       {assignee?.name.split(' ').map(n => n[0]).join('')}
                     </div>
                     <span>{assignee?.name.split(' ')[0]}</span>
                   </div>
-                  <span>{formatDate(task.due_date)}</span>
                 </div>
 
-                <div className="flex items-center justify-end pt-2 border-t border-border/50">
+                <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                  <span className="text-[10px] text-muted-foreground">{formatDate(task.due_date)}</span>
                   <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} />
                 </div>
               </motion.div>
