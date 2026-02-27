@@ -338,12 +338,12 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                       {isEditable ? (
                         <>
                           <div>
-                            <label className={labelCls}>Content Asset Link</label>
-                            <input value={form.content_asset_link || ''} onChange={e => setForm(f => ({ ...f, content_asset_link: e.target.value }))} className={inputCls} placeholder="https://drive.google.com/..." />
+                            <label className={labelCls}>Content Asset</label>
+                            <input value={form.content_asset_link || ''} onChange={e => setForm(f => ({ ...f, content_asset_link: e.target.value }))} className={inputCls} placeholder="Link atau deskripsi asset..." />
                           </div>
                           <div>
-                            <label className={labelCls}>Moodboard Link</label>
-                            <input value={form.moodboard_link || ''} onChange={e => setForm(f => ({ ...f, moodboard_link: e.target.value }))} className={inputCls} placeholder="https://pinterest.com/..." />
+                            <label className={labelCls}>Moodboard</label>
+                            <input value={form.moodboard_link || ''} onChange={e => setForm(f => ({ ...f, moodboard_link: e.target.value }))} className={inputCls} placeholder="Link atau deskripsi moodboard..." />
                           </div>
                           <div>
                             <label className={labelCls}>Visual Direction</label>
@@ -361,16 +361,10 @@ const TaskModal = ({ task, division, isOpen, onClose, onUpdate, onDelete, readOn
                       ) : (
                         <>
                           {displayTask.content_asset_link && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Link className="w-3.5 h-3.5 text-muted-foreground" />
-                              <a href={displayTask.content_asset_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">Content Asset</a>
-                            </div>
+                            <p className="text-sm text-foreground">Content Asset: {displayTask.content_asset_link as string}</p>
                           )}
                           {displayTask.moodboard_link && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Link className="w-3.5 h-3.5 text-muted-foreground" />
-                              <a href={displayTask.moodboard_link as string} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">Moodboard</a>
-                            </div>
+                            <p className="text-sm text-foreground">Moodboard: {displayTask.moodboard_link as string}</p>
                           )}
                           {displayTask.brand_guidelines && <p className="text-sm text-foreground">Visual Direction: {displayTask.brand_guidelines as string}</p>}
                           {displayTask.aspect_ratio && <p className="text-sm text-foreground">Deliverables: {displayTask.aspect_ratio as string}</p>}
