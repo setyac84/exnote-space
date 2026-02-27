@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { formatDate } from '@/lib/formatDate';
 import { mockProjects, mockTasks, mockUsers, mockCompanies } from '@/data/mock';
 import { Task, User as UserType, UserRole } from '@/types';
 import { motion } from 'framer-motion';
@@ -335,7 +336,7 @@ const Dashboard = () => {
                 </div>
                 <span className="text-xs text-muted-foreground line-clamp-1">{task.description}</span>
                 <span className={cn('text-xs capitalize', priorityLabel[task.priority])}>{task.priority}</span>
-                <span className="text-xs text-muted-foreground">{task.due_date?.slice(5)}</span>
+                <span className="text-xs text-muted-foreground">{formatDate(task.due_date)}</span>
                 <span className="text-xs text-muted-foreground truncate">{assignee?.name.split(' ')[0]}</span>
                 <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} />
               </div>

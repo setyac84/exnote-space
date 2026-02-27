@@ -5,6 +5,7 @@ import { Task, TaskStatus, TaskPriority } from '@/types';
 import TaskModal from '@/components/TaskModal';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/formatDate';
 import { useSearchParams } from 'react-router-dom';
 import { List, LayoutGrid, Plus, ChevronDown } from 'lucide-react';
 
@@ -204,7 +205,7 @@ const TaskListPage = () => {
                 </div>
                 <span className="text-xs text-muted-foreground line-clamp-2">{task.description}</span>
                 <span className={cn('text-xs capitalize', priorityLabel[task.priority])}>{task.priority}</span>
-                <span className="text-xs text-muted-foreground">{task.due_date?.slice(5)}</span>
+                <span className="text-xs text-muted-foreground">{formatDate(task.due_date)}</span>
                 <span className="text-xs text-muted-foreground truncate">{assignee?.name.split(' ')[0]}</span>
                 <span className="text-[10px] text-muted-foreground truncate">{projectName} · {companyName}</span>
                 <InlineStatusDropdown
@@ -249,7 +250,7 @@ const TaskListPage = () => {
                     </div>
                     <span>{assignee?.name.split(' ')[0]}</span>
                   </div>
-                  <span>{task.due_date}</span>
+                  <span>{formatDate(task.due_date)}</span>
                 </div>
 
                 <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/50 truncate">
