@@ -323,21 +323,22 @@ const Dashboard = () => {
             <button onClick={() => navigate('/tasks?priority=high,urgent')} className="text-xs text-primary hover:underline">Lihat Semua</button>
           </div>
           {/* Table header matching tasks page */}
-          <div className="grid grid-cols-[1fr_1.2fr_80px_80px_100px_120px_110px] gap-2 px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wide border-b border-border">
+          <div className="grid grid-cols-[140px_1fr_1.5fr_90px_90px_110px_110px] gap-2 px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide border-b border-border">
+            <span>Project · Company</span>
             <span>Task</span>
             <span>Description</span>
             <span>Priority</span>
             <span>Due Date</span>
-            <span>Assignee</span>
-            <span>Project · Company</span>
             <span>Status</span>
+            <span>Assignee</span>
           </div>
           {highPriorityTasks.map(task => {
             const assignee = mockUsers.find(u => u.id === task.assignee_id);
             const { projectName, companyName } = getProjectCompany(task.project_id);
             return (
               <div key={task.id} onClick={() => setSelectedTask(task)}
-                className="grid grid-cols-[1fr_1.2fr_80px_80px_100px_120px_110px] gap-2 px-3 py-2.5 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors items-center">
+                className="grid grid-cols-[140px_1fr_1.5fr_90px_90px_110px_110px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors items-center">
+                <span className="text-[10px] text-muted-foreground">{projectName} · {companyName}</span>
                 <div className="flex items-center gap-2 min-w-0">
                   <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
                   <span className="text-sm text-foreground font-medium">{task.title}</span>
@@ -345,9 +346,8 @@ const Dashboard = () => {
                 <span className="text-xs text-muted-foreground line-clamp-2">{task.description}</span>
                 <span className={cn('text-xs capitalize', priorityLabel[task.priority])}>{task.priority}</span>
                 <span className="text-xs text-muted-foreground">{formatDate(task.due_date)}</span>
-                <span className="text-xs text-muted-foreground truncate">{assignee?.name.split(' ')[0]}</span>
-                <span className="text-[10px] text-muted-foreground">{projectName} · {companyName}</span>
                 <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} />
+                <span className="text-xs text-muted-foreground">{assignee?.name.split(' ')[0]}</span>
               </div>
             );
           })}
