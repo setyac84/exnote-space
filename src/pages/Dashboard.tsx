@@ -1,45 +1,23 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProjects, useTasks, useMembers, useCompanies, useCreateProject, useCreateTask, useUpdateTask, useDeleteTask, useUpdateProfile, useUpdateUserRole } from '@/hooks/useSupabaseData';
 import { formatDate } from '@/lib/formatDate';
-import { mockProjects, mockTasks, mockUsers, mockCompanies } from '@/data/mock';
-import { Task, User as UserType, UserRole } from '@/types';
 import { motion } from 'framer-motion';
-import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users, Plus, Pencil, Trash2, Save, X, ChevronDown } from 'lucide-react';
+import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users, Plus, Pencil, Trash2, Save, ChevronDown } from 'lucide-react';
 import TaskCalendar from '@/components/TaskCalendar';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import TaskModal from '@/components/TaskModal';
 import ProjectModal from '@/components/ProjectModal';
-import { Project, TaskStatus } from '@/types';
 import { cn } from '@/lib/utils';
 
-const statusLabel: Record<TaskStatus, string> = {
-  todo: 'To Do',
-  doing: 'Doing',
-  review: 'Review',
-  done: 'Done',
-};
+type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
+type UserRole = 'super_admin' | 'admin' | 'member';
 
-const statusDot: Record<TaskStatus, string> = {
-  todo: 'border-muted-foreground',
-  doing: 'border-info',
-  review: 'border-warning',
-  done: 'border-success bg-success',
-};
-
-const priorityDot: Record<string, string> = {
-  low: 'bg-muted-foreground',
-  medium: 'bg-info',
-  high: 'bg-warning',
-  urgent: 'bg-destructive',
-};
-
-const priorityLabel: Record<string, string> = {
-  low: 'text-muted-foreground',
-  medium: 'text-info',
-  high: 'text-warning',
-  urgent: 'text-destructive',
-};
+const statusLabel: Record<TaskStatus, string> = { todo: 'To Do', doing: 'Doing', review: 'Review', done: 'Done' };
+const statusDot: Record<TaskStatus, string> = { todo: 'border-muted-foreground', doing: 'border-info', review: 'border-warning', done: 'border-success bg-success' };
+const priorityDot: Record<string, string> = { low: 'bg-muted-foreground', medium: 'bg-info', high: 'bg-warning', urgent: 'bg-destructive' };
+const priorityLabel: Record<string, string> = { low: 'text-muted-foreground', medium: 'text-info', high: 'text-warning', urgent: 'text-destructive' };
 
 const InlineStatusDropdown = ({ value, onChange }: { value: TaskStatus; onChange: (s: TaskStatus) => void }) => {
   const [open, setOpen] = useState(false);
@@ -68,27 +46,25 @@ const InlineStatusDropdown = ({ value, onChange }: { value: TaskStatus; onChange
   );
 };
 
-const roleOptions: UserRole[] = ['super_admin', 'admin', 'member'];
-
 const Dashboard = () => {
   const { user, activeDivision, isAdmin, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [tasks, setTasks] = useState(mockTasks);
+  const { data: allProjects = [] } = useProjects();
+  const { data: allTasks = [] } = useTasks();
+  const { data: allMembers = [] } = useMembers();
+  const { data: companies = [] } = useCompanies();
+  const updateTaskMutation = useUpdateTask();
+  const deleteTaskMutation = useDeleteTask();
+
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
-  const [projects, setProjects] = useState(mockProjects);
-  const [members, setMembers] = useState(mockUsers);
-  const [editingMember, setEditingMember] = useState<string | null>(null);
-  const [memberForm, setMemberForm] = useState<Partial<UserType>>({});
-  const [showAddMember, setShowAddMember] = useState(false);
-  const [showDeleteMember, setShowDeleteMember] = useState<string | null>(null);
 
   if (!user) return null;
 
-  const divisionProjects = mockProjects.filter(p => p.division === activeDivision);
-  const divisionTasks = tasks.filter(t => {
-    const project = mockProjects.find(p => p.id === t.project_id);
+  const divisionProjects = allProjects.filter(p => p.division === activeDivision);
+  const divisionTasks = allTasks.filter(t => {
+    const project = allProjects.find(p => p.id === t.project_id);
     return project?.division === activeDivision;
   });
 
@@ -97,7 +73,7 @@ const Dashboard = () => {
   const doingCount = myTasks.filter(t => t.status === 'doing').length;
   const doneCount = myTasks.filter(t => t.status === 'done').length;
 
-  const divisionMembers = members.filter(u => u.division === activeDivision && u.role !== 'super_admin');
+  const divisionMembers = allMembers.filter(u => u.division === activeDivision && u.role !== 'super_admin');
 
   const stats = [
     { label: 'Total Projects', value: divisionProjects.length, icon: FolderKanban, color: 'text-primary', onClick: () => navigate('/projects') },
@@ -106,55 +82,15 @@ const Dashboard = () => {
     { label: 'Done', value: doneCount, icon: CheckCircle2, color: 'text-success', onClick: () => navigate('/tasks?status=done') },
   ];
 
-  const handleUpdateTask = (updated: Task) => {
-    setTasks(prev => {
-      const exists = prev.find(t => t.id === updated.id);
-      if (exists) return prev.map(t => t.id === updated.id ? updated : t);
-      return [...prev, updated];
-    });
-    setSelectedTask(null);
-  };
-
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
-  };
-
-  const handleDeleteTask = (id: string) => {
-    setTasks(prev => prev.filter(t => t.id !== id));
-    setSelectedTask(null);
+    updateTaskMutation.mutate({ id: taskId, status: newStatus });
   };
 
   const getProjectCompany = (projectId: string) => {
-    const project = mockProjects.find(p => p.id === projectId);
+    const project = allProjects.find(p => p.id === projectId);
     if (!project) return { projectName: '-', companyName: '-' };
-    const company = mockCompanies.find(c => c.id === project.company_id);
+    const company = companies.find(c => c.id === project.company_id);
     return { projectName: project.name, companyName: company?.name || '-' };
-  };
-
-  // Member CRUD
-  const handleSaveMember = () => {
-    if (!memberForm.name?.trim() || !memberForm.email?.trim()) return;
-    if (editingMember) {
-      setMembers(prev => prev.map(m => m.id === editingMember ? { ...m, ...memberForm } as UserType : m));
-    } else {
-      const newMember: UserType = {
-        id: `u${Date.now()}`,
-        name: memberForm.name || '',
-        email: memberForm.email || '',
-        role: (memberForm.role as UserRole) || 'member',
-        division: (memberForm.division as any) || activeDivision,
-        company_id: 'c1',
-      };
-      setMembers(prev => [...prev, newMember]);
-    }
-    setEditingMember(null);
-    setMemberForm({});
-    setShowAddMember(false);
-  };
-
-  const handleDeleteMember = (id: string) => {
-    setMembers(prev => prev.filter(m => m.id !== id));
-    setShowDeleteMember(null);
   };
 
   const highPriorityTasks = myTasks
@@ -170,9 +106,7 @@ const Dashboard = () => {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 lg:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            Hello, {user.name.split(' ')[0]} 👋
-          </h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Hello, {user.name.split(' ')[0]} 👋</h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {isSuperAdmin ? 'All divisions & projects' : isAdmin ? `Overview of ${activeDivision} division` : 'Summary of tasks assigned to you'}
           </p>
@@ -209,74 +143,15 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold text-foreground">Member Management</h2>
+              <h2 className="text-sm font-semibold text-foreground">Team Members</h2>
             </div>
-            <button onClick={() => { setShowAddMember(true); setMemberForm({ role: 'member', division: activeDivision }); }}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-              <Plus className="w-3 h-3" /> Add
-            </button>
+            <button onClick={() => navigate('/members')} className="text-xs text-primary hover:underline">Manage</button>
           </div>
-
-          {/* Add Member Form */}
-          {showAddMember && (
-            <div className="border border-border rounded-lg p-4 mb-4 space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <input value={memberForm.name || ''} onChange={e => setMemberForm(f => ({ ...f, name: e.target.value }))}
-                  className="bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground" placeholder="Name" />
-                <input value={memberForm.email || ''} onChange={e => setMemberForm(f => ({ ...f, email: e.target.value }))}
-                  className="bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground" placeholder="Email" />
-                <select value={memberForm.role || 'member'} onChange={e => setMemberForm(f => ({ ...f, role: e.target.value as UserRole }))}
-                  className="bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground">
-                  {roleOptions.filter(r => !isSuperAdmin ? r !== 'super_admin' : true).map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
-                <select value={memberForm.division || activeDivision} onChange={e => setMemberForm(f => ({ ...f, division: e.target.value as any }))}
-                  className="bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground">
-                  <option value="creative">Creative</option>
-                  <option value="developer">Developer</option>
-                </select>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={handleSaveMember} className="px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground">
-                  <Save className="w-3.5 h-3.5 inline mr-1" />Save
-                </button>
-                <button onClick={() => { setShowAddMember(false); setMemberForm({}); }} className="px-3 py-1.5 text-sm rounded-lg bg-secondary text-secondary-foreground">Cancel</button>
-              </div>
-            </div>
-          )}
-
           <div className="space-y-2">
             {divisionMembers.map(member => {
               const memberTasks = divisionTasks.filter(t => t.assignee_id === member.id);
               const memberDone = memberTasks.filter(t => t.status === 'done').length;
               const memberPending = memberTasks.filter(t => t.status !== 'done').length;
-              const isEditing = editingMember === member.id;
-
-              if (isEditing) {
-                return (
-                  <div key={member.id} className="border border-border rounded-lg p-3 space-y-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                      <input value={memberForm.name || ''} onChange={e => setMemberForm(f => ({ ...f, name: e.target.value }))}
-                        className="bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground" />
-                      <input value={memberForm.email || ''} onChange={e => setMemberForm(f => ({ ...f, email: e.target.value }))}
-                        className="bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground" />
-                      <select value={memberForm.role || 'member'} onChange={e => setMemberForm(f => ({ ...f, role: e.target.value as UserRole }))}
-                        className="bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground">
-                        {roleOptions.filter(r => !isSuperAdmin ? r !== 'super_admin' : true).map(r => <option key={r} value={r}>{r}</option>)}
-                      </select>
-                      <select value={memberForm.division || member.division} onChange={e => setMemberForm(f => ({ ...f, division: e.target.value as any }))}
-                        className="bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground">
-                        <option value="creative">Creative</option>
-                        <option value="developer">Developer</option>
-                      </select>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={handleSaveMember} className="px-3 py-1 text-xs rounded-lg bg-primary text-primary-foreground">Save</button>
-                      <button onClick={() => { setEditingMember(null); setMemberForm({}); }} className="px-3 py-1 text-xs rounded-lg bg-secondary text-secondary-foreground">Cancel</button>
-                    </div>
-                  </div>
-                );
-              }
-
               return (
                 <div key={member.id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-secondary/50 transition-colors">
                   <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => navigate(`/tasks?member=${member.id}`)}>
@@ -291,21 +166,6 @@ const Dashboard = () => {
                   <div className="flex items-center gap-3 text-xs">
                     <span className="text-warning">{memberPending} Pending</span>
                     <span className="text-success">{memberDone} Done</span>
-                    <button onClick={() => { setEditingMember(member.id); setMemberForm({ ...member }); }}
-                      className="p-1.5 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    {showDeleteMember === member.id ? (
-                      <div className="flex items-center gap-1">
-                         <button onClick={() => handleDeleteMember(member.id)} className="px-2 py-1 text-[10px] rounded bg-destructive text-destructive-foreground">Yes</button>
-                         <button onClick={() => setShowDeleteMember(null)} className="px-2 py-1 text-[10px] rounded bg-secondary text-secondary-foreground">No</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setShowDeleteMember(member.id)}
-                        className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
                   </div>
                 </div>
               );
@@ -315,9 +175,9 @@ const Dashboard = () => {
       )}
 
       {/* Task Calendar */}
-      <TaskCalendar tasks={myTasks} onTaskClick={setSelectedTask} />
+      <TaskCalendar tasks={myTasks as any} members={allMembers} onTaskClick={setSelectedTask} />
 
-      {/* High Priority Tasks - Same view as Tasks page */}
+      {/* High Priority Tasks */}
       {highPriorityTasks.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="glass-card rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
@@ -327,19 +187,11 @@ const Dashboard = () => {
             </div>
             <button onClick={() => navigate('/tasks?priority=high,urgent')} className="text-xs text-primary hover:underline">View All</button>
           </div>
-          {/* Table header matching tasks page */}
-          {/* Table header - hidden on mobile, show card view instead */}
           <div className="hidden lg:grid grid-cols-[140px_1fr_1.5fr_90px_90px_110px_110px] gap-2 px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide border-b border-border">
-            <span>Project · Company</span>
-            <span>Task</span>
-            <span>Description</span>
-            <span>Priority</span>
-            <span>Due Date</span>
-            <span>Status</span>
-            <span>Assignee</span>
+            <span>Project · Company</span><span>Task</span><span>Description</span><span>Priority</span><span>Due Date</span><span>Status</span><span>Assignee</span>
           </div>
           {highPriorityTasks.map(task => {
-            const assignee = mockUsers.find(u => u.id === task.assignee_id);
+            const assignee = allMembers.find(u => u.id === task.assignee_id);
             const { projectName, companyName } = getProjectCompany(task.project_id);
             return (
               <React.Fragment key={task.id}>
@@ -353,7 +205,7 @@ const Dashboard = () => {
                   <span className="text-xs text-muted-foreground line-clamp-2">{task.description}</span>
                   <span className={cn('text-xs capitalize', priorityLabel[task.priority])}>{task.priority}</span>
                   <span className="text-xs text-muted-foreground">{formatDate(task.due_date)}</span>
-                  <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} />
+                  <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
                   <span className="text-xs text-muted-foreground">{assignee?.name.split(' ')[0]}</span>
                 </div>
                 <div onClick={() => setSelectedTask(task)}
@@ -365,7 +217,7 @@ const Dashboard = () => {
                   <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{task.description}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-muted-foreground">{assignee?.name.split(' ')[0]} · {formatDate(task.due_date)}</span>
-                    <InlineStatusDropdown value={task.status} onChange={(s) => handleStatusChange(task.id, s)} />
+                    <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
                   </div>
                 </div>
               </React.Fragment>
@@ -379,8 +231,7 @@ const Dashboard = () => {
         division={activeDivision}
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
-        onUpdate={handleUpdateTask}
-        onDelete={isAdmin ? handleDeleteTask : undefined}
+        onDelete={isAdmin ? (id) => { deleteTaskMutation.mutate(id); setSelectedTask(null); } : undefined}
         readOnly={!isAdmin}
       />
 
@@ -389,7 +240,6 @@ const Dashboard = () => {
         division={activeDivision}
         isOpen={showCreateTask}
         onClose={() => setShowCreateTask(false)}
-        onUpdate={(t: Task) => { setTasks(prev => [...prev, t]); setShowCreateTask(false); }}
         mode="create"
         projectId=""
       />
@@ -399,10 +249,6 @@ const Dashboard = () => {
         division={activeDivision}
         isOpen={showCreateProject}
         onClose={() => setShowCreateProject(false)}
-        onSave={(data: any) => {
-          const newProject: Project = { ...data, id: `p${Date.now()}`, created_at: new Date().toISOString().split('T')[0], tasks: [] };
-          setProjects(prev => [...prev, newProject]);
-        }}
         mode="create"
       />
     </div>

@@ -1,27 +1,31 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockProjects as initialProjects, mockCompanies } from '@/data/mock';
+import { useProjects, useTasks, useCompanies } from '@/hooks/useSupabaseData';
 import ProjectCard from '@/components/ProjectCard';
 import ProjectModal from '@/components/ProjectModal';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
-import { Project } from '@/types';
 
 const Projects = () => {
   const { user, activeDivision, isAdmin, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
-  const [projects, setProjects] = useState(initialProjects);
+  const { data: allProjects = [] } = useProjects();
+  const { data: allTasks = [] } = useTasks();
+  const { data: companies = [] } = useCompanies();
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
   const [modalMode, setModalMode] = useState<'view' | 'edit' | 'create'>('view');
 
   if (!user) return null;
 
-  const divisionProjects = projects.filter(p => p.division === activeDivision);
-  const visibleProjects = isAdmin
-    ? divisionProjects
-    : divisionProjects.filter(p => p.tasks.some(t => t.assignee_id === user.id));
+  const divisionProjects = allProjects.filter(p => p.division === activeDivision);
+
+  // Build projects with tasks for ProjectCard
+  const projectsWithTasks = divisionProjects.map(p => ({
+    ...p,
+    tasks: allTasks.filter(t => t.project_id === p.id),
+  }));
 
   const handleCreate = () => {
     setSelectedProject(null);
@@ -29,28 +33,10 @@ const Projects = () => {
     setModalOpen(true);
   };
 
-  const handleCardClick = (project: Project) => {
+  const handleCardClick = (project: any) => {
     setSelectedProject(project);
     setModalMode('view');
     setModalOpen(true);
-  };
-
-  const handleSave = (data: any) => {
-    if (data.id) {
-      setProjects(prev => prev.map(p => p.id === data.id ? { ...p, ...data } : p));
-    } else {
-      const newProject: Project = {
-        ...data,
-        id: `p${Date.now()}`,
-        created_at: new Date().toISOString().split('T')[0],
-        tasks: [],
-      };
-      setProjects(prev => [...prev, newProject]);
-    }
-  };
-
-  const handleDelete = (id: string) => {
-    setProjects(prev => prev.filter(p => p.id !== id));
   };
 
   return (
@@ -70,17 +56,29 @@ const Projects = () => {
       </motion.div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {visibleProjects.map((project, i) => (
-          <ProjectCard key={project.id} project={project} index={i} onClick={() => handleCardClick(project)} onNavigate={() => navigate(`/tasks?project=${project.id}`)} />
+        {projectsWithTasks.map((project, i) => (
+          <ProjectCard
+            key={project.id}
+            project={project as any}
+            companyName={companies.find(c => c.id === project.company_id)?.name || ''}
+            index={i}
+            onClick={() => handleCardClick(project)}
+            onNavigate={() => navigate(`/tasks?project=${project.id}`)}
+          />
         ))}
       </div>
 
-      {visibleProjects.length === 0 && (
+      {projectsWithTasks.length === 0 && (
         <div className="text-center py-20 text-muted-foreground text-sm">No projects in this division yet.</div>
       )}
 
-      <ProjectModal project={selectedProject} division={activeDivision} isOpen={modalOpen} onClose={() => setModalOpen(false)}
-        onSave={handleSave} onDelete={isAdmin ? handleDelete : undefined} mode={modalMode} />
+      <ProjectModal
+        project={selectedProject}
+        division={activeDivision}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        mode={modalMode}
+      />
     </div>
   );
 };

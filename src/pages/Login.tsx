@@ -2,31 +2,48 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Briefcase, ArrowRight } from 'lucide-react';
+import { Briefcase, ArrowRight, Loader2 } from 'lucide-react';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, signup, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('andi@company.com');
-  const [password, setPassword] = useState('password');
+  const [isSignup, setIsSignup] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect if already logged in
+  if (user && !authLoading) {
+    navigate('/dashboard', { replace: true });
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!email.trim()) { setError('Email is required'); return; }
-    const success = login(email, password);
-    if (success) navigate('/dashboard');
-    else setError('Email not found.');
-  };
+    setSuccess('');
+    if (!email.trim() || !password.trim()) { setError('Email dan password wajib diisi'); return; }
+    if (isSignup && !name.trim()) { setError('Nama wajib diisi'); return; }
+    if (password.length < 6) { setError('Password minimal 6 karakter'); return; }
 
-  const demoAccounts = [
-    { label: 'Super Admin', email: 'super@company.com' },
-    { label: 'Admin Creative', email: 'andi@company.com' },
-    { label: 'Member Creative', email: 'budi@company.com' },
-    { label: 'Admin Developer', email: 'dimas@company.com' },
-    { label: 'Member Developer', email: 'eka@company.com' },
-  ];
+    setLoading(true);
+    try {
+      if (isSignup) {
+        const err = await signup(email, password, name);
+        if (err) { setError(err); }
+        else { setSuccess('Akun berhasil dibuat! Silakan login.'); setIsSignup(false); }
+      } else {
+        const err = await login(email, password);
+        if (err) { setError(err); }
+        else { navigate('/dashboard'); }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -39,10 +56,22 @@ const Login = () => {
         </div>
 
         <div className="glass-card rounded-2xl p-8">
-          <h2 className="text-xl font-semibold text-foreground mb-1">Sign in to your account</h2>
-          <p className="text-muted-foreground text-sm mb-6">Manage your projects and team tasks</p>
+          <h2 className="text-xl font-semibold text-foreground mb-1">
+            {isSignup ? 'Buat akun baru' : 'Masuk ke akun Anda'}
+          </h2>
+          <p className="text-muted-foreground text-sm mb-6">
+            {isSignup ? 'Daftar untuk mulai mengelola project' : 'Kelola project dan task tim Anda'}
+          </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignup && (
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Nama Lengkap</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg bg-input border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  placeholder="Nama lengkap" />
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)}
@@ -57,22 +86,24 @@ const Login = () => {
             </div>
 
             {error && <p className="text-destructive text-sm">{error}</p>}
+            {success && <p className="text-success text-sm">{success}</p>}
 
-            <button type="submit" className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-              Sign In <ArrowRight className="w-4 h-4" />
+            <button type="submit" disabled={loading}
+              className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                <>{isSignup ? 'Daftar' : 'Masuk'} <ArrowRight className="w-4 h-4" /></>
+              )}
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-xs text-muted-foreground mb-3">Demo accounts (click to quick login):</p>
-            <div className="grid grid-cols-2 gap-2">
-              {demoAccounts.map(acc => (
-                <button key={acc.email} onClick={() => setEmail(acc.email)}
-                  className="text-xs px-3 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors text-left">
-                  {acc.label}
-                </button>
-              ))}
-            </div>
+          <div className="mt-6 pt-6 border-t border-border text-center">
+            <p className="text-sm text-muted-foreground">
+              {isSignup ? 'Sudah punya akun?' : 'Belum punya akun?'}{' '}
+              <button onClick={() => { setIsSignup(!isSignup); setError(''); setSuccess(''); }}
+                className="text-primary hover:underline font-medium">
+                {isSignup ? 'Masuk' : 'Daftar'}
+              </button>
+            </p>
           </div>
         </div>
       </motion.div>

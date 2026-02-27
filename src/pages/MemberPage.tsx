@@ -1,58 +1,51 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockUsers } from '@/data/mock';
-import { User as UserType, UserRole, Division } from '@/types';
+import { useMembers, useUpdateProfile, useUpdateUserRole } from '@/hooks/useSupabaseData';
 import { motion } from 'framer-motion';
-import { Plus, Pencil, Trash2, Save, X } from 'lucide-react';
+import { Pencil, Trash2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+type UserRole = 'super_admin' | 'admin' | 'member';
 const roleOptions: UserRole[] = ['super_admin', 'admin', 'member'];
 
 const MemberPage = () => {
   const { user, activeDivision, isAdmin, isSuperAdmin } = useAuth();
-  const [members, setMembers] = useState(mockUsers);
+  const { data: allMembers = [] } = useMembers();
+  const updateProfile = useUpdateProfile();
+  const updateRole = useUpdateUserRole();
+
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<Partial<UserType>>({});
-  const [showAdd, setShowAdd] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [form, setForm] = useState<any>({});
 
   if (!user) return null;
 
   const visibleMembers = isAdmin
-    ? members.filter(u => u.division === activeDivision && u.role !== 'super_admin')
-    : members.filter(u => u.division === user.division);
+    ? allMembers.filter(u => u.division === activeDivision && u.role !== 'super_admin')
+    : allMembers.filter(u => u.division === user.division);
 
   const inputCls = 'bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
 
-  const handleSave = () => {
-    if (!form.name?.trim() || !form.email?.trim()) return;
+  const handleSave = async () => {
+    if (!form.name?.trim()) return;
     if (editingId) {
-      setMembers(prev => prev.map(m => m.id === editingId ? { ...m, ...form } as UserType : m));
+      await updateProfile.mutateAsync({
+        id: editingId,
+        name: form.name,
+        position: form.position,
+        division: form.division,
+        company_id: form.company_id,
+      });
+      if (form.role) {
+        await updateRole.mutateAsync({ userId: editingId, role: form.role });
+      }
       setEditingId(null);
-    } else {
-      const newMember: UserType = {
-        id: `u${Date.now()}`,
-        name: form.name || '',
-        email: form.email || '',
-        role: (form.role as UserRole) || 'member',
-        division: (form.division as Division) || activeDivision,
-        company_id: 'c1',
-      };
-      setMembers(prev => [...prev, newMember]);
-      setShowAdd(false);
+      setForm({});
     }
-    setForm({});
   };
 
-  const handleDelete = (id: string) => {
-    setMembers(prev => prev.filter(m => m.id !== id));
-    setDeleteConfirm(null);
-  };
-
-  const startEdit = (member: UserType) => {
+  const startEdit = (member: any) => {
     setEditingId(member.id);
     setForm({ ...member });
-    setShowAdd(false);
   };
 
   const cancelEdit = () => {
@@ -65,19 +58,19 @@ const MemberPage = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Name</label>
-          <input value={form.name || ''} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="Full name" />
+          <input value={form.name || ''} onChange={e => setForm((f: any) => ({ ...f, name: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="Full name" />
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Email</label>
-          <input value={form.email || ''} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="email@company.com" />
+          <input value={form.email || ''} disabled className={cn(inputCls, 'w-full opacity-60')} />
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Position</label>
-          <input value={form.position || ''} onChange={e => setForm(f => ({ ...f, position: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="e.g. UI/UX Designer" />
+          <input value={form.position || ''} onChange={e => setForm((f: any) => ({ ...f, position: e.target.value }))} className={cn(inputCls, 'w-full')} placeholder="e.g. UI/UX Designer" />
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
-          <select value={form.role || 'member'} onChange={e => setForm(f => ({ ...f, role: e.target.value as UserRole }))} className={cn(inputCls, 'w-full')}>
+          <select value={form.role || 'member'} onChange={e => setForm((f: any) => ({ ...f, role: e.target.value }))} className={cn(inputCls, 'w-full')}>
             {roleOptions.filter(r => isSuperAdmin ? true : r !== 'super_admin').map(r => (
               <option key={r} value={r}>{r === 'super_admin' ? 'Super Admin' : r}</option>
             ))}
@@ -85,21 +78,18 @@ const MemberPage = () => {
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
-          <select value={form.division || activeDivision} onChange={e => setForm(f => ({ ...f, division: e.target.value as Division }))} className={cn(inputCls, 'w-full')}>
+          <select value={form.division || activeDivision} onChange={e => setForm((f: any) => ({ ...f, division: e.target.value }))} className={cn(inputCls, 'w-full')}>
             <option value="creative">Creative</option>
             <option value="developer">Developer</option>
           </select>
         </div>
       </div>
       <div className="flex gap-2">
-        <button onClick={handleSave} disabled={!form.name?.trim() || !form.email?.trim()}
+        <button onClick={handleSave} disabled={!form.name?.trim() || updateProfile.isPending}
           className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
           <Save className="w-3.5 h-3.5" /> Save
         </button>
-        <button onClick={() => { cancelEdit(); setShowAdd(false); setForm({}); }}
-          className="px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
-          Cancel
-        </button>
+        <button onClick={cancelEdit} className="px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">Cancel</button>
       </div>
     </div>
   );
@@ -113,33 +103,19 @@ const MemberPage = () => {
             {isSuperAdmin ? 'All members' : `${activeDivision} division members`}
           </p>
         </div>
-        {isAdmin && (
-          <button onClick={() => { setShowAdd(true); setEditingId(null); setForm({ role: 'member', division: activeDivision }); }}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-            <Plus className="w-4 h-4" /> Add Member
-          </button>
-        )}
       </motion.div>
-
-      {showAdd && renderForm()}
 
       <div className="space-y-3">
         {visibleMembers.map((member, i) => {
           if (editingId === member.id) {
             return <div key={member.id}>{renderForm(true)}</div>;
           }
-
           return (
-            <motion.div
-              key={member.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="glass-card rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-            >
+            <motion.div key={member.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+              className="glass-card rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary">
-                  {member.name.split(' ').map(n => n[0]).join('')}
+                  {member.name.split(' ').map((n: string) => n[0]).join('')}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">{member.name}</p>
@@ -156,28 +132,16 @@ const MemberPage = () => {
                 </span>
                 <span className="text-xs text-muted-foreground capitalize">{member.division}</span>
                 {isAdmin && (
-                  <div className="flex items-center gap-1 ml-2">
-                    <button onClick={() => startEdit(member)}
-                      className="p-1.5 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    {deleteConfirm === member.id ? (
-                      <div className="flex items-center gap-1">
-                         <button onClick={() => handleDelete(member.id)} className="px-2 py-1 text-[10px] rounded bg-destructive text-destructive-foreground">Delete</button>
-                         <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 text-[10px] rounded bg-secondary text-secondary-foreground">Cancel</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setDeleteConfirm(member.id)}
-                        className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
+                  <button onClick={() => startEdit(member)}
+                    className="p-1.5 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground ml-2">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
                 )}
               </div>
             </motion.div>
           );
         })}
+        {visibleMembers.length === 0 && <div className="text-center py-20 text-muted-foreground text-sm">No members found.</div>}
       </div>
     </div>
   );

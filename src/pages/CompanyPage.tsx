@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockCompanies as initialCompanies } from '@/data/mock';
-import { Company } from '@/types';
+import { useCompanies, useCreateCompany, useUpdateCompany, useDeleteCompany } from '@/hooks/useSupabaseData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Pencil, Trash2, Save, X, Building2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 const CompanyPage = () => {
   const { user, isAdmin } = useAuth();
-  const [companies, setCompanies] = useState(initialCompanies);
+  const { data: companies = [] } = useCompanies();
+  const createMutation = useCreateCompany();
+  const updateMutation = useUpdateCompany();
+  const deleteMutation = useDeleteCompany();
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: '', description: '' });
@@ -18,33 +20,27 @@ const CompanyPage = () => {
 
   const inputCls = 'w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!form.name.trim()) return;
-    const newCompany: Company = {
-      id: `c${Date.now()}`,
-      name: form.name,
-      description: form.description,
-      created_at: new Date().toISOString().split('T')[0],
-    };
-    setCompanies(prev => [...prev, newCompany]);
+    await createMutation.mutateAsync({ name: form.name, description: form.description });
     setForm({ name: '', description: '' });
     setShowCreate(false);
   };
 
-  const handleEdit = (company: Company) => {
+  const handleEdit = (company: any) => {
     setEditingId(company.id);
-    setForm({ name: company.name, description: company.description });
+    setForm({ name: company.name, description: company.description || '' });
   };
 
-  const handleSave = (id: string) => {
+  const handleSave = async (id: string) => {
     if (!form.name.trim()) return;
-    setCompanies(prev => prev.map(c => c.id === id ? { ...c, name: form.name, description: form.description } : c));
+    await updateMutation.mutateAsync({ id, name: form.name, description: form.description });
     setEditingId(null);
     setForm({ name: '', description: '' });
   };
 
-  const handleDelete = (id: string) => {
-    setCompanies(prev => prev.filter(c => c.id !== id));
+  const handleDelete = async (id: string) => {
+    await deleteMutation.mutateAsync(id);
     setDeleteConfirm(null);
   };
 
@@ -56,34 +52,26 @@ const CompanyPage = () => {
           <p className="text-sm text-muted-foreground mt-1">Manage companies for your projects</p>
         </div>
         {isAdmin && (
-          <button
-            onClick={() => { setShowCreate(true); setForm({ name: '', description: '' }); }}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
+          <button onClick={() => { setShowCreate(true); setForm({ name: '', description: '' }); }}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
             <Plus className="w-4 h-4" /> Add Company
           </button>
         )}
       </motion.div>
 
-      {/* Create Form */}
       <AnimatePresence>
         {showCreate && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="glass-card rounded-xl p-5 mb-4 overflow-hidden"
-          >
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+            className="glass-card rounded-xl p-5 mb-4 overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-foreground">New Company</h3>
-              <button onClick={() => setShowCreate(false)} className="text-muted-foreground hover:text-foreground">
-                <X className="w-4 h-4" />
-              </button>
+              <button onClick={() => setShowCreate(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-3">
               <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={inputCls} placeholder="Company name..." />
               <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={inputCls} placeholder="Description..." />
-              <button onClick={handleCreate} disabled={!form.name.trim()} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+              <button onClick={handleCreate} disabled={!form.name.trim() || createMutation.isPending}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
                 <Save className="w-3.5 h-3.5" /> Save
               </button>
             </div>
@@ -91,16 +79,10 @@ const CompanyPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Company List */}
       <div className="space-y-3">
         {companies.map((company, i) => (
-          <motion.div
-            key={company.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="glass-card rounded-xl p-5"
-          >
+          <motion.div key={company.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+            className="glass-card rounded-xl p-5">
             {editingId === company.id ? (
               <div className="space-y-3">
                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={inputCls} />
@@ -109,9 +91,7 @@ const CompanyPage = () => {
                   <button onClick={() => handleSave(company.id)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
                     <Save className="w-3.5 h-3.5" /> Save
                   </button>
-                  <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
-                    Cancel
-                  </button>
+                  <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">Cancel</button>
                 </div>
               </div>
             ) : (
@@ -146,9 +126,7 @@ const CompanyPage = () => {
             )}
           </motion.div>
         ))}
-        {companies.length === 0 && (
-          <div className="text-center py-20 text-muted-foreground text-sm">No companies yet.</div>
-        )}
+        {companies.length === 0 && <div className="text-center py-20 text-muted-foreground text-sm">No companies yet.</div>}
       </div>
     </div>
   );

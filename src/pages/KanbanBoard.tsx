@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockProjects, mockTasks, mockUsers } from '@/data/mock';
-import { Task, TaskStatus } from '@/types';
+import { useProjects, useTasks, useMembers, useUpdateTask, useDeleteTask } from '@/hooks/useSupabaseData';
 import TaskModal from '@/components/TaskModal';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
+
+type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 
 const columns: { status: TaskStatus; label: string; className: string }[] = [
   { status: 'todo', label: 'To Do', className: 'kanban-col-todo' },
@@ -16,123 +17,87 @@ const columns: { status: TaskStatus; label: string; className: string }[] = [
 ];
 
 const priorityDot: Record<string, string> = {
-  low: 'bg-muted-foreground',
-  medium: 'bg-info',
-  high: 'bg-warning',
-  urgent: 'bg-destructive',
+  low: 'bg-muted-foreground', medium: 'bg-info', high: 'bg-warning', urgent: 'bg-destructive',
 };
 
 const KanbanBoard = () => {
-  const { user, activeDivision } = useAuth();
+  const { user, activeDivision, isAdmin } = useAuth();
   const [searchParams] = useSearchParams();
   const projectFilter = searchParams.get('project');
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [tasks, setTasks] = useState(mockTasks);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const isAdmin = user?.role === 'admin';
+
+  const { data: allProjects = [] } = useProjects();
+  const { data: allTasks = [] } = useTasks();
+  const { data: allMembers = [] } = useMembers();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
 
   const filteredTasks = useMemo(() => {
     if (!user) return [];
-    let filtered = tasks.filter(t => {
-      const project = mockProjects.find(p => p.id === t.project_id);
+    let filtered = allTasks.filter(t => {
+      const project = allProjects.find(p => p.id === t.project_id);
       return project?.division === activeDivision;
     });
     if (projectFilter) filtered = filtered.filter(t => t.project_id === projectFilter);
     if (!isAdmin) filtered = filtered.filter(t => t.assignee_id === user.id);
     return filtered;
-  }, [tasks, activeDivision, projectFilter, isAdmin, user]);
+  }, [allTasks, allProjects, activeDivision, projectFilter, isAdmin, user]);
 
   if (!user) return null;
 
-  const currentProject = projectFilter ? mockProjects.find(p => p.id === projectFilter) : null;
+  const currentProject = projectFilter ? allProjects.find(p => p.id === projectFilter) : null;
 
-  const handleUpdateTask = (updated: Task) => {
-    setTasks(prev => {
-      const exists = prev.find(t => t.id === updated.id);
-      if (exists) return prev.map(t => t.id === updated.id ? updated : t);
-      return [...prev, updated];
-    });
-    setSelectedTask(null);
-  };
-
-  const handleDeleteTask = (id: string) => {
-    setTasks(prev => prev.filter(t => t.id !== id));
-    setSelectedTask(null);
+  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
+    updateTask.mutate({ id: taskId, status: newStatus });
   };
 
   return (
-    <div>
+    <div className="max-w-7xl mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
             {currentProject ? currentProject.name : 'Kanban Board'}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {currentProject ? currentProject.description : `Semua task divisi ${activeDivision}`}
-          </p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">{filteredTasks.length} tasks</p>
         </div>
         {isAdmin && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Tambah Task
+          <button onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+            <Plus className="w-4 h-4" /> Add Task
           </button>
         )}
       </motion.div>
 
-      <div className="grid grid-cols-4 gap-4">
-        {columns.map((col, colIdx) => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {columns.map(col => {
           const colTasks = filteredTasks.filter(t => t.status === col.status);
           return (
-            <motion.div
-              key={col.status}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: colIdx * 0.08 }}
-              className={cn('rounded-xl p-3 min-h-[60vh]', col.className)}
-            >
-              <div className="flex items-center justify-between mb-3 px-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-foreground">{col.label}</h3>
-                  <span className="text-[10px] bg-background/50 text-muted-foreground px-1.5 py-0.5 rounded-md font-medium">
-                    {colTasks.length}
-                  </span>
-                </div>
+            <motion.div key={col.status} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              className={cn('rounded-xl p-3 min-h-[200px]', col.className)}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">{col.label}</h3>
+                <span className="text-[10px] font-medium text-muted-foreground bg-background/50 px-2 py-0.5 rounded-full">{colTasks.length}</span>
               </div>
-
               <div className="space-y-2">
-                {colTasks.map((task, i) => {
-                  const assignee = mockUsers.find(u => u.id === task.assignee_id);
-                  const project = mockProjects.find(p => p.id === task.project_id);
-
+                {colTasks.map(task => {
+                  const assignee = allMembers.find(u => u.id === task.assignee_id);
                   return (
-                    <motion.div
-                      key={task.id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: colIdx * 0.08 + i * 0.04 }}
-                      onClick={() => setSelectedTask(task)}
-                      className="bg-card border border-border/50 rounded-lg p-3 cursor-pointer hover:border-primary/30 transition-all group"
-                    >
-                      <div className="flex items-start gap-2 mb-2">
-                        <div className={cn('w-2 h-2 rounded-full mt-1.5 shrink-0', priorityDot[task.priority])} />
-                        <p className="text-sm text-foreground font-medium leading-snug">{task.title}</p>
+                    <motion.div key={task.id} layout onClick={() => setSelectedTask(task)}
+                      className="bg-card border border-border/60 rounded-lg p-3 cursor-pointer hover:border-primary/30 transition-all shadow-sm">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
+                        <span className="text-[10px] text-muted-foreground capitalize">{task.priority}</span>
                       </div>
-
-                      {!projectFilter && project && (
-                        <p className="text-[10px] text-muted-foreground mb-2 ml-4">{project.name}</p>
-                      )}
-
-                      <div className="flex items-center justify-between ml-4">
-                        <div className="flex items-center gap-1.5">
+                      <h4 className="text-sm font-medium text-foreground mb-1 line-clamp-2">{task.title}</h4>
+                      {assignee && (
+                        <div className="flex items-center gap-1.5 mt-2">
                           <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-bold text-primary">
-                            {assignee?.name.split(' ').map(n => n[0]).join('')}
+                            {assignee.name.split(' ').map((n: string) => n[0]).join('')}
                           </div>
-                          <span className="text-[10px] text-muted-foreground">{assignee?.name.split(' ')[0]}</span>
+                          <span className="text-[10px] text-muted-foreground">{assignee.name.split(' ')[0]}</span>
                         </div>
-                        <span className="text-[10px] text-muted-foreground">{task.due_date.slice(5)}</span>
-                      </div>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -142,27 +107,11 @@ const KanbanBoard = () => {
         })}
       </div>
 
-      {/* View/Edit Task Modal */}
-      <TaskModal
-        task={selectedTask}
-        division={activeDivision}
-        isOpen={!!selectedTask}
-        onClose={() => setSelectedTask(null)}
-        onUpdate={handleUpdateTask}
-        onDelete={isAdmin ? handleDeleteTask : undefined}
-        readOnly={!isAdmin}
-      />
+      <TaskModal task={selectedTask} division={activeDivision} isOpen={!!selectedTask} onClose={() => setSelectedTask(null)}
+        onDelete={isAdmin ? (id) => { deleteTask.mutate(id); setSelectedTask(null); } : undefined} readOnly={!isAdmin} />
 
-      {/* Create Task Modal */}
-      <TaskModal
-        task={null}
-        division={activeDivision}
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onUpdate={handleUpdateTask}
-        mode="create"
-        projectId={projectFilter || ''}
-      />
+      <TaskModal task={null} division={activeDivision} isOpen={showCreateModal} onClose={() => setShowCreateModal(false)}
+        mode="create" projectId={projectFilter || ''} />
     </div>
   );
 };
