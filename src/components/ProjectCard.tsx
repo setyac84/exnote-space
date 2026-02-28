@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDateRange } from '@/lib/formatDate';
 
@@ -18,9 +18,12 @@ interface ProjectCardProps {
   index: number;
   onClick: () => void;
   onNavigate?: () => void;
+  showArchiveCheckbox?: boolean;
+  isArchived?: boolean;
+  onArchiveToggle?: () => void;
 }
 
-const ProjectCard = ({ project, companyName, index, onClick, onNavigate }: ProjectCardProps) => {
+const ProjectCard = ({ project, companyName, index, onClick, onNavigate, showArchiveCheckbox, isArchived, onArchiveToggle }: ProjectCardProps) => {
   const tasks = project.tasks || [];
   const doneTasks = tasks.filter((t: any) => t.status === 'done').length;
   const totalTasks = tasks.length;
@@ -34,7 +37,23 @@ const ProjectCard = ({ project, companyName, index, onClick, onNavigate }: Proje
           <p className="text-[10px] text-muted-foreground mb-1">{companyName}</p>
           <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">{project.name}</h3>
         </div>
-        <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full capitalize', statusColors[project.status])}>{project.status}</span>
+        <div className="flex items-center gap-2">
+          {showArchiveCheckbox && onArchiveToggle && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onArchiveToggle(); }}
+              className={cn(
+                "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                isArchived
+                  ? 'border-primary bg-primary/20 hover:border-destructive hover:bg-transparent'
+                  : 'border-muted-foreground/40 hover:border-primary'
+              )}
+              title={isArchived ? 'Unarchive this project' : 'Archive this project'}
+            >
+              <Check className={cn('w-3 h-3', isArchived ? 'text-primary' : 'text-transparent hover:text-primary')} />
+            </button>
+          )}
+          <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full capitalize', statusColors[project.status])}>{project.status}</span>
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{project.description}</p>
