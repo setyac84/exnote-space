@@ -136,13 +136,13 @@ const Dashboard = () => {
               <motion.div key={stat.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
                 className="glass-card rounded-xl overflow-hidden flex flex-col">
                 <div className="p-4 flex-1">
-                  <div className="flex items-center gap-2.5 mb-3">
+                  <div className="flex items-center justify-between mb-3">
                     <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center', stat.bgColor)}>
                       <stat.icon className={cn('w-4 h-4', stat.color)} />
                     </div>
-                    <span className="text-xs text-muted-foreground font-medium leading-tight">{stat.label}</span>
+                    <p className="text-3xl font-bold text-foreground">{stat.value}</p>
                   </div>
-                  <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
                 </div>
                 <button onClick={stat.onClick}
                   className="flex items-center justify-between w-full px-4 py-2.5 text-xs text-muted-foreground font-medium border-t border-border hover:bg-secondary/50 hover:text-foreground transition-colors">
