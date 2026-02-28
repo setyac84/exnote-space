@@ -239,6 +239,21 @@ export function useCreateMember() {
   });
 }
 
+export function useRegisterCompany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      company_name: string; email: string; password: string; name: string; position?: string;
+    }) => {
+      const { data, error } = await supabase.functions.invoke('register-company', { body: input });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['companies'] }),
+  });
+}
+
 export function useDeleteMember() {
   const qc = useQueryClient();
   return useMutation({

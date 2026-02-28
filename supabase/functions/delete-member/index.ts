@@ -52,7 +52,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Delete from auth (cascades to profiles and user_roles via FK)
+    // Get caller's company_id
+    const { data: callerProfile } = await adminClient
+      .from("profiles")
+      .select("company_id")
+      .eq("id", caller.id)
+      .single();
+
+    const callerCompanyId = callerProfile?.company_id;
+
+    // If scoped super admin, verify target is in same company
+    if (callerCompanyId !== null) {
+      const { data: targetProfile } = await adminClient
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user_id)
+        .single();
+
+      if (!targetProfile || targetProfile.company_id !== callerCompanyId) {
+        return new Response(JSON.stringify({ error: "Forbidden: member not in your company" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const { error } = await adminClient.auth.admin.deleteUser(user_id);
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
