@@ -76,7 +76,8 @@ const TaskListPage = () => {
   const [viewMode, setViewMode] = useState<'list' | 'card'>('card');
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabView>('all');
+  const hasFilters = searchParams.has('status') || searchParams.has('member') || searchParams.has('priority');
+  const [activeTab, setActiveTab] = useState<TabView>(hasFilters ? 'all' : 'all');
 
   const { data: allProjects = [] } = useProjects();
   const { data: allTasks = [] } = useTasks();
@@ -134,13 +135,18 @@ const TaskListPage = () => {
       filtered = filtered.filter(t => t.status === statusFilter);
     }
 
-    // Tab filtering
-    if (activeTab === 'all') {
-      filtered = filtered.filter(t => t.status !== 'done' && !(t as any).archived);
-    } else if (activeTab === 'done') {
-      filtered = filtered.filter(t => t.status === 'done' && !(t as any).archived);
-    } else if (activeTab === 'archive') {
-      filtered = filtered.filter(t => (t as any).archived === true);
+    // Tab filtering - only apply when no URL status filter
+    if (!statusFilter) {
+      if (activeTab === 'all') {
+        filtered = filtered.filter(t => t.status !== 'done' && !(t as any).archived);
+      } else if (activeTab === 'done') {
+        filtered = filtered.filter(t => t.status === 'done' && !(t as any).archived);
+      } else if (activeTab === 'archive') {
+        filtered = filtered.filter(t => (t as any).archived === true);
+      }
+    } else {
+      // When status filter is active, still exclude archived
+      filtered = filtered.filter(t => !(t as any).archived);
     }
 
     const statusOrder: Record<string, number> = { todo: 0, doing: 1, review: 2, done: 3 };
@@ -194,7 +200,18 @@ const TaskListPage = () => {
     <div className="max-w-7xl mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">All Tasks</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+            {(() => {
+              const parts: string[] = [];
+              if (statusFilter) parts.push(statusLabel[statusFilter] || statusFilter);
+              if (memberFilter) {
+                const member = allMembers.find(m => m.id === memberFilter);
+                if (member) parts.push(member.name.split(' ')[0]);
+              }
+              if (priorityFilter) parts.push(priorityFilter.charAt(0).toUpperCase() + priorityFilter.slice(1));
+              return parts.length > 0 ? `${parts.join(' · ')} - Tasks` : 'All Tasks';
+            })()}
+          </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">{filteredTasks.length} tasks found</p>
         </div>
         <div className="flex items-center gap-3">
@@ -222,10 +239,10 @@ const TaskListPage = () => {
             { key: 'done', label: 'Completed', count: tabCounts.done },
             { key: 'archive', label: 'Archived', count: tabCounts.archive },
           ] as { key: TabView; label: string; count: number }[]).map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+            <button key={tab.key} onClick={() => { setActiveTab(tab.key); setSearchParams({}); }}
               className={cn(
                 'px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors border',
-                activeTab === tab.key
+                !hasFilters && activeTab === tab.key
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-secondary/50 text-muted-foreground border-border hover:text-foreground hover:border-primary/30'
               )}>
