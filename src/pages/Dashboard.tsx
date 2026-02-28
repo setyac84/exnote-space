@@ -152,7 +152,7 @@ const Dashboard = () => {
           <AvatarUpload userId={user.id} currentAvatar={user.avatar} name={user.name} size="md" editable={false} />
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">Hello, {user.name.split(' ')[0]} 👋</h1>
-            <p className="text-muted-foreground mt-1 text-sm">Today is <span className="font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md">{format(new Date(), 'EEEE, d MMM yyyy')}</span></p>
+            <p className="text-muted-foreground mt-2 text-sm">Today is <span className="font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md">{format(new Date(), 'EEEE, d MMM yyyy')}</span></p>
           </div>
         </div>
         {isAdmin &&
