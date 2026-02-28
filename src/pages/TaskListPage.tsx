@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatDate, formatDaysLeft, daysLeftColor } from '@/lib/formatDate';
 import { useSearchParams } from 'react-router-dom';
-import { List, LayoutGrid, Plus, ChevronDown, Check } from 'lucide-react';
+import { Plus, ChevronDown, Check } from 'lucide-react';
 
 type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 type TabView = 'all' | 'done' | 'archive';
@@ -73,7 +73,7 @@ const ProjectFilterDropdown = ({ projects, value, onChange }: { projects: { id: 
 const TaskListPage = () => {
   const { user, activeDivision, isAdmin, isSuperAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('card');
+  const [viewMode] = useState<'card'>('card');
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const hasFilters = searchParams.has('status') || searchParams.has('member') || searchParams.has('priority');
@@ -271,14 +271,6 @@ const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: s
               <Plus className="w-4 h-4" /> Add Task
             </button>
           )}
-          <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-            <button onClick={() => setViewMode('list')} className={cn('p-2 rounded-md transition-colors', viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>
-              <List className="w-4 h-4" />
-            </button>
-            <button onClick={() => setViewMode('card')} className={cn('p-2 rounded-md transition-colors', viewMode === 'card' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-          </div>
         </div>
       </motion.div>
 
@@ -317,60 +309,7 @@ const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: s
         </div>
       </div>
 
-      {viewMode === 'list' ? (
-        <div className="glass-card rounded-xl overflow-hidden">
-          <div className="hidden lg:grid grid-cols-[140px_1fr_1.5fr_90px_90px_110px_110px] gap-2 px-4 py-2.5 border-b border-border text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-            <span>Project · Company</span><span>Task</span><span>Description</span><span>Priority</span><span>Due Date</span><span>Status</span><span>Assignee</span>
-          </div>
-          {filteredTasks.map((task, i) => {
-            const taskAssigneeIds = allTaskAssignees.filter(ta => ta.task_id === task.id).map(ta => ta.assignee_id);
-            const assignees = taskAssigneeIds.length > 0
-              ? taskAssigneeIds.map(id => allMembers.find(u => u.id === id)).filter(Boolean)
-              : (task.assignee_id ? [allMembers.find(u => u.id === task.assignee_id)].filter(Boolean) : []);
-            const assigneeLabel = assignees.length > 0 ? assignees.map((a: any) => a.name.split(' ')[0]).join(', ') : 'Unassigned';
-            const { projectName, companyName } = getProjectCompany(task.project_id);
-            return (
-              <motion.div key={task.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                onClick={() => setSelectedTask(task)} className="cursor-pointer transition-colors">
-                <div className="hidden lg:grid grid-cols-[140px_1fr_1.5fr_90px_90px_110px_110px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-secondary/30 items-center">
-                  <span className="text-[10px] text-muted-foreground">{projectName} · {companyName}</span>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
-                    <span className="text-sm text-foreground font-medium">{task.title}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground line-clamp-2">{task.description}</span>
-                  <span className={cn('text-xs capitalize', priorityLabel[task.priority])}>{task.priority}</span>
-                  <span className="text-xs text-muted-foreground">{formatDate(task.due_date)}</span>
-                  <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
-                  <div className="flex items-center gap-1">
-                    <div className="flex -space-x-1">
-                      {assignees.slice(0, 2).map((a: any) => (
-                        <div key={a.id} className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[7px] font-bold text-primary border border-card">
-                          {a.name.split(' ').map((n: string) => n[0]).join('')}
-                        </div>
-                      ))}
-                    </div>
-                    {assignees.length > 2 && <span className="text-[9px] text-muted-foreground">+{assignees.length - 2}</span>}
-                  </div>
-                </div>
-                <div className="lg:hidden p-3 border-b border-border/50 hover:bg-secondary/30">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-foreground">{task.title}</span>
-                    <span className={cn('text-[10px] capitalize font-medium', priorityLabel[task.priority])}>{task.priority}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{task.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground">{assigneeLabel} · {formatDate(task.due_date)}</span>
-                    <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-          {filteredTasks.length === 0 && <div className="text-center py-12 text-muted-foreground text-sm">No tasks found.</div>}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTasks.map((task, i) => {
             const taskAssigneeIds = allTaskAssignees.filter(ta => ta.task_id === task.id).map(ta => ta.assignee_id);
             const assignees = taskAssigneeIds.length > 0
@@ -436,7 +375,6 @@ const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: s
           })}
           {filteredTasks.length === 0 && <div className="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-12 text-muted-foreground text-sm">No tasks found.</div>}
         </div>
-      )}
 
       <TaskModal task={selectedTask} division={activeDivision} isOpen={!!selectedTask} onClose={() => setSelectedTask(null)}
         onDelete={isAdmin ? (id) => { deleteTaskMutation.mutate(id); setSelectedTask(null); } : undefined} readOnly={!isAdmin} />
