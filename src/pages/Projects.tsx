@@ -111,7 +111,7 @@ const Projects = () => {
                   }
                 }}
                 className={cn(
-                  "absolute top-4 right-4 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors z-10",
+                  "absolute bottom-5 right-5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors z-10",
                   activeTab === 'archived'
                     ? 'border-primary bg-primary/20 hover:border-destructive hover:bg-transparent'
                     : 'border-muted-foreground/40 hover:border-primary'
