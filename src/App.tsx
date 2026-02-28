@@ -13,6 +13,7 @@ import TaskListPage from "./pages/TaskListPage";
 import CompanyPage from "./pages/CompanyPage";
 import MemberPage from "./pages/MemberPage";
 import RegisterCompany from "./pages/RegisterCompany";
+import NotepadPage from "./pages/NotepadPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/company" element={<AppLayout><CompanyPage /></AppLayout>} />
             <Route path="/members" element={<AppLayout><MemberPage /></AppLayout>} />
             <Route path="/register-company" element={<AppLayout><RegisterCompany /></AppLayout>} />
+            <Route path="/notepad" element={<AppLayout><NotepadPage /></AppLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

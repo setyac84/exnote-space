@@ -1,11 +1,12 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProjects, useTasks, useMembers, useCompanies, useCreateProject, useCreateTask, useUpdateTask, useDeleteTask, useUpdateProfile, useUpdateUserRole, useTaskAssignees } from '@/hooks/useSupabaseData';
+import { useProjects, useTasks, useMembers, useCompanies, useCreateProject, useCreateTask, useUpdateTask, useDeleteTask, useUpdateProfile, useUpdateUserRole, useTaskAssignees, useNotes } from '@/hooks/useSupabaseData';
 import { formatDate, formatDaysLeft, daysLeftColor } from '@/lib/formatDate';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
-import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users, Plus, Pencil, Trash2, Save, ChevronDown } from 'lucide-react';
+import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users, Plus, Pencil, Trash2, Save, ChevronDown, StickyNote } from 'lucide-react';
 import TaskCalendar from '@/components/TaskCalendar';
+import AvatarUpload from '@/components/AvatarUpload';
 import ProjectCard from '@/components/ProjectCard';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -59,6 +60,7 @@ const Dashboard = () => {
   const { data: allTaskAssignees = [] } = useTaskAssignees();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
+  const { data: notes = [] } = useNotes();
 
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [showCreateProject, setShowCreateProject] = useState(false);
@@ -115,9 +117,12 @@ const Dashboard = () => {
     <div className="max-w-7xl mx-auto px-2 lg:px-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 lg:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Hello, {user.name.split(' ')[0]} 👋</h1>
-          <p className="text-muted-foreground mt-3 text-base">Today is <span className="font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md">{format(new Date(), 'd MMM yyyy')}</span></p>
+        <div className="flex items-center gap-3">
+          <AvatarUpload userId={user.id} currentAvatar={user.avatar} name={user.name} size="md" editable={false} />
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Hello, {user.name.split(' ')[0]} 👋</h1>
+            <p className="text-muted-foreground mt-1 text-sm">Today is <span className="font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md">{format(new Date(), 'd MMM yyyy')}</span></p>
+          </div>
         </div>
         {isAdmin &&
         <div className="flex items-center gap-2">
@@ -194,6 +199,35 @@ const Dashboard = () => {
               </div>
             </motion.div>
           }
+
+          {/* Notepad Widget */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <StickyNote className="w-4 h-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-foreground">My Notes</h2>
+              </div>
+              <button onClick={() => navigate('/notepad')} className="text-xs text-primary hover:underline">View All</button>
+            </div>
+            {notes.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <StickyNote className="w-8 h-8 text-muted-foreground/30 mb-2" />
+                <p className="text-xs text-muted-foreground">No notes yet</p>
+                <button onClick={() => navigate('/notepad')} className="text-xs text-primary mt-2 hover:underline">Create your first note</button>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {notes.slice(0, 4).map(note => (
+                  <div key={note.id} onClick={() => navigate('/notepad')}
+                    className="p-2.5 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+                    <p className="text-sm font-medium text-foreground truncate">{note.title || 'Untitled'}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{note.content || 'No content'}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">{format(new Date(note.updated_at), 'd MMM, HH:mm')}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
         </div>
 
         {/* Right column: High Priority + Calendar */}
