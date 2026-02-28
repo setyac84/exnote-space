@@ -33,8 +33,8 @@ Deno.serve(async (req) => {
       .eq("user_id", caller.id)
       .single();
 
-    if (roleData?.role !== "super_admin") {
-      return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
+    if (!['super_admin', 'admin'].includes(roleData?.role)) {
+      return new Response(JSON.stringify({ error: "Forbidden: admin or above only" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
     const callerCompanyId = callerProfile?.company_id;
 
-    // If scoped super admin, verify target is in same company
+    // If scoped admin, verify target is in same holding group
     if (callerCompanyId !== null) {
       const { data: targetProfile } = await adminClient
         .from("profiles")
@@ -69,8 +69,28 @@ Deno.serve(async (req) => {
         .eq("id", user_id)
         .single();
 
-      if (!targetProfile || targetProfile.company_id !== callerCompanyId) {
-        return new Response(JSON.stringify({ error: "Forbidden: member not in your company" }), {
+      if (!targetProfile) {
+        return new Response(JSON.stringify({ error: "Member not found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check if target is in same company or a sub-company
+      const targetCompanyId = targetProfile.company_id;
+      const sameCompany = targetCompanyId === callerCompanyId;
+
+      let inSubCompany = false;
+      if (!sameCompany && targetCompanyId) {
+        const { data: targetCompany } = await adminClient
+          .from("companies")
+          .select("parent_id")
+          .eq("id", targetCompanyId)
+          .single();
+        inSubCompany = targetCompany?.parent_id === callerCompanyId;
+      }
+
+      if (!sameCompany && !inSubCompany) {
+        return new Response(JSON.stringify({ error: "Forbidden: member not in your company group" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
