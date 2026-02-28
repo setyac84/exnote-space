@@ -26,7 +26,7 @@ const StyledDropdown = <T extends string>({ value, onChange, options, placeholde
   return (
     <div className={cn("relative", className)} ref={ref}>
       <button type="button" onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground hover:border-primary/40 transition-colors">
+        className="flex items-center justify-between w-full bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-xs text-foreground hover:border-primary/40 transition-colors">
         <span className={!selected ? 'text-muted-foreground' : ''}>{selected?.label || placeholder || 'Select...'}</span>
         <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
