@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProjects, useTasks, useCompanies } from '@/hooks/useSupabaseData';
+import { useProjects, useTasks, useCompanies, useUpdateProject } from '@/hooks/useSupabaseData';
 import ProjectCard from '@/components/ProjectCard';
 import ProjectModal from '@/components/ProjectModal';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Plus, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type ProjectTab = 'all' | 'completed' | 'archived';
@@ -16,6 +16,7 @@ const Projects = () => {
   const { data: allProjects = [] } = useProjects();
   const { data: allTasks = [] } = useTasks();
   const { data: companies = [] } = useCompanies();
+  const updateProjectMutation = useUpdateProject();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [modalMode, setModalMode] = useState<'view' | 'edit' | 'create'>('view');
@@ -91,14 +92,36 @@ const Projects = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {projectsWithTasks.map((project, i) => (
-          <ProjectCard
-            key={project.id}
-            project={project as any}
-            companyName={companies.find(c => c.id === project.company_id)?.name || ''}
-            index={i}
-            onClick={() => handleCardClick(project)}
-            onNavigate={() => navigate(`/tasks?project=${project.id}`)}
-          />
+          <div key={project.id} className="relative">
+            <ProjectCard
+              project={project as any}
+              companyName={companies.find(c => c.id === project.company_id)?.name || ''}
+              index={i}
+              onClick={() => handleCardClick(project)}
+              onNavigate={() => navigate(`/tasks?project=${project.id}`)}
+            />
+            {(activeTab === 'completed' || activeTab === 'archived') && isAdmin && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (activeTab === 'archived') {
+                    updateProjectMutation.mutate({ id: project.id, status: 'completed' });
+                  } else {
+                    updateProjectMutation.mutate({ id: project.id, status: 'archived' });
+                  }
+                }}
+                className={cn(
+                  "absolute top-4 right-4 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors z-10",
+                  activeTab === 'archived'
+                    ? 'border-primary bg-primary/20 hover:border-destructive hover:bg-transparent'
+                    : 'border-muted-foreground/40 hover:border-primary'
+                )}
+                title={activeTab === 'archived' ? 'Unarchive this project' : 'Archive this project'}
+              >
+                <Check className={cn('w-3 h-3', activeTab === 'archived' ? 'text-primary' : 'text-transparent hover:text-primary')} />
+              </button>
+            )}
+          </div>
         ))}
       </div>
 

@@ -197,9 +197,9 @@ const TaskListPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-2">
           {([
-            { key: 'all', label: 'All Task View', count: tabCounts.all },
-            { key: 'done', label: 'Task Done', count: tabCounts.done },
-            { key: 'archive', label: 'Task Archive', count: tabCounts.archive },
+            { key: 'all', label: 'All Tasks', count: tabCounts.all },
+            { key: 'done', label: 'Completed', count: tabCounts.done },
+            { key: 'archive', label: 'Archived', count: tabCounts.archive },
           ] as { key: TabView; label: string; count: number }[]).map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className={cn(
@@ -266,29 +266,7 @@ const TaskListPage = () => {
             return (
               <motion.div key={task.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                 onClick={() => setSelectedTask(task)} className="glass-card rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all overflow-visible relative">
-                {/* Archive checkbox on Done tab */}
-                {(activeTab === 'done' || activeTab === 'archive') && isAdmin && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (activeTab === 'archive') {
-                        updateTaskMutation.mutate({ id: task.id, archived: false } as any);
-                      } else {
-                        handleArchiveTask(task.id);
-                      }
-                    }}
-                    className={cn(
-                      "absolute top-3 right-3 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors z-10",
-                      activeTab === 'archive'
-                        ? 'border-primary bg-primary/20 hover:border-destructive hover:bg-transparent'
-                        : 'border-muted-foreground/40 hover:border-primary'
-                    )}
-                    title={activeTab === 'archive' ? 'Unarchive this task' : 'Archive this task'}
-                  >
-                    <Check className={cn('w-3 h-3', activeTab === 'archive' ? 'text-primary' : 'text-transparent hover:text-primary')} />
-                  </button>
-                )}
-                <div className="flex items-center justify-between mb-2 pr-6">
+                <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] text-muted-foreground">{projectName} · {companyName}</p>
                   <div className="flex items-center gap-1.5">
                     <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
@@ -297,17 +275,38 @@ const TaskListPage = () => {
                 </div>
                 <h3 className="text-sm font-medium text-foreground mb-1">{task.title}</h3>
                 <p className="text-xs text-muted-foreground mb-3">{task.description}</p>
-                <div className="flex items-center text-[10px] text-muted-foreground mb-2">
-                  <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                  <span className="text-[10px] text-muted-foreground">{formatDate(task.due_date)}</span>
+                  <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                     <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-bold text-primary">
                       {assignee?.name.split(' ').map(n => n[0]).join('') || '?'}
                     </div>
                     <span>{assignee?.name.split(' ')[0] || 'Unassigned'}</span>
                   </div>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                  <span className="text-[10px] text-muted-foreground">{formatDate(task.due_date)}</span>
-                  <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
+                  {(activeTab === 'done' || activeTab === 'archive') && isAdmin && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (activeTab === 'archive') {
+                          updateTaskMutation.mutate({ id: task.id, archived: false } as any);
+                        } else {
+                          handleArchiveTask(task.id);
+                        }
+                      }}
+                      className={cn(
+                        "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                        activeTab === 'archive'
+                          ? 'border-primary bg-primary/20 hover:border-destructive hover:bg-transparent'
+                          : 'border-muted-foreground/40 hover:border-primary'
+                      )}
+                      title={activeTab === 'archive' ? 'Unarchive this task' : 'Archive this task'}
+                    >
+                      <Check className={cn('w-3 h-3', activeTab === 'archive' ? 'text-primary' : 'text-transparent hover:text-primary')} />
+                    </button>
+                  )}
                 </div>
               </motion.div>
             );

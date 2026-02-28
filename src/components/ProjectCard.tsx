@@ -63,7 +63,7 @@ const ProjectCard = ({ project, companyName, index, onClick, onNavigate }: Proje
         </div>
         {onNavigate && (
           <button onClick={(e) => { e.stopPropagation(); onNavigate(); }}
-            className="flex items-center gap-1 text-primary hover:underline text-[10px] font-medium">
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-medium hover:bg-primary/20 transition-colors">
             View Tasks <ArrowRight className="w-3 h-3" />
           </button>
         )}
