@@ -4,7 +4,7 @@ import { useProjects, useTasks, useMembers, useCompanies, useUpdateTask, useDele
 import TaskModal from '@/components/TaskModal';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { formatDate } from '@/lib/formatDate';
+import { formatDate, formatDaysLeft, daysLeftColor } from '@/lib/formatDate';
 import { useSearchParams } from 'react-router-dom';
 import { List, LayoutGrid, Plus, ChevronDown, Check } from 'lucide-react';
 
@@ -334,15 +334,20 @@ const TaskListPage = () => {
                   <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
                 </div>
                 <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <div className="flex -space-x-1.5">
-                      {assignees.slice(0, 3).map((a: any) => (
-                        <div key={a.id} className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-bold text-primary border border-card">
-                          {a.name.split(' ').map((n: string) => n[0]).join('')}
-                        </div>
-                      ))}
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex -space-x-1.5">
+                        {assignees.slice(0, 3).map((a: any) => (
+                          <div key={a.id} className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-bold text-primary border border-card">
+                            {a.name.split(' ').map((n: string) => n[0]).join('')}
+                          </div>
+                        ))}
+                      </div>
+                      <span>{assignees.length > 0 ? (assignees.length <= 2 ? assignees.map((a: any) => a.name.split(' ')[0]).join(', ') : `${assignees.length} assignees`) : 'Unassigned'}</span>
                     </div>
-                    <span>{assignees.length > 0 ? (assignees.length <= 2 ? assignees.map((a: any) => a.name.split(' ')[0]).join(', ') : `${assignees.length} assignees`) : 'Unassigned'}</span>
+                    {task.due_date && formatDaysLeft(task.due_date) && (
+                      <span className={cn('font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
+                    )}
                   </div>
                   {(activeTab === 'done' || activeTab === 'archive') && isAdmin && (
                     <button
