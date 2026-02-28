@@ -111,7 +111,7 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="max-w-8xl mx-auto px-2 lg:px-6">
+    <div className="max-w-7xl mx-auto px-2 lg:px-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 lg:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
