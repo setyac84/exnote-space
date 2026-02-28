@@ -86,10 +86,10 @@ const Dashboard = () => {
   const divisionMembers = allMembers.filter((u) => u.division === activeDivision && u.role !== 'super_admin');
 
   const stats = [
-  { label: 'Total Projects', value: divisionProjects.length, icon: FolderKanban, color: 'text-primary', bgColor: 'bg-primary/10', onClick: () => navigate('/projects') },
-  { label: 'To Do', value: todoCount, icon: Clock, color: 'text-info', bgColor: 'bg-info/10', onClick: () => navigate('/tasks?status=todo') },
-  { label: 'In Progress', value: doingCount, icon: AlertTriangle, color: 'text-warning', bgColor: 'bg-warning/10', onClick: () => navigate('/tasks?status=doing') },
-  { label: 'Overdue', value: overdueCount, icon: AlertTriangle, color: 'text-destructive', bgColor: 'bg-destructive/10', onClick: () => navigate('/tasks') }];
+  { label: 'Total Projects', value: divisionProjects.length, icon: FolderKanban, color: 'text-primary', bgColor: 'bg-primary/10', onClick: () => navigate('/projects'), viewLabel: 'View projects' },
+  { label: 'To Do', value: todoCount, icon: Clock, color: 'text-info', bgColor: 'bg-info/10', onClick: () => navigate('/tasks?status=todo'), viewLabel: 'View tasks' },
+  { label: 'In Progress', value: doingCount, icon: AlertTriangle, color: 'text-warning', bgColor: 'bg-warning/10', onClick: () => navigate('/tasks?status=doing'), viewLabel: 'View tasks' },
+  { label: 'Overdue', value: overdueCount, icon: AlertTriangle, color: 'text-destructive', bgColor: 'bg-destructive/10', onClick: () => navigate('/tasks'), viewLabel: 'View tasks' }];
 
 
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
@@ -155,7 +155,7 @@ const Dashboard = () => {
                 </div>
                 <button onClick={stat.onClick}
               className="flex items-center justify-between w-full px-4 py-2.5 text-xs text-muted-foreground font-medium border-t border-border hover:bg-secondary/50 hover:text-foreground transition-colors">
-                  <span>View all</span>
+                  <span>{stat.viewLabel}</span>
                   <ChevronDown className="w-3.5 h-3.5 -rotate-90" />
                 </button>
               </motion.div>
