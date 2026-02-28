@@ -68,6 +68,7 @@ const Dashboard = () => {
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [taskViewTab, setTaskViewTab] = useState<TaskViewTab>('today');
   const [filterProject, setFilterProject] = useState<string>('all');
+  const [filterAssignee, setFilterAssignee] = useState<string>('all');
 
   if (!user) return null;
 
@@ -123,6 +124,13 @@ const Dashboard = () => {
       filtered = filtered.filter(t => t.project_id === filterProject);
     }
     
+    if (filterAssignee !== 'all') {
+      filtered = filtered.filter(t => {
+        const taIds = allTaskAssignees.filter(ta => ta.task_id === t.id).map(ta => ta.assignee_id);
+        return taIds.includes(filterAssignee) || t.assignee_id === filterAssignee;
+      });
+    }
+    
     return filtered.sort((a, b) => {
       if (!a.due_date) return 1;
       if (!b.due_date) return -1;
@@ -142,6 +150,11 @@ const Dashboard = () => {
   const projectFilterOptions = [
     { value: 'all', label: 'All Projects' },
     ...divisionProjects.map(p => ({ value: p.id, label: p.name }))
+  ];
+
+  const assigneeFilterOptions = [
+    { value: 'all', label: 'All Assignees' },
+    ...divisionMembers.map(m => ({ value: m.id, label: m.name }))
   ];
 
   return (
@@ -278,12 +291,22 @@ const Dashboard = () => {
                   </button>
                 ))}
               </div>
-              <StyledDropdown
-                value={filterProject}
-                onChange={(v) => setFilterProject(v)}
-                options={projectFilterOptions}
-                className="w-[180px]"
-              />
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <StyledDropdown
+                    value={filterAssignee}
+                    onChange={(v) => setFilterAssignee(v)}
+                    options={assigneeFilterOptions}
+                    className="w-[160px]"
+                  />
+                )}
+                <StyledDropdown
+                  value={filterProject}
+                  onChange={(v) => setFilterProject(v)}
+                  options={projectFilterOptions}
+                  className="w-[160px]"
+                />
+              </div>
             </div>
 
             {/* Task heading */}
