@@ -21,6 +21,8 @@ interface TaskCalendarProps {
 type ViewMode = 'weekly' | 'monthly';
 
 const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const isWeekend = (dayIndex: number) => dayIndex >= 5; // 0=Mon...6=Sun
+const isWeekendDate = (date: Date) => { const d = date.getDay(); return d === 0 || d === 6; };
 
 const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], taskAssignees = [], onTaskClick }) => {
   const [view, setView] = useState<ViewMode>('weekly');
@@ -110,9 +112,10 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], taskAs
           <div className="hidden sm:grid grid-cols-7 gap-1">
             {days.map(day => {
               const dayTasks = getTasksForDay(day);
+              const weekend = isWeekendDate(day);
               return (
                 <div key={day.toISOString()} className="min-h-[120px]">
-                  <div className={cn('text-center py-1.5 rounded-lg mb-1 text-xs font-medium', isToday(day) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
+                  <div className={cn('text-center py-1.5 rounded-lg mb-1 text-xs font-medium', isToday(day) ? 'bg-primary text-primary-foreground' : weekend ? 'text-destructive' : 'text-muted-foreground')}>
                     {format(day, 'EEE')} <span className="ml-1">{format(day, 'd')}</span>
                   </div>
                   <div className="space-y-1">
@@ -129,7 +132,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], taskAs
                 const dayTasks = getTasksForDay(day);
                 return (
                   <div key={day.toISOString()} className="flex-shrink-0" style={{ width: '110px' }}>
-                    <div className={cn('text-center py-1.5 rounded-lg mb-1 text-xs font-medium', isToday(day) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
+                    <div className={cn('text-center py-1.5 rounded-lg mb-1 text-xs font-medium', isToday(day) ? 'bg-primary text-primary-foreground' : isWeekendDate(day) ? 'text-destructive' : 'text-muted-foreground')}>
                       {format(day, 'EEEEE')} <span className="ml-1">{format(day, 'd')}</span>
                     </div>
                     <div className="space-y-1 min-h-[80px]">
@@ -149,18 +152,19 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], taskAs
           {/* Desktop monthly */}
           <div className="hidden sm:block">
             <div className="grid grid-cols-7 gap-1 mb-1">
-              {dayHeaders.map(d => (
-                <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1.5 rounded-lg">{d}</div>
+              {dayHeaders.map((d, i) => (
+                <div key={d} className={cn("text-center text-xs font-medium py-1.5 rounded-lg", isWeekend(i) ? 'text-destructive' : 'text-muted-foreground')}>{d}</div>
               ))}
             </div>
             <div className="grid grid-cols-7 gap-1">
               {days.map(day => {
                 const dayTasks = getTasksForDay(day);
                 const inMonth = isSameMonth(day, currentDate);
+                const weekend = isWeekendDate(day);
                 return (
                   <div key={day.toISOString()} className={cn('min-h-[90px] rounded-lg p-1 border border-transparent transition-colors',
-                    !inMonth && 'opacity-30', isToday(day) && 'border-primary/40 bg-primary/5')}>
-                    <p className={cn('text-[10px] font-medium mb-0.5 text-center', isToday(day) ? 'text-primary' : 'text-muted-foreground')}>{format(day, 'd')}</p>
+                    !inMonth && 'opacity-30')}>
+                    <p className={cn('text-[10px] font-medium mb-0.5 text-center', isToday(day) ? 'bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center mx-auto' : weekend ? 'text-destructive' : 'text-muted-foreground')}>{format(day, 'd')}</p>
                     <div className="space-y-0.5">
                       {dayTasks.map(task => <TaskChip key={task.id} task={task} compact />)}
                     </div>
@@ -173,18 +177,19 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], taskAs
           {/* Mobile monthly: compact list-style per week */}
           <div className="sm:hidden">
             <div className="grid grid-cols-7 gap-px mb-1">
-              {dayHeaders.map(d => (
-                <div key={d} className="text-center text-[9px] font-medium text-muted-foreground py-1">{d[0]}</div>
+              {dayHeaders.map((d, i) => (
+                <div key={d} className={cn("text-center text-[9px] font-medium py-1", isWeekend(i) ? 'text-destructive' : 'text-muted-foreground')}>{d[0]}</div>
               ))}
             </div>
             <div className="grid grid-cols-7 gap-px">
               {days.map(day => {
                 const dayTasks = getTasksForDay(day);
                 const inMonth = isSameMonth(day, currentDate);
+                const weekend = isWeekendDate(day);
                 return (
                   <div key={day.toISOString()} className={cn('min-h-[60px] rounded-md p-0.5 border border-transparent transition-colors',
-                    !inMonth && 'opacity-30', isToday(day) && 'border-primary/40 bg-primary/5')}>
-                    <p className={cn('text-[9px] font-medium mb-0.5 text-center', isToday(day) ? 'text-primary font-bold' : 'text-muted-foreground')}>{format(day, 'd')}</p>
+                    !inMonth && 'opacity-30')}>
+                    <p className={cn('text-[9px] font-medium mb-0.5 text-center', isToday(day) ? 'bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center mx-auto text-[8px]' : weekend ? 'text-destructive' : 'text-muted-foreground')}>{format(day, 'd')}</p>
                     <div className="space-y-0.5">
                       {dayTasks.slice(0, 2).map(task => (
                         <div key={task.id} onClick={() => onTaskClick(task)}
