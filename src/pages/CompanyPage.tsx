@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Pencil, Trash2, Save, X, Building2 } from 'lucide-react';
 
 const CompanyPage = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const { data: companies = [] } = useCompanies();
   const createMutation = useCreateCompany();
   const updateMutation = useUpdateCompany();
@@ -51,7 +51,7 @@ const CompanyPage = () => {
           <h1 className="text-2xl font-bold text-foreground">Companies</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage companies for your projects</p>
         </div>
-        {isAdmin && (
+        {isSuperAdmin && (
           <button onClick={() => { setShowCreate(true); setForm({ name: '', description: '' }); }}
             className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
             <Plus className="w-4 h-4" /> Add Company
@@ -105,7 +105,7 @@ const CompanyPage = () => {
                     <p className="text-xs text-muted-foreground">{company.description}</p>
                   </div>
                 </div>
-                {isAdmin && (
+                {isSuperAdmin && (
                   <div className="flex items-center gap-1">
                     <button onClick={() => handleEdit(company)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">
                       <Pencil className="w-4 h-4" />
