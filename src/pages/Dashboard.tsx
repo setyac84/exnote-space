@@ -333,9 +333,7 @@ const Dashboard = () => {
                           )}
                           {task.due_date && (
                             <>
-                              {taskViewTab !== 'tomorrow' && (
-                                <span className="text-[10px] text-muted-foreground">· {formatDate(task.due_date)}</span>
-                              )}
+                              <span className="text-[10px] text-muted-foreground">· {formatDate(task.due_date)}</span>
                               {taskViewTab === 'all' && formatDaysLeft(task.due_date) && (
                                 <span className={cn('text-[10px] font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
                               )}
