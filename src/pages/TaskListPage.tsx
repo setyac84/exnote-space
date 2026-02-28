@@ -91,6 +91,17 @@ const TaskListPage = () => {
   const memberFilter = searchParams.get('member');
   const priorityFilter = searchParams.get('priority');
   const projectFilter = searchParams.get('project') || '';
+  const assigneeFilter = searchParams.get('assignee') || '';
+
+  const handleAssigneeFilterChange = (assigneeId: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (assigneeId) {
+      newParams.set('assignee', assigneeId);
+    } else {
+      newParams.delete('assignee');
+    }
+    setSearchParams(newParams);
+  };
 
   const handleProjectFilterChange = (projectId: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -105,6 +116,10 @@ const TaskListPage = () => {
   const divisionProjects = useMemo(() => {
     return allProjects.filter(p => p.division === activeDivision);
   }, [allProjects, activeDivision]);
+
+  const divisionMembers = useMemo(() => {
+    return allMembers.filter(m => m.division === activeDivision && m.role !== 'super_admin');
+  }, [allMembers, activeDivision]);
 
   const filteredTasks = useMemo(() => {
     if (!user) return [];
@@ -129,6 +144,12 @@ const TaskListPage = () => {
       filtered = filtered.filter(t => priorities.includes(t.priority));
     }
     if (projectFilter) filtered = filtered.filter(t => t.project_id === projectFilter);
+    if (assigneeFilter) {
+      filtered = filtered.filter(t => {
+        const taIds = allTaskAssignees.filter(ta => ta.task_id === t.id).map(ta => ta.assignee_id);
+        return taIds.includes(assigneeFilter) || t.assignee_id === assigneeFilter;
+      });
+    }
 
     // Status filter from URL params (e.g. ?status=todo)
     if (statusFilter) {
@@ -158,6 +179,36 @@ const TaskListPage = () => {
     });
     return filtered;
   }, [allTasks, allProjects, activeDivision, isAdmin, user, memberFilter, priorityFilter, statusFilter, projectFilter, activeTab, allTaskAssignees]);
+
+const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: string; name: string }[]; value: string; onChange: (v: string) => void }) => {
+  const [open, setOpen] = useState(false);
+  const selected = members.find(m => m.id === value);
+  return (
+    <div className="relative" onClick={e => e.stopPropagation()}>
+      <button onClick={() => setOpen(!open)} className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-secondary/50 text-foreground hover:border-primary/40 transition-colors">
+        <span>{selected?.name || 'Filter by assignee'}</span>
+        <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 bg-popover border border-border rounded-xl shadow-lg z-50 py-1 min-w-[180px] max-h-[260px] overflow-y-auto">
+            <button onClick={() => { onChange(''); setOpen(false); }}
+              className={cn('w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 transition-colors', !value && 'font-medium text-primary')}>
+              All Assignees
+            </button>
+            {members.map(m => (
+              <button key={m.id} onClick={() => { onChange(m.id); setOpen(false); }}
+                className={cn('w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 transition-colors', value === m.id && 'font-medium text-primary')}>
+                {m.name}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
@@ -250,11 +301,20 @@ const TaskListPage = () => {
             </button>
           ))}
         </div>
-        <ProjectFilterDropdown
-          projects={divisionProjects}
-          value={projectFilter}
-          onChange={handleProjectFilterChange}
-        />
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <AssigneeFilterDropdown
+              members={divisionMembers}
+              value={assigneeFilter}
+              onChange={handleAssigneeFilterChange}
+            />
+          )}
+          <ProjectFilterDropdown
+            projects={divisionProjects}
+            value={projectFilter}
+            onChange={handleProjectFilterChange}
+          />
+        </div>
       </div>
 
       {viewMode === 'list' ? (
