@@ -129,6 +129,11 @@ const TaskListPage = () => {
     }
     if (projectFilter) filtered = filtered.filter(t => t.project_id === projectFilter);
 
+    // Status filter from URL params (e.g. ?status=todo)
+    if (statusFilter) {
+      filtered = filtered.filter(t => t.status === statusFilter);
+    }
+
     // Tab filtering
     if (activeTab === 'all') {
       filtered = filtered.filter(t => t.status !== 'done' && !(t as any).archived);
@@ -146,7 +151,7 @@ const TaskListPage = () => {
       return (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4);
     });
     return filtered;
-  }, [allTasks, allProjects, activeDivision, isAdmin, user, memberFilter, priorityFilter, projectFilter, activeTab, allTaskAssignees]);
+  }, [allTasks, allProjects, activeDivision, isAdmin, user, memberFilter, priorityFilter, statusFilter, projectFilter, activeTab, allTaskAssignees]);
 
 
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
