@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjects, useTasks, useMembers, useCompanies, useCreateProject, useCreateTask, useUpdateTask, useDeleteTask, useUpdateProfile, useUpdateUserRole } from '@/hooks/useSupabaseData';
 import { formatDate } from '@/lib/formatDate';
+import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users, Plus, Pencil, Trash2, Save, ChevronDown } from 'lucide-react';
 import TaskCalendar from '@/components/TaskCalendar';
@@ -111,6 +112,7 @@ const Dashboard = () => {
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {isSuperAdmin ? 'All divisions & projects' : isAdmin ? `Overview of ${activeDivision} division` : 'Summary of tasks assigned to you'}
           </p>
+          <p className="text-xs text-muted-foreground mt-0.5">Today is {format(new Date(), 'd MMM yyyy')}</p>
         </div>
         {isAdmin && (
           <div className="flex items-center gap-2">
