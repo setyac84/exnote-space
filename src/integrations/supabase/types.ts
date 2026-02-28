@@ -335,7 +335,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_division: "creative" | "developer"
+      app_division: "creative" | "developer" | "management"
       app_role: "super_admin" | "admin" | "member"
       project_status: "planning" | "ongoing" | "completed" | "archived"
       task_priority: "low" | "medium" | "high" | "urgent"
@@ -467,7 +467,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_division: ["creative", "developer"],
+      app_division: ["creative", "developer", "management"],
       app_role: ["super_admin", "admin", "member"],
       project_status: ["planning", "ongoing", "completed", "archived"],
       task_priority: ["low", "medium", "high", "urgent"],

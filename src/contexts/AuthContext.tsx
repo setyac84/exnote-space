@@ -56,7 +56,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         position: profile.position,
       };
       setUser(userProfile);
-      setActiveDivision(userProfile.division);
+      // Super admin defaults to 'management', others to their profile division
+      setActiveDivision(userProfile.role === 'super_admin' ? 'management' : userProfile.division);
     }
   }, []);
 

@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
-type Division = 'creative' | 'developer';
+type Division = 'creative' | 'developer' | 'management';
 
 const priorityColors: Record<TaskPriority, string> = {
   low: 'text-muted-foreground bg-muted', medium: 'text-info bg-info/15', high: 'text-warning bg-warning/15', urgent: 'text-destructive bg-destructive/15',

@@ -57,6 +57,7 @@ const Sidebar = () => {
   ];
 
   const divisionOptions: { value: Division; label: string; icon: typeof Palette }[] = [
+    ...(isSuperAdmin ? [{ value: 'management' as Division, label: 'Management', icon: Building2 }] : []),
     { value: 'creative', label: 'Creative', icon: Palette },
     { value: 'developer', label: 'Developer', icon: Code2 },
   ];

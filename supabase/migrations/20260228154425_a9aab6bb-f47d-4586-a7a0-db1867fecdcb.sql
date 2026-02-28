@@ -1,0 +1,1 @@
+ALTER TYPE public.app_division ADD VALUE IF NOT EXISTS 'management';

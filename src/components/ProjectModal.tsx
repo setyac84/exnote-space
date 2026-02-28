@@ -12,7 +12,7 @@ import StyledDropdown from '@/components/StyledDropdown';
 
 type ProjectStatus = 'planning' | 'ongoing' | 'completed' | 'archived';
 type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
-type Division = 'creative' | 'developer';
+type Division = 'creative' | 'developer' | 'management';
 type ModalMode = 'view' | 'edit' | 'create';
 
 const statusOptions: { value: ProjectStatus; label: string }[] = [

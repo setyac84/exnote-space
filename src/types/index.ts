@@ -1,4 +1,4 @@
-export type Division = 'creative' | 'developer';
+export type Division = 'creative' | 'developer' | 'management';
 export type UserRole = 'super_admin' | 'admin' | 'member';
 export type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
