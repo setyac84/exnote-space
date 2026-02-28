@@ -92,36 +92,23 @@ const Projects = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {projectsWithTasks.map((project, i) => (
-          <div key={project.id} className="relative">
-            <ProjectCard
-              project={project as any}
-              companyName={companies.find(c => c.id === project.company_id)?.name || ''}
-              index={i}
-              onClick={() => handleCardClick(project)}
-              onNavigate={() => navigate(`/tasks?project=${project.id}`)}
-            />
-            {(activeTab === 'completed' || activeTab === 'archived') && isAdmin && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (activeTab === 'archived') {
-                    updateProjectMutation.mutate({ id: project.id, status: 'completed' });
-                  } else {
-                    updateProjectMutation.mutate({ id: project.id, status: 'archived' });
-                  }
-                }}
-                className={cn(
-                  "absolute bottom-5 right-5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors z-10",
-                  activeTab === 'archived'
-                    ? 'border-primary bg-primary/20 hover:border-destructive hover:bg-transparent'
-                    : 'border-muted-foreground/40 hover:border-primary'
-                )}
-                title={activeTab === 'archived' ? 'Unarchive this project' : 'Archive this project'}
-              >
-                <Check className={cn('w-3 h-3', activeTab === 'archived' ? 'text-primary' : 'text-transparent hover:text-primary')} />
-              </button>
-            )}
-          </div>
+          <ProjectCard
+            key={project.id}
+            project={project as any}
+            companyName={companies.find(c => c.id === project.company_id)?.name || ''}
+            index={i}
+            onClick={() => handleCardClick(project)}
+            onNavigate={() => navigate(`/tasks?project=${project.id}`)}
+            showArchiveCheckbox={(activeTab === 'completed' || activeTab === 'archived') && isAdmin}
+            isArchived={activeTab === 'archived'}
+            onArchiveToggle={() => {
+              if (activeTab === 'archived') {
+                updateProjectMutation.mutate({ id: project.id, status: 'completed' });
+              } else {
+                updateProjectMutation.mutate({ id: project.id, status: 'archived' });
+              }
+            }}
+          />
         ))}
       </div>
 
