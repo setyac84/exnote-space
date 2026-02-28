@@ -190,7 +190,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
 
   const isCreate = initialMode === 'create';
   const isEditing = mode === 'edit';
-  const divisionMembers = allMembers.filter(u => u.division === division);
+  const divisionMembers = allMembers.filter(u => u.division === division && u.role !== 'super_admin');
   const divisionProjects = allProjects.filter(p => p.division === division);
 
   useEffect(() => {
