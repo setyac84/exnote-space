@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import Sidebar from '@/components/Sidebar';
+import GlobalSearch from '@/components/GlobalSearch';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -20,7 +21,15 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <main className="p-4 pt-[72px] lg:pt-6 lg:pl-56 lg:pr-6">
+      {/* Top bar with search - desktop */}
+      <div className="hidden lg:flex fixed top-0 left-52 right-0 h-14 items-center justify-center px-6 z-30 bg-background/80 backdrop-blur-sm border-b border-border">
+        <GlobalSearch />
+      </div>
+      {/* Top bar with search - mobile (below mobile header) */}
+      <div className="lg:hidden px-4 pt-[60px] pb-2">
+        <GlobalSearch />
+      </div>
+      <main className="p-4 pt-2 lg:pt-[72px] lg:pl-56 lg:pr-6">
         {children}
       </main>
     </div>
