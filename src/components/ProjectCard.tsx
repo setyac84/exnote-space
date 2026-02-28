@@ -1,5 +1,6 @@
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, ArrowRight, Check } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDateRange } from '@/lib/formatDate';
 
@@ -12,6 +13,13 @@ const priorityColors: Record<string, string> = {
   low: 'text-muted-foreground', medium: 'text-info', high: 'text-warning', urgent: 'text-destructive',
 };
 
+const statusOptions = [
+  { value: 'planning', label: 'Planning' },
+  { value: 'ongoing', label: 'Ongoing' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'archived', label: 'Archived' },
+];
+
 interface ProjectCardProps {
   project: any;
   companyName: string;
@@ -21,23 +29,61 @@ interface ProjectCardProps {
   showArchiveCheckbox?: boolean;
   isArchived?: boolean;
   onArchiveToggle?: () => void;
+  onStatusChange?: (status: string) => void;
+  isAdmin?: boolean;
 }
 
-const ProjectCard = ({ project, companyName, index, onClick, onNavigate, showArchiveCheckbox, isArchived, onArchiveToggle }: ProjectCardProps) => {
+const ProjectCard = ({ project, companyName, index, onClick, onNavigate, showArchiveCheckbox, isArchived, onArchiveToggle, onStatusChange, isAdmin }: ProjectCardProps) => {
   const tasks = project.tasks || [];
   const doneTasks = tasks.filter((t: any) => t.status === 'done').length;
   const totalTasks = tasks.length;
   const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const [statusOpen, setStatusOpen] = useState(false);
+  const statusRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) setStatusOpen(false);
+    };
+    if (statusOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [statusOpen]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08, duration: 0.35 }}
       onClick={onClick} className="glass-card rounded-xl p-5 cursor-pointer hover:border-primary/30 transition-all group">
       <div className="flex items-start justify-between mb-1">
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-muted-foreground mb-1">{companyName}</p>
-          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">{project.name}</h3>
+        <div className="flex items-center gap-2">
+          {/* Status dropdown (left side) */}
+          {isAdmin && onStatusChange ? (
+            <div ref={statusRef} className="relative">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setStatusOpen(!statusOpen); }}
+                className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full capitalize inline-flex items-center gap-1', statusColors[project.status])}
+              >
+                {project.status}
+                <ChevronDown className={cn("w-2.5 h-2.5 transition-transform", statusOpen && "rotate-180")} />
+              </button>
+              {statusOpen && (
+                <div className="absolute top-full left-0 mt-1.5 bg-popover border border-border rounded-xl shadow-xl z-[70] p-1 min-w-[120px]">
+                  {statusOptions.map(opt => (
+                    <button key={opt.value} type="button"
+                      onClick={(e) => { e.stopPropagation(); onStatusChange(opt.value); setStatusOpen(false); }}
+                      className={cn('w-full text-left px-2.5 py-1.5 text-[11px] rounded-lg transition-colors capitalize',
+                        project.status === opt.value ? 'font-medium bg-accent text-accent-foreground' : 'text-foreground hover:bg-accent/60')}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full capitalize', statusColors[project.status])}>{project.status}</span>
+          )}
         </div>
         <div className="flex items-center gap-2">
+          {/* Archive checkbox (right side) */}
           {showArchiveCheckbox && onArchiveToggle && (
             <button
               onClick={(e) => { e.stopPropagation(); onArchiveToggle(); }}
@@ -52,8 +98,12 @@ const ProjectCard = ({ project, companyName, index, onClick, onNavigate, showArc
               <Check className={cn('w-3 h-3', isArchived ? 'text-primary' : 'text-transparent hover:text-primary')} />
             </button>
           )}
-          <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full capitalize', statusColors[project.status])}>{project.status}</span>
         </div>
+      </div>
+
+      <div className="mt-1 mb-1">
+        <p className="text-[10px] text-muted-foreground mb-1">{companyName}</p>
+        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">{project.name}</h3>
       </div>
 
       <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{project.description}</p>
@@ -82,8 +132,8 @@ const ProjectCard = ({ project, companyName, index, onClick, onNavigate, showArc
         </div>
         {onNavigate && (
           <button onClick={(e) => { e.stopPropagation(); onNavigate(); }}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-medium hover:bg-primary/20 transition-colors">
-            View Tasks <ArrowRight className="w-3 h-3" />
+            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors">
+            View all <ChevronRight className="w-3.5 h-3.5" />
           </button>
         )}
       </div>

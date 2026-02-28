@@ -108,6 +108,8 @@ const Projects = () => {
                 updateProjectMutation.mutate({ id: project.id, status: 'archived' });
               }
             }}
+            isAdmin={isAdmin}
+            onStatusChange={(status) => updateProjectMutation.mutate({ id: project.id, status })}
           />
         ))}
       </div>
