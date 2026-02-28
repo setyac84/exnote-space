@@ -77,10 +77,10 @@ const Dashboard = () => {
   const divisionMembers = allMembers.filter(u => u.division === activeDivision && u.role !== 'super_admin');
 
   const stats = [
-    { label: 'Total Projects', value: divisionProjects.length, icon: FolderKanban, color: 'text-primary', onClick: () => navigate('/projects') },
-    { label: 'To Do', value: todoCount, icon: Clock, color: 'text-info', onClick: () => navigate('/tasks?status=todo') },
-    { label: 'In Progress', value: doingCount, icon: AlertTriangle, color: 'text-warning', onClick: () => navigate('/tasks?status=doing') },
-    { label: 'Done', value: doneCount, icon: CheckCircle2, color: 'text-success', onClick: () => navigate('/tasks?status=done') },
+    { label: 'Total Projects', value: divisionProjects.length, icon: FolderKanban, color: 'text-primary', bgColor: 'bg-primary/10', onClick: () => navigate('/projects') },
+    { label: 'To Do', value: todoCount, icon: Clock, color: 'text-info', bgColor: 'bg-info/10', onClick: () => navigate('/tasks?status=todo') },
+    { label: 'In Progress', value: doingCount, icon: AlertTriangle, color: 'text-warning', bgColor: 'bg-warning/10', onClick: () => navigate('/tasks?status=doing') },
+    { label: 'Done', value: doneCount, icon: CheckCircle2, color: 'text-success', bgColor: 'bg-success/10', onClick: () => navigate('/tasks?status=done') },
   ];
 
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
@@ -132,12 +132,20 @@ const Dashboard = () => {
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {stats.map((stat, i) => (
               <motion.div key={stat.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-                onClick={stat.onClick} className="glass-card rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-2">
-                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                  <span className="text-2xl font-bold text-foreground">{stat.value}</span>
+                className="glass-card rounded-xl p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center', stat.bgColor)}>
+                      <stat.icon className={cn('w-4 h-4', stat.color)} />
+                    </div>
+                    <span className="text-xs text-muted-foreground font-medium">{stat.label}</span>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 </div>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                <button onClick={stat.onClick}
+                  className="mt-3 w-full text-[11px] text-muted-foreground font-medium py-1.5 rounded-lg border border-border hover:bg-secondary/50 hover:text-foreground transition-colors">
+                  View all →
+                </button>
               </motion.div>
             ))}
           </div>
