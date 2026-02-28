@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, FolderKanban, LogOut, Palette, Code2,
-  Building2, ListTodo, Users, Menu, X, PlusCircle, Moon, Sun,
+  Building2, ListTodo, Users, Menu, X, PlusCircle, Moon, Sun, StickyNote,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Division } from '@/types';
@@ -46,6 +46,7 @@ const Sidebar = () => {
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/projects', icon: FolderKanban, label: 'Projects' },
     { to: '/tasks', icon: ListTodo, label: 'Tasks' },
+    { to: '/notepad', icon: StickyNote, label: 'Notepad' },
     ...(isAdmin ? [
       { to: '/company', icon: Building2, label: 'Company' },
       { to: '/members', icon: Users, label: 'Members' },

@@ -279,3 +279,50 @@ export function useResetMemberPassword() {
     },
   });
 }
+
+// ─── Notes (Private Notepad) ───
+export function useNotes() {
+  return useQuery({
+    queryKey: ['notes'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('notes').select('*').order('updated_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+export function useCreateNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { title: string; content?: string; user_id: string }) => {
+      const { data, error } = await supabase.from('notes').insert(input).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notes'] }),
+  });
+}
+
+export function useUpdateNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...input }: { id: string; title?: string; content?: string }) => {
+      const { data, error } = await supabase.from('notes').update(input).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notes'] }),
+  });
+}
+
+export function useDeleteNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('notes').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notes'] }),
+  });
+}
