@@ -269,10 +269,10 @@ const Dashboard = () => {
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="glass-card rounded-xl p-5">
             {/* Tab bar + filter */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <div className="flex bg-secondary rounded-lg p-0.5 text-xs">
+              <div className="flex bg-secondary rounded-xl p-0.5 text-xs">
                 {(['today', 'tomorrow', 'all'] as TaskViewTab[]).map(tab => (
                   <button key={tab} onClick={() => setTaskViewTab(tab)}
-                    className={cn('px-3 py-1.5 rounded-md transition-colors whitespace-nowrap', 
+                    className={cn('px-3 py-2 rounded-xl transition-colors whitespace-nowrap text-sm', 
                       taskViewTab === tab ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>
                     {tabLabels[tab]}
                   </button>
