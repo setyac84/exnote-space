@@ -310,71 +310,81 @@ const TaskListPage = () => {
           {filteredTasks.length === 0 && <div className="text-center py-12 text-muted-foreground text-sm">No tasks found.</div>}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredTasks.map((task, i) => {
-            const taskAssigneeIds = allTaskAssignees.filter(ta => ta.task_id === task.id).map(ta => ta.assignee_id);
-            const assignees = taskAssigneeIds.length > 0
-              ? taskAssigneeIds.map(id => allMembers.find(u => u.id === id)).filter(Boolean)
-              : (task.assignee_id ? [allMembers.find(u => u.id === task.assignee_id)].filter(Boolean) : []);
-            const { projectName, companyName } = getProjectCompany(task.project_id);
-            return (
-              <motion.div key={task.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                onClick={() => setSelectedTask(task)} className="glass-card rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all overflow-visible relative">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] text-muted-foreground">{projectName} · {companyName}</p>
-                  <div className="flex items-center gap-1.5">
-                    <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
-                    <span className={cn('text-[10px] font-medium capitalize', priorityLabel[task.priority])}>{task.priority}</span>
+        <div className="glass-card rounded-xl">
+          <div className="divide-y divide-border/50">
+            {filteredTasks.map((task, i) => {
+              const taskAssigneeIds = allTaskAssignees.filter(ta => ta.task_id === task.id).map(ta => ta.assignee_id);
+              const assignees = taskAssigneeIds.length > 0
+                ? taskAssigneeIds.map(id => allMembers.find(u => u.id === id)).filter(Boolean)
+                : (task.assignee_id ? [allMembers.find(u => u.id === task.assignee_id)].filter(Boolean) : []);
+              const { projectName, companyName } = getProjectCompany(task.project_id);
+              return (
+                <motion.div key={task.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
+                  onClick={() => setSelectedTask(task)} className="py-3 px-5 hover:bg-secondary/30 cursor-pointer transition-colors">
+                  <p className="text-[10px] text-muted-foreground mb-1">{projectName} · {companyName}</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-foreground">{task.title}</span>
+                    <span className={cn('text-[10px] font-semibold capitalize px-2 py-0.5 rounded-md',
+                      task.priority === 'low' ? 'bg-muted text-muted-foreground' :
+                      task.priority === 'medium' ? 'bg-info/15 text-info' :
+                      task.priority === 'high' ? 'bg-warning/15 text-warning' :
+                      'bg-destructive/15 text-destructive'
+                    )}>{task.priority}</span>
                   </div>
-                </div>
-                <h3 className="text-sm font-medium text-foreground mb-1">{task.title}</h3>
-                <p className="text-xs text-muted-foreground mb-3">{task.description}</p>
-                <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                  <span className="text-[10px] text-muted-foreground">{formatDate(task.due_date)}</span>
-                  <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex -space-x-1.5">
-                        {assignees.slice(0, 3).map((a: any) => (
-                          <div key={a.id} className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-bold text-primary border border-card">
-                            {a.name.split(' ').map((n: string) => n[0]).join('')}
+                  <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{task.description}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {assignees.length > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex -space-x-1.5">
+                            {assignees.slice(0, 3).map((a: any) => (
+                              <div key={a.id} className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-semibold text-primary border border-card">
+                                {a.name.split(' ').map((n: string) => n[0]).join('')}
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                      <span>{assignees.length > 0 ? (assignees.length <= 2 ? assignees.map((a: any) => a.name.split(' ')[0]).join(', ') : `${assignees.length} assignees`) : 'Unassigned'}</span>
-                    </div>
-                    {task.due_date && formatDaysLeft(task.due_date) && (
-                      <span className={cn('font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
-                    )}
-                  </div>
-                  {(activeTab === 'done' || activeTab === 'archive') && isAdmin && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (activeTab === 'archive') {
-                          updateTaskMutation.mutate({ id: task.id, archived: false } as any);
-                        } else {
-                          handleArchiveTask(task.id);
-                        }
-                      }}
-                      className={cn(
-                        "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
-                        activeTab === 'archive'
-                          ? 'border-primary bg-primary/20 hover:border-destructive hover:bg-transparent'
-                          : 'border-muted-foreground/40 hover:border-primary'
+                          <span className="text-[11px] text-muted-foreground">
+                            {assignees.length <= 2 ? assignees.map((a: any) => a.name.split(' ')[0]).join(', ') : `${assignees.length} assignees`}
+                          </span>
+                        </div>
                       )}
-                      title={activeTab === 'archive' ? 'Unarchive this task' : 'Archive this task'}
-                    >
-                      <Check className={cn('w-3 h-3', activeTab === 'archive' ? 'text-primary' : 'text-transparent hover:text-primary')} />
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-          {filteredTasks.length === 0 && <div className="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-12 text-muted-foreground text-sm">No tasks found.</div>}
+                      {task.due_date && (
+                        <span className="text-[10px] text-muted-foreground">· {formatDate(task.due_date)}</span>
+                      )}
+                      {task.due_date && formatDaysLeft(task.due_date) && (
+                        <span className={cn('text-[10px] font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {(activeTab === 'done' || activeTab === 'archive') && isAdmin && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (activeTab === 'archive') {
+                              updateTaskMutation.mutate({ id: task.id, archived: false } as any);
+                            } else {
+                              handleArchiveTask(task.id);
+                            }
+                          }}
+                          className={cn(
+                            "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                            activeTab === 'archive'
+                              ? 'border-primary bg-primary/20 hover:border-destructive hover:bg-transparent'
+                              : 'border-muted-foreground/40 hover:border-primary'
+                          )}
+                          title={activeTab === 'archive' ? 'Unarchive this task' : 'Archive this task'}
+                        >
+                          <Check className={cn('w-3 h-3', activeTab === 'archive' ? 'text-primary' : 'text-transparent hover:text-primary')} />
+                        </button>
+                      )}
+                      <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+          {filteredTasks.length === 0 && <div className="text-center py-12 text-muted-foreground text-sm">No tasks found.</div>}
         </div>
       )}
 
