@@ -21,11 +21,11 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      {/* Top bar with search - desktop */}
-      <div className="hidden lg:flex fixed top-0 left-52 right-0 h-14 items-center justify-center px-6 z-30 bg-background/80 backdrop-blur-sm border-b border-border">
+      {/* Top bar - desktop */}
+      <div className="hidden lg:flex fixed top-0 left-52 right-0 h-14 items-center justify-end px-6 z-30 bg-background/80 backdrop-blur-sm border-b border-border">
         <GlobalSearch />
       </div>
-      {/* Top bar with search - mobile (below mobile header) */}
+      {/* Top bar - mobile (below mobile header) */}
       <div className="lg:hidden px-4 pt-[60px] pb-2">
         <GlobalSearch />
       </div>
