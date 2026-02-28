@@ -116,7 +116,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
               <div className="px-6 pb-6 space-y-4">
                 <div>
                   <label className={labelCls}>Company</label>
-                  {isEditable && isHolding ? (
+                  {isEditable && isAdmin ? (
                     <StyledDropdown value={form.company_id} onChange={(v) => setForm(f => ({ ...f, company_id: v }))}
                       options={companies.map(c => ({ value: c.id, label: c.name }))} placeholder="Select company..." />
                   ) : (
