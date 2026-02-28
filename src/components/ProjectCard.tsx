@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatDateFull } from '@/lib/formatDate';
 
 const statusColors: Record<string, string> = {
   planning: 'bg-info/15 text-info', ongoing: 'bg-warning/15 text-warning',
@@ -41,7 +42,7 @@ const ProjectCard = ({ project, companyName, index, onClick, onNavigate }: Proje
       <div className="flex items-center gap-3 mb-3 text-[10px] text-muted-foreground">
         <span className={cn('font-medium capitalize', priorityColors[project.priority])}>{project.priority}</span>
         <span>·</span>
-        <span>{project.start_date} → {project.end_date}</span>
+        <span>{formatDateFull(project.start_date)} → {formatDateFull(project.end_date)}</span>
       </div>
 
       <div className="mb-3">

@@ -333,7 +333,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                       <Popover>
                         <PopoverTrigger asChild>
                           <button type="button" className={cn(inputCls, 'flex items-center justify-between text-left', !form.request_date && 'text-muted-foreground')}>
-                            <span>{form.request_date ? format(parseISO(form.request_date), 'dd MMM yyyy') : 'Pick a date'}</span>
+                            <span>{form.request_date ? format(parseISO(form.request_date), 'd MMM yyyy') : 'Pick a date'}</span>
                             <CalendarIcon className="w-4 h-4 text-muted-foreground" />
                           </button>
                         </PopoverTrigger>
@@ -351,7 +351,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                       <Popover>
                         <PopoverTrigger asChild>
                           <button type="button" className={cn(inputCls, 'flex items-center justify-between text-left', !form.due_date && 'text-muted-foreground')}>
-                            <span>{form.due_date ? format(parseISO(form.due_date), 'dd MMM yyyy') : 'Pick a date'}</span>
+                            <span>{form.due_date ? format(parseISO(form.due_date), 'd MMM yyyy') : 'Pick a date'}</span>
                             <CalendarIcon className="w-4 h-4 text-muted-foreground" />
                           </button>
                         </PopoverTrigger>
