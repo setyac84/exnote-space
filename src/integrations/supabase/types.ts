@@ -131,6 +131,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          archived: boolean
           aspect_ratio: string | null
           assignee_id: string | null
           brand_guidelines: string | null
@@ -152,6 +153,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived?: boolean
           aspect_ratio?: string | null
           assignee_id?: string | null
           brand_guidelines?: string | null
@@ -173,6 +175,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived?: boolean
           aspect_ratio?: string | null
           assignee_id?: string | null
           brand_guidelines?: string | null
