@@ -199,7 +199,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
     if (isCreate) {
       setForm({
         title: '', description: '', status: 'todo', priority: 'medium',
-        assignee_id: divisionMembers[0]?.id || '', project_id: projectId || divisionProjects[0]?.id || '',
+        assignee_id: divisionMembers.filter(m => m.role !== 'super_admin')[0]?.id || '', project_id: projectId || divisionProjects[0]?.id || '',
         request_date: new Date().toISOString().split('T')[0], due_date: '',
       });
     } else if (task) {
@@ -269,7 +269,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
     const company = companies.find(c => c.id === p.company_id);
     return { value: p.id, label: company ? `${p.name} · ${company.name}` : p.name };
   });
-  const assigneeOptions = divisionMembers.map(m => ({ value: m.id, label: m.name }));
+  const assigneeOptions = divisionMembers.filter(m => m.role !== 'super_admin').map(m => ({ value: m.id, label: m.name }));
   const assignee = allMembers.find(u => u.id === form.assignee_id);
 
   // Creative fields (excluding result_link which is handled separately)
