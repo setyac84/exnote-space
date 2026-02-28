@@ -87,21 +87,20 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], onTask
                   <span className="ml-1">{format(day, 'd')}</span>
                 </div>
                 <div className="space-y-1">
-                  {dayTasks.slice(0, 3).map(task => {
+                  {dayTasks.map(task => {
                     const assignee = members.find(u => u.id === task.assignee_id);
                     return (
                       <div key={task.id} onClick={() => onTaskClick(task)}
-                        className={cn('border-l-2 rounded-r-md px-1.5 py-1 cursor-pointer hover:opacity-80 transition-opacity', statusColor[task.status])}>
+                        className={cn('border-l-2 rounded-r-md px-1.5 py-1.5 cursor-pointer hover:opacity-80 transition-opacity', statusColor[task.status])}>
                         <p className="text-[10px] font-medium text-foreground leading-tight line-clamp-1">{task.title}</p>
-                        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                        <div className="flex items-center gap-1 mt-0.5">
                           <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', priorityDot[task.priority])} />
                           <span className="text-[8px] text-muted-foreground">{statusLabel[task.status]}</span>
-                          {assignee && <span className="text-[8px] text-muted-foreground">· {assignee.name?.split(' ')[0]}</span>}
                         </div>
+                        {assignee && <p className="text-[8px] text-muted-foreground mt-0.5">{assignee.name?.split(' ')[0]}</p>}
                       </div>
                     );
                   })}
-                  {dayTasks.length > 3 && <p className="text-[9px] text-muted-foreground text-center">+{dayTasks.length - 3} more</p>}
                 </div>
               </div>
             );
@@ -127,21 +126,20 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], onTask
                   !inMonth && 'opacity-30', isToday(day) && 'border-primary/40 bg-primary/5')}>
                   <p className={cn('text-[10px] font-medium mb-0.5 text-center', isToday(day) ? 'text-primary' : 'text-muted-foreground')}>{format(day, 'd')}</p>
                   <div className="space-y-0.5">
-                    {dayTasks.slice(0, 2).map(task => {
+                    {dayTasks.map(task => {
                       const assignee = members.find(u => u.id === task.assignee_id);
                       return (
                         <div key={task.id} onClick={() => onTaskClick(task)}
                           className={cn('border-l-2 rounded-r-sm px-1 py-0.5 cursor-pointer hover:opacity-80 transition-opacity', statusColor[task.status])}>
                           <p className="text-[9px] font-medium text-foreground leading-tight line-clamp-1">{task.title}</p>
-                          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                          <div className="flex items-center gap-1 mt-0.5">
                             <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', priorityDot[task.priority])} />
                             <span className="text-[8px] text-muted-foreground">{statusLabel[task.status]}</span>
-                            {assignee && <span className="text-[8px] text-muted-foreground">· {assignee.name?.split(' ')[0]}</span>}
                           </div>
+                          {assignee && <p className="text-[8px] text-muted-foreground mt-0.5">{assignee.name?.split(' ')[0]}</p>}
                         </div>
                       );
                     })}
-                    {dayTasks.length > 2 && <p className="text-[8px] text-muted-foreground text-center">+{dayTasks.length - 2}</p>}
                   </div>
                 </div>
               );
