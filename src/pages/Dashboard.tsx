@@ -83,6 +83,7 @@ const Dashboard = () => {
   const divisionMembers = allMembers.filter((u) => u.division === activeDivision && u.role !== 'super_admin');
 
   const stats = [
+  { label: 'Total Projects', value: divisionProjects.length, icon: FolderKanban, color: 'text-primary', bgColor: 'bg-primary/10', onClick: () => navigate('/projects') },
   { label: 'To Do', value: todoCount, icon: Clock, color: 'text-info', bgColor: 'bg-info/10', onClick: () => navigate('/tasks?status=todo') },
   { label: 'In Progress', value: doingCount, icon: AlertTriangle, color: 'text-warning', bgColor: 'bg-warning/10', onClick: () => navigate('/tasks?status=doing') },
   { label: 'Done', value: doneCount, icon: CheckCircle2, color: 'text-success', bgColor: 'bg-success/10', onClick: () => navigate('/tasks?status=done') }];
@@ -134,8 +135,8 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-5">
         {/* Left column: Stats + Team Members */}
         <div className="flex flex-col gap-4 lg:gap-5">
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          {/* Stats 2x2 */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {stats.map((stat, i) =>
             <motion.div key={stat.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
             className="glass-card rounded-xl overflow-hidden flex flex-col">
@@ -195,38 +196,8 @@ const Dashboard = () => {
           }
         </div>
 
-        {/* Right column: Projects + High Priority + Calendar */}
+        {/* Right column: High Priority + Calendar */}
         <div className="flex flex-col gap-4 lg:gap-5">
-          {/* Projects */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <FolderKanban className="w-4 h-4 text-primary" />
-                <h2 className="text-sm font-semibold text-foreground">Projects ({divisionProjects.length})</h2>
-              </div>
-              <button onClick={() => navigate('/projects')} className="text-xs text-primary hover:underline">View All</button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {divisionProjects.filter(p => p.status !== 'archived').slice(0, 4).map((project, i) => {
-                const projectTasks = divisionTasks.filter(t => t.project_id === project.id);
-                const company = companies.find(c => c.id === project.company_id);
-                return (
-                  <ProjectCard
-                    key={project.id}
-                    project={{ ...project, tasks: projectTasks }}
-                    companyName={company?.name || '-'}
-                    index={i}
-                    onClick={() => navigate(`/tasks?project=${project.id}`)}
-                    onNavigate={() => navigate(`/tasks?project=${project.id}`)}
-                  />
-                );
-              })}
-            </div>
-            {divisionProjects.filter(p => p.status !== 'archived').length === 0 && (
-              <div className="glass-card rounded-xl p-8 text-center text-sm text-muted-foreground">No projects yet.</div>
-            )}
-          </motion.div>
-
           {/* Today's Tasks */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card rounded-xl p-5">
             <div className="flex items-center gap-2 mb-4">
