@@ -112,7 +112,7 @@ const Dashboard = () => {
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {isSuperAdmin ? 'All divisions & projects' : isAdmin ? `Overview of ${activeDivision} division` : 'Summary of tasks assigned to you'}
           </p>
-          <p className="text-muted-foreground mt-0.5 my-[10px] text-base">Today is <span className="font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md">{format(new Date(), 'd MMM yyyy')}</span></p>
+          <p className="text-muted-foreground mt-0.5 text-base my-[10px]">Today is <span className="font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md">{format(new Date(), 'd MMM yyyy')}</span></p>
         </div>
         {isAdmin &&
         <div className="flex items-center gap-2">
