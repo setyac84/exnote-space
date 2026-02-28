@@ -64,7 +64,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
         start_date: project.start_date || '', end_date: project.end_date || '',
       });
     }
-  }, [project, initialMode, division, isOpen, companies]);
+  }, [project, initialMode, division, isOpen]);
 
   const handleSave = async () => {
     if (!form.name.trim()) return;

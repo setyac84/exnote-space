@@ -52,7 +52,7 @@ const ProjectFilterDropdown = ({ projects, value, onChange }: { projects: { id: 
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1.5 bg-popover border border-border rounded-xl shadow-lg z-50 py-1 min-w-[180px] max-h-[260px] overflow-y-auto">
+          <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-1.5 bg-popover border border-border rounded-xl shadow-lg z-50 py-1 min-w-[180px] max-h-[260px] overflow-y-auto">
             <button onClick={() => { onChange(''); setOpen(false); }}
               className={cn('w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 transition-colors', !value && 'font-medium text-primary')}>
               All Projects
@@ -186,7 +186,7 @@ const TaskListPage = () => {
   if (!user) return null;
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-8xl mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">All Tasks</h1>
