@@ -154,14 +154,14 @@ const NotepadPage = () => {
                 onChange={e => setEditTitle(e.target.value)}
                 onBlur={handleSave}
                 placeholder="Note title..."
-                className="text-lg font-semibold border-none shadow-none focus-visible:ring-0 px-0 mb-2"
+                className="text-lg font-semibold border-none shadow-none focus-visible:ring-0 px-3 mb-2"
               />
               <Textarea
                 value={editContent}
                 onChange={e => setEditContent(e.target.value)}
                 onBlur={handleSave}
                 placeholder="Start writing..."
-                className="flex-1 border-none shadow-none focus-visible:ring-0 px-0 resize-none min-h-[300px] text-sm"
+                className="flex-1 border-none shadow-none focus-visible:ring-0 px-3 resize-none min-h-[300px] text-sm"
               />
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                 <p className="text-[10px] text-muted-foreground">

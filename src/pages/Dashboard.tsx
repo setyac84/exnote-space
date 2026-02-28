@@ -80,7 +80,8 @@ const Dashboard = () => {
   });
   const todoCount = myTasks.filter((t) => t.status === 'todo').length;
   const doingCount = myTasks.filter((t) => t.status === 'doing').length;
-  const doneCount = myTasks.filter((t) => t.status === 'done').length;
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const overdueCount = myTasks.filter((t) => t.status !== 'done' && t.due_date && t.due_date < today).length;
 
   const divisionMembers = allMembers.filter((u) => u.division === activeDivision && u.role !== 'super_admin');
 
@@ -88,7 +89,7 @@ const Dashboard = () => {
   { label: 'Total Projects', value: divisionProjects.length, icon: FolderKanban, color: 'text-primary', bgColor: 'bg-primary/10', onClick: () => navigate('/projects') },
   { label: 'To Do', value: todoCount, icon: Clock, color: 'text-info', bgColor: 'bg-info/10', onClick: () => navigate('/tasks?status=todo') },
   { label: 'In Progress', value: doingCount, icon: AlertTriangle, color: 'text-warning', bgColor: 'bg-warning/10', onClick: () => navigate('/tasks?status=doing') },
-  { label: 'Done', value: doneCount, icon: CheckCircle2, color: 'text-success', bgColor: 'bg-success/10', onClick: () => navigate('/tasks?status=done') }];
+  { label: 'Overdue', value: overdueCount, icon: AlertTriangle, color: 'text-destructive', bgColor: 'bg-destructive/10', onClick: () => navigate('/tasks') }];
 
 
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
@@ -102,11 +103,11 @@ const Dashboard = () => {
     return { projectName: project.name, companyName: company?.name || '-' };
   };
 
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const todayTasks = myTasks.filter((t) => t.due_date === today && t.status !== 'done');
+  const todayStr = today;
+  const todayTasks = myTasks.filter((t) => t.due_date === todayStr && t.status !== 'done');
 
   const highPriorityTasks = myTasks.
-  filter((t) => t.priority === 'urgent' && t.status !== 'done' && t.due_date !== today).
+  filter((t) => t.priority === 'urgent' && t.status !== 'done' && t.due_date !== todayStr).
   sort((a, b) => {
     if (!a.due_date) return 1;
     if (!b.due_date) return -1;
@@ -121,7 +122,7 @@ const Dashboard = () => {
           <AvatarUpload userId={user.id} currentAvatar={user.avatar} name={user.name} size="md" editable={false} />
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">Hello, {user.name.split(' ')[0]} 👋</h1>
-            <p className="text-muted-foreground mt-1 text-sm">Today is <span className="font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md">{format(new Date(), 'd MMM yyyy')}</span></p>
+            <p className="text-muted-foreground mt-1 text-sm">Today is <span className="font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md">{format(new Date(), 'EEEE, d MMM yyyy')}</span></p>
           </div>
         </div>
         {isAdmin &&
@@ -147,7 +148,7 @@ const Dashboard = () => {
             className="glass-card rounded-xl overflow-hidden flex flex-col">
                 <div className="p-4 flex-1">
                   <div className="flex items-center justify-between mb-3">
-                    <stat.icon className={cn('w-5 h-5', stat.color)} />
+                    <stat.icon className={cn('w-4 h-4', stat.color)} />
                     <p className="text-3xl font-bold text-foreground">{stat.value}</p>
                   </div>
                   <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
