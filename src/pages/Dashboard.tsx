@@ -102,7 +102,7 @@ const Dashboard = () => {
     });
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 lg:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -123,108 +123,99 @@ const Dashboard = () => {
         )}
       </motion.div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 lg:mb-8">
-        {stats.map((stat, i) => (
-          <motion.div key={stat.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-            onClick={stat.onClick} className="glass-card rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <stat.icon className={`w-5 h-5 ${stat.color}`} />
-              <span className="text-2xl font-bold text-foreground">{stat.value}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
-          </motion.div>
-        ))}
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4 lg:gap-5">
+        {/* Left column: Stats + Team Members */}
+        <div className="flex flex-col gap-4 lg:gap-5">
+          {/* Stats 2x2 */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {stats.map((stat, i) => (
+              <motion.div key={stat.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+                onClick={stat.onClick} className="glass-card rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-2">
+                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                  <span className="text-2xl font-bold text-foreground">{stat.value}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Member Management - Admin only */}
+          {isAdmin && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="glass-card rounded-xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  <h2 className="text-sm font-semibold text-foreground">Team Members</h2>
+                </div>
+                <button onClick={() => navigate('/members')} className="text-xs text-primary hover:underline">Manage</button>
+              </div>
+              <div className="space-y-2">
+                {divisionMembers.map(member => {
+                  const memberTasks = divisionTasks.filter(t => t.assignee_id === member.id);
+                  const memberDone = memberTasks.filter(t => t.status === 'done').length;
+                  const memberPending = memberTasks.filter(t => t.status !== 'done').length;
+                  return (
+                    <div key={member.id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-secondary/50 transition-colors">
+                      <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => navigate(`/tasks?member=${member.id}`)}>
+                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">
+                          {member.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{member.name}</p>
+                          <p className="text-[11px] text-muted-foreground">{member.position || 'No position'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-warning">{memberPending} Pending</span>
+                        <span className="text-success">{memberDone} Done</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Right column: High Priority + Calendar */}
+        <div className="flex flex-col gap-4 lg:gap-5">
+          {/* High Priority Tasks */}
+          {highPriorityTasks.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="glass-card rounded-xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-destructive" />
+                  <h2 className="text-sm font-semibold text-foreground">High Priority Tasks</h2>
+                </div>
+                <button onClick={() => navigate('/tasks?priority=high,urgent')} className="text-xs text-primary hover:underline">View All</button>
+              </div>
+              {highPriorityTasks.map(task => {
+                const assignee = allMembers.find(u => u.id === task.assignee_id);
+                const { projectName, companyName } = getProjectCompany(task.project_id);
+                return (
+                  <div key={task.id} onClick={() => setSelectedTask(task)}
+                    className="p-3 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-foreground">{task.title}</span>
+                      <span className={cn('text-[10px] capitalize', priorityLabel[task.priority])}>{task.priority}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{task.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground">{projectName} · {assignee?.name.split(' ')[0]} · {formatDate(task.due_date)}</span>
+                      <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
+                    </div>
+                  </div>
+                );
+              })}
+            </motion.div>
+          )}
+
+          {/* Task Calendar */}
+          <TaskCalendar tasks={myTasks as any} members={allMembers} onTaskClick={setSelectedTask} />
+        </div>
       </div>
-
-      {/* Member Management - Admin only */}
-      {isAdmin && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="glass-card rounded-xl p-5 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold text-foreground">Team Members</h2>
-            </div>
-            <button onClick={() => navigate('/members')} className="text-xs text-primary hover:underline">Manage</button>
-          </div>
-          <div className="space-y-2">
-            {divisionMembers.map(member => {
-              const memberTasks = divisionTasks.filter(t => t.assignee_id === member.id);
-              const memberDone = memberTasks.filter(t => t.status === 'done').length;
-              const memberPending = memberTasks.filter(t => t.status !== 'done').length;
-              return (
-                <div key={member.id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-secondary/50 transition-colors">
-                  <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => navigate(`/tasks?member=${member.id}`)}>
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">
-                      {member.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{member.name}</p>
-                      <p className="text-[11px] text-muted-foreground">{member.position || 'No position'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="text-warning">{memberPending} Pending</span>
-                    <span className="text-success">{memberDone} Done</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Task Calendar */}
-      <TaskCalendar tasks={myTasks as any} members={allMembers} onTaskClick={setSelectedTask} />
-
-      {/* High Priority Tasks */}
-      {highPriorityTasks.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="glass-card rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-destructive" />
-              <h2 className="text-sm font-semibold text-foreground">High Priority Tasks</h2>
-            </div>
-            <button onClick={() => navigate('/tasks?priority=high,urgent')} className="text-xs text-primary hover:underline">View All</button>
-          </div>
-          <div className="hidden lg:grid grid-cols-[140px_1fr_1.5fr_90px_90px_110px_110px] gap-2 px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide border-b border-border">
-            <span>Project · Company</span><span>Task</span><span>Description</span><span>Priority</span><span>Due Date</span><span>Status</span><span>Assignee</span>
-          </div>
-          {highPriorityTasks.map(task => {
-            const assignee = allMembers.find(u => u.id === task.assignee_id);
-            const { projectName, companyName } = getProjectCompany(task.project_id);
-            return (
-              <React.Fragment key={task.id}>
-                <div onClick={() => setSelectedTask(task)}
-                  className="hidden lg:grid grid-cols-[140px_1fr_1.5fr_90px_90px_110px_110px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors items-center">
-                  <span className="text-[10px] text-muted-foreground">{projectName} · {companyName}</span>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
-                    <span className="text-sm text-foreground font-medium">{task.title}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground line-clamp-2">{task.description}</span>
-                  <span className={cn('text-xs capitalize', priorityLabel[task.priority])}>{task.priority}</span>
-                  <span className="text-xs text-muted-foreground">{formatDate(task.due_date)}</span>
-                  <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
-                  <span className="text-xs text-muted-foreground">{assignee?.name.split(' ')[0]}</span>
-                </div>
-                <div onClick={() => setSelectedTask(task)}
-                  className="lg:hidden p-3 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-foreground">{task.title}</span>
-                    <span className={cn('text-[10px] capitalize', priorityLabel[task.priority])}>{task.priority}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{task.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground">{assignee?.name.split(' ')[0]} · {formatDate(task.due_date)}</span>
-                    <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
-                  </div>
-                </div>
-              </React.Fragment>
-            );
-          })}
-        </motion.div>
-      )}
 
       <TaskModal
         task={selectedTask}
