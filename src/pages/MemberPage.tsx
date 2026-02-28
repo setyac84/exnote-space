@@ -145,7 +145,11 @@ const MemberPage = () => {
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
           <StyledDropdown value={form.division || activeDivision} onChange={(v) => setForm((f: any) => ({ ...f, division: v }))}
-            options={[{ value: 'creative', label: 'Creative' }, { value: 'developer', label: 'Developer' }]} />
+            options={[
+              ...(form.role === 'super_admin' ? [{ value: 'management', label: 'Management' }] : []),
+              { value: 'creative', label: 'Creative' },
+              { value: 'developer', label: 'Developer' },
+            ]} />
         </div>
       </div>
       <div className="flex gap-2">
@@ -274,7 +278,11 @@ const MemberPage = () => {
               <div className="col-span-2">
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
                 <StyledDropdown value={addForm.division || 'creative'} onChange={(v) => setAddForm((f: any) => ({ ...f, division: v }))}
-                  options={[{ value: 'creative', label: 'Creative' }, { value: 'developer', label: 'Developer' }]} />
+                  options={[
+                    ...(addForm.role === 'super_admin' ? [{ value: 'management', label: 'Management' }] : []),
+                    { value: 'creative', label: 'Creative' },
+                    { value: 'developer', label: 'Developer' },
+                  ]} />
               </div>
             </div>
             <button onClick={handleAdd} disabled={createMember.isPending}
