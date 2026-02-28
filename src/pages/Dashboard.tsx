@@ -263,7 +263,7 @@ const Dashboard = () => {
         {/* Right column: Calendar + Task Tabs */}
         <div className="flex flex-col gap-4 lg:gap-5">
           {/* Task Calendar - moved to top */}
-          <TaskCalendar tasks={myTasks as any} members={allMembers} onTaskClick={setSelectedTask} />
+          <TaskCalendar tasks={myTasks as any} members={allMembers} taskAssignees={allTaskAssignees} onTaskClick={setSelectedTask} />
 
           {/* Task View Tabs */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="glass-card rounded-xl p-5">

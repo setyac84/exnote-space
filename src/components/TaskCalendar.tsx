@@ -14,6 +14,7 @@ const priorityDot: Record<string, string> = { low: 'bg-muted-foreground', medium
 interface TaskCalendarProps {
   tasks: any[];
   members?: any[];
+  taskAssignees?: any[];
   onTaskClick: (task: any) => void;
 }
 
@@ -21,7 +22,7 @@ type ViewMode = 'weekly' | 'monthly';
 
 const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], onTaskClick }) => {
+const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], taskAssignees = [], onTaskClick }) => {
   const [view, setView] = useState<ViewMode>('weekly');
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -56,7 +57,12 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], onTask
     : format(currentDate, 'MMMM yyyy');
 
   const TaskChip = ({ task, compact = false }: { task: any; compact?: boolean }) => {
-    const assignee = members.find(u => u.id === task.assignee_id);
+    // Get all assignees: from task_assignees table first, fallback to assignee_id
+    const taEntries = taskAssignees.filter(ta => ta.task_id === task.id);
+    const assigneeIds = taEntries.length > 0 
+      ? taEntries.map(ta => ta.assignee_id) 
+      : (task.assignee_id ? [task.assignee_id] : []);
+    const assignees = assigneeIds.map(id => members.find(u => u.id === id)).filter(Boolean);
     return (
       <div onClick={() => onTaskClick(task)}
         className={cn('border-l-2 rounded-r-md px-1.5 py-1 cursor-pointer hover:opacity-80 transition-opacity', statusColor[task.status])}>
@@ -65,7 +71,11 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, members = [], onTask
           <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', priorityDot[task.priority])} />
           <span className={cn('text-muted-foreground', compact ? 'text-[7px]' : 'text-[8px]')}>{statusLabel[task.status]}</span>
         </div>
-        {assignee && <p className={cn('text-muted-foreground mt-0.5', compact ? 'text-[7px]' : 'text-[8px]')}>{assignee.name?.split(' ')[0]}</p>}
+        {assignees.length > 0 && (
+          <p className={cn('text-muted-foreground mt-0.5', compact ? 'text-[7px]' : 'text-[8px]')}>
+            {assignees.map(a => a.name?.split(' ')[0]).join(', ')}
+          </p>
+        )}
       </div>
     );
   };
