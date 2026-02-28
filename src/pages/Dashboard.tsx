@@ -18,6 +18,7 @@ const statusLabel: Record<TaskStatus, string> = { todo: 'To Do', doing: 'Doing',
 const statusDot: Record<TaskStatus, string> = { todo: 'border-muted-foreground', doing: 'border-info', review: 'border-warning', done: 'border-success bg-success' };
 const priorityDot: Record<string, string> = { low: 'bg-muted-foreground', medium: 'bg-info', high: 'bg-warning', urgent: 'bg-destructive' };
 const priorityLabel: Record<string, string> = { low: 'text-muted-foreground', medium: 'text-info', high: 'text-warning', urgent: 'text-destructive' };
+const priorityBadge: Record<string, string> = { low: 'bg-muted text-muted-foreground', medium: 'bg-info/15 text-info', high: 'bg-warning/15 text-warning', urgent: 'bg-destructive/15 text-destructive' };
 
 const InlineStatusDropdown = ({ value, onChange }: { value: TaskStatus; onChange: (s: TaskStatus) => void }) => {
   const [open, setOpen] = useState(false);
@@ -157,19 +158,18 @@ const Dashboard = () => {
                   const memberDone = memberTasks.filter(t => t.status === 'done').length;
                   const memberPending = memberTasks.filter(t => t.status !== 'done').length;
                   return (
-                    <div key={member.id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-secondary/50 transition-colors">
-                      <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => navigate(`/tasks?member=${member.id}`)}>
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">
-                          {member.name.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{member.name}</p>
-                          <p className="text-[11px] text-muted-foreground">{member.position || 'No position'}</p>
-                        </div>
+                    <div key={member.id} onClick={() => navigate(`/tasks?member=${member.id}`)}
+                      className="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+                      <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary shrink-0">
+                        {member.name.split(' ').map(n => n[0]).join('')}
                       </div>
-                      <div className="flex items-center gap-3 text-xs">
-                        <span className="text-warning">{memberPending} Pending</span>
-                        <span className="text-success">{memberDone} Done</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{member.position || 'No position'}</p>
+                        <div className="flex items-center gap-3 text-[11px] mt-0.5">
+                          <span className="text-warning font-medium">{memberPending} Pending</span>
+                          <span className="text-success font-medium">{memberDone} Done</span>
+                        </div>
                       </div>
                     </div>
                   );
@@ -197,13 +197,14 @@ const Dashboard = () => {
                 return (
                   <div key={task.id} onClick={() => setSelectedTask(task)}
                     className="p-3 border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors">
+                    <p className="text-[10px] text-muted-foreground mb-1">{projectName} · {companyName}</p>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium text-foreground">{task.title}</span>
-                      <span className={cn('text-[10px] capitalize', priorityLabel[task.priority])}>{task.priority}</span>
+                      <span className={cn('text-[10px] font-semibold capitalize px-2 py-0.5 rounded-md', priorityBadge[task.priority])}>{task.priority}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{task.description}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-muted-foreground">{projectName} · {assignee?.name.split(' ')[0]} · {formatDate(task.due_date)}</span>
+                      <span className="text-[10px] text-muted-foreground">{assignee?.name.split(' ')[0]} · {formatDate(task.due_date)}</span>
                       <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
                     </div>
                   </div>
