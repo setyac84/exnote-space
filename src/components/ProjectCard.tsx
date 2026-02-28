@@ -4,6 +4,8 @@ import { CheckCircle2, ChevronRight, Check, ChevronDown, Clock } from 'lucide-re
 import { cn } from '@/lib/utils';
 import { formatDateRange, formatDaysLeft, daysLeftColor } from '@/lib/formatDate';
 
+const priorityDot: Record<string, string> = { low: 'bg-muted-foreground', medium: 'bg-info', high: 'bg-warning', urgent: 'bg-destructive' };
+
 const statusColors: Record<string, string> = {
   planning: 'bg-info/15 text-info', ongoing: 'bg-warning/15 text-warning',
   completed: 'bg-success/15 text-success', archived: 'bg-muted text-muted-foreground',
@@ -93,7 +95,10 @@ const ProjectCard = ({ project, companyName, index, onClick, onNavigate, showArc
         {/* Priority + Date row + checkbox */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-            <span className={cn('font-medium capitalize', priorityColors[project.priority])}>{project.priority}</span>
+            <span className="flex items-center gap-1.5">
+              <span className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[project.priority])} />
+              <span className={cn('font-medium capitalize', priorityColors[project.priority])}>{project.priority}</span>
+            </span>
             <span>·</span>
             <span>{formatDateRange(project.start_date, project.end_date)}</span>
           </div>
