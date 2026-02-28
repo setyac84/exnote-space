@@ -2,9 +2,9 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjects, useTasks, useMembers, useCompanies, useCreateProject, useCreateTask, useUpdateTask, useDeleteTask, useUpdateProfile, useUpdateUserRole, useTaskAssignees, useNotes } from '@/hooks/useSupabaseData';
 import { formatDate, formatDaysLeft, daysLeftColor } from '@/lib/formatDate';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { motion } from 'framer-motion';
-import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users, Plus, Pencil, Trash2, Save, ChevronDown, StickyNote } from 'lucide-react';
+import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users, Plus, Pencil, Trash2, Save, ChevronDown, StickyNote, Filter } from 'lucide-react';
 import TaskCalendar from '@/components/TaskCalendar';
 import AvatarUpload from '@/components/AvatarUpload';
 import ProjectCard from '@/components/ProjectCard';
@@ -13,9 +13,11 @@ import { useState } from 'react';
 import TaskModal from '@/components/TaskModal';
 import ProjectModal from '@/components/ProjectModal';
 import { cn } from '@/lib/utils';
+import StyledDropdown from '@/components/StyledDropdown';
 
 type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 type UserRole = 'super_admin' | 'admin' | 'member';
+type TaskViewTab = 'today' | 'tomorrow' | 'all';
 
 const statusLabel: Record<TaskStatus, string> = { todo: 'To Do', doing: 'Doing', review: 'Review', done: 'Done' };
 const statusDot: Record<TaskStatus, string> = { todo: 'border-muted-foreground', doing: 'border-info', review: 'border-warning', done: 'border-success bg-success' };
@@ -47,7 +49,6 @@ const InlineStatusDropdown = ({ value, onChange }: {value: TaskStatus;onChange: 
         </>
       }
     </div>);
-
 };
 
 const Dashboard = () => {
@@ -65,6 +66,8 @@ const Dashboard = () => {
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
+  const [taskViewTab, setTaskViewTab] = useState<TaskViewTab>('today');
+  const [filterProject, setFilterProject] = useState<string>('all');
 
   if (!user) return null;
 
@@ -82,15 +85,15 @@ const Dashboard = () => {
   const doingCount = myTasks.filter((t) => t.status === 'doing').length;
   const today = format(new Date(), 'yyyy-MM-dd');
   const overdueCount = myTasks.filter((t) => t.status !== 'done' && t.due_date && t.due_date < today).length;
+  const urgentCount = myTasks.filter((t) => t.priority === 'urgent' && t.status !== 'done').length;
 
   const divisionMembers = allMembers.filter((u) => u.division === activeDivision && u.role !== 'super_admin');
 
   const stats = [
-  { label: 'Total Projects', value: divisionProjects.length, icon: FolderKanban, color: 'text-primary', bgColor: 'bg-primary/10', onClick: () => navigate('/projects'), viewLabel: 'View projects' },
+  { label: 'High Priority', value: urgentCount, icon: AlertTriangle, color: 'text-destructive', bgColor: 'bg-destructive/10', onClick: () => navigate('/tasks?priority=urgent'), viewLabel: 'View tasks' },
   { label: 'To Do', value: todoCount, icon: Clock, color: 'text-info', bgColor: 'bg-info/10', onClick: () => navigate('/tasks?status=todo'), viewLabel: 'View tasks' },
   { label: 'In Progress', value: doingCount, icon: AlertTriangle, color: 'text-warning', bgColor: 'bg-warning/10', onClick: () => navigate('/tasks?status=doing'), viewLabel: 'View tasks' },
   { label: 'Overdue', value: overdueCount, icon: AlertTriangle, color: 'text-destructive', bgColor: 'bg-destructive/10', onClick: () => navigate('/tasks'), viewLabel: 'View tasks' }];
-
 
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
     updateTaskMutation.mutate({ id: taskId, status: newStatus });
@@ -103,16 +106,43 @@ const Dashboard = () => {
     return { projectName: project.name, companyName: company?.name || '-' };
   };
 
+  // Task view tab filtering
   const todayStr = today;
-  const todayTasks = myTasks.filter((t) => t.due_date === todayStr && t.status !== 'done');
+  const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
 
-  const highPriorityTasks = myTasks.
-  filter((t) => t.priority === 'urgent' && t.status !== 'done' && t.due_date !== todayStr).
-  sort((a, b) => {
-    if (!a.due_date) return 1;
-    if (!b.due_date) return -1;
-    return new Date(b.due_date).getTime() - new Date(a.due_date).getTime();
-  });
+  const getFilteredTasks = () => {
+    let filtered = myTasks.filter(t => t.status !== 'done');
+    
+    if (taskViewTab === 'today') {
+      filtered = filtered.filter(t => t.due_date === todayStr);
+    } else if (taskViewTab === 'tomorrow') {
+      filtered = filtered.filter(t => t.due_date === tomorrowStr);
+    }
+    
+    if (filterProject !== 'all') {
+      filtered = filtered.filter(t => t.project_id === filterProject);
+    }
+    
+    return filtered.sort((a, b) => {
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+    });
+  };
+
+  const filteredTasks = getFilteredTasks();
+
+  const tabLabels: Record<TaskViewTab, string> = { today: 'Tasks Today!', tomorrow: 'Tasks Tomorrow', all: 'All Tasks' };
+  const emptyMessages: Record<TaskViewTab, { emoji: string; title: string; subtitle: string }> = {
+    today: { emoji: '🎉', title: 'Congrats! No task today!', subtitle: 'Enjoy your free time or get ahead on tomorrow\'s work.' },
+    tomorrow: { emoji: '☀️', title: 'No tasks tomorrow!', subtitle: 'Tomorrow looks clear. Plan ahead or relax.' },
+    all: { emoji: '✅', title: 'All caught up!', subtitle: 'No pending tasks right now.' },
+  };
+
+  const projectFilterOptions = [
+    { value: 'all', label: 'All Projects' },
+    ...divisionProjects.map(p => ({ value: p.id, label: p.name }))
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-2 lg:px-6">
@@ -139,7 +169,7 @@ const Dashboard = () => {
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-5">
-        {/* Left column: Stats + Team Members */}
+        {/* Left column: Stats + Team Members + Notes */}
         <div className="flex flex-col gap-4 lg:gap-5">
           {/* Stats 2x2 */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -195,7 +225,6 @@ const Dashboard = () => {
                         </div>
                       </div>
                     </div>);
-
               })}
               </div>
             </motion.div>
@@ -231,30 +260,61 @@ const Dashboard = () => {
           </motion.div>
         </div>
 
-        {/* Right column: High Priority + Calendar */}
+        {/* Right column: Calendar + Task Tabs */}
         <div className="flex flex-col gap-4 lg:gap-5">
-          {/* Today's Tasks */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card rounded-xl p-5">
+          {/* Task Calendar - moved to top */}
+          <TaskCalendar tasks={myTasks as any} members={allMembers} onTaskClick={setSelectedTask} />
+
+          {/* Task View Tabs */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="glass-card rounded-xl p-5">
+            {/* Tab bar + filter */}
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <div className="flex bg-secondary rounded-lg p-0.5 text-xs">
+                {(['today', 'tomorrow', 'all'] as TaskViewTab[]).map(tab => (
+                  <button key={tab} onClick={() => setTaskViewTab(tab)}
+                    className={cn('px-3 py-1.5 rounded-md transition-colors whitespace-nowrap', 
+                      taskViewTab === tab ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>
+                    {tabLabels[tab]}
+                  </button>
+                ))}
+              </div>
+              <div className="relative">
+                <select 
+                  value={filterProject} 
+                  onChange={(e) => setFilterProject(e.target.value)}
+                  className="text-xs border border-border rounded-lg px-3 py-1.5 bg-card text-foreground appearance-none pr-7 cursor-pointer hover:bg-secondary/50 transition-colors"
+                >
+                  {projectFilterOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3 h-3 absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Task heading */}
             <div className="flex items-center gap-2 mb-4">
               <Clock className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">Task Today!</h2>
+              <h2 className="text-sm font-semibold text-foreground">{tabLabels[taskViewTab]}</h2>
             </div>
-            {todayTasks.length === 0 ?
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-                <span className="text-4xl mb-2">🎉</span>
-                <p className="text-sm font-semibold text-foreground">Congrats! No task today!</p>
-                <p className="text-xs text-muted-foreground mt-1">Enjoy your free time or get ahead on tomorrow's work.</p>
-              </div> :
 
-            <div className="space-y-0 divide-y divide-border/50">
-                {todayTasks.map((task) => {
-                const taskAssigneeIds = allTaskAssignees.filter(ta => ta.task_id === task.id).map(ta => ta.assignee_id);
-                const assignees = taskAssigneeIds.length > 0
-                  ? taskAssigneeIds.map(id => allMembers.find(u => u.id === id)).filter(Boolean)
-                  : (task.assignee_id ? [allMembers.find(u => u.id === task.assignee_id)].filter(Boolean) : []);
-                const { projectName, companyName } = getProjectCompany(task.project_id);
-                return (
-                  <div key={task.id} onClick={() => setSelectedTask(task)} className="py-3 hover:bg-secondary/30 cursor-pointer transition-colors">
+            {/* Task list */}
+            {filteredTasks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <span className="text-4xl mb-2">{emptyMessages[taskViewTab].emoji}</span>
+                <p className="text-sm font-semibold text-foreground">{emptyMessages[taskViewTab].title}</p>
+                <p className="text-xs text-muted-foreground mt-1">{emptyMessages[taskViewTab].subtitle}</p>
+              </div>
+            ) : (
+              <div className="space-y-0 divide-y divide-border/50">
+                {filteredTasks.map((task) => {
+                  const taskAssigneeIds = allTaskAssignees.filter(ta => ta.task_id === task.id).map(ta => ta.assignee_id);
+                  const assignees = taskAssigneeIds.length > 0
+                    ? taskAssigneeIds.map(id => allMembers.find(u => u.id === id)).filter(Boolean)
+                    : (task.assignee_id ? [allMembers.find(u => u.id === task.assignee_id)].filter(Boolean) : []);
+                  const { projectName, companyName } = getProjectCompany(task.project_id);
+                  return (
+                    <div key={task.id} onClick={() => setSelectedTask(task)} className="py-3 hover:bg-secondary/30 cursor-pointer transition-colors">
                       <p className="text-[10px] text-muted-foreground mb-1">{projectName} · {companyName}</p>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-foreground">{task.title}</span>
@@ -277,79 +337,23 @@ const Dashboard = () => {
                               </span>
                             </div>
                           )}
+                          {taskViewTab !== 'today' && task.due_date && (
+                            <>
+                              <span className="text-[10px] text-muted-foreground">· {formatDate(task.due_date)}</span>
+                              {formatDaysLeft(task.due_date) && (
+                                <span className={cn('text-[10px] font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
+                              )}
+                            </>
+                          )}
                         </div>
                         <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
                       </div>
-                    </div>);
-
-              })}
+                    </div>
+                  );
+                })}
               </div>
-            }
+            )}
           </motion.div>
-
-          {/* High Priority Tasks */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="glass-card rounded-xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-destructive" />
-                  <h2 className="text-sm font-semibold text-foreground">High Priority Tasks</h2>
-                </div>
-                <button onClick={() => navigate('/tasks?priority=urgent')} className="text-xs text-primary hover:underline">View All</button>
-              </div>
-              {highPriorityTasks.length === 0 ?
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-                  <span className="text-4xl mb-2">☕</span>
-                  <p className="text-sm font-semibold text-foreground">Enjoy, and take your time!</p>
-                  <p className="text-xs text-muted-foreground mt-1">No need rush task.</p>
-                </div> :
-
-            <div className="space-y-0 divide-y divide-border/50">
-                  {highPriorityTasks.map((task) => {
-                const taskAssigneeIds = allTaskAssignees.filter(ta => ta.task_id === task.id).map(ta => ta.assignee_id);
-                const assignees = taskAssigneeIds.length > 0
-                  ? taskAssigneeIds.map(id => allMembers.find(u => u.id === id)).filter(Boolean)
-                  : (task.assignee_id ? [allMembers.find(u => u.id === task.assignee_id)].filter(Boolean) : []);
-                const { projectName, companyName } = getProjectCompany(task.project_id);
-                return (
-                  <div key={task.id} onClick={() => setSelectedTask(task)} className="py-3 hover:bg-secondary/30 cursor-pointer transition-colors">
-                        <p className="text-[10px] text-muted-foreground mb-1">{projectName} · {companyName}</p>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-foreground">{task.title}</span>
-                          <span className={cn('text-[10px] font-semibold capitalize px-2 py-0.5 rounded-md', priorityBadge[task.priority])}>{task.priority}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{task.description}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {assignees.length > 0 && (
-                              <div className="flex items-center gap-1.5">
-                                <div className="flex -space-x-1.5">
-                                  {assignees.slice(0, 3).map((a: any) => (
-                                    <div key={a.id} className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-semibold text-primary border border-card">
-                                      {a.name.split(' ').map((n: string) => n[0]).join('')}
-                                    </div>
-                                  ))}
-                                </div>
-                                <span className="text-[11px] text-muted-foreground">
-                                  {assignees.length <= 2 ? assignees.map((a: any) => a.name.split(' ')[0]).join(', ') : `${assignees.length} assignees`}
-                                </span>
-                              </div>
-                            )}
-                            <span className="text-[10px] text-muted-foreground">· {formatDate(task.due_date)}</span>
-                            {formatDaysLeft(task.due_date) && (
-                              <span className={cn('text-[10px] font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
-                            )}
-                          </div>
-                          <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
-                        </div>
-                      </div>);
-
-              })}
-                </div>
-            }
-            </motion.div>
-
-          {/* Task Calendar */}
-          <TaskCalendar tasks={myTasks as any} members={allMembers} onTaskClick={setSelectedTask} />
         </div>
       </div>
 
@@ -361,7 +365,6 @@ const Dashboard = () => {
         onDelete={isAdmin ? (id) => {deleteTaskMutation.mutate(id);setSelectedTask(null);} : undefined}
         readOnly={!isAdmin} />
 
-
       <TaskModal
         task={null}
         division={activeDivision}
@@ -370,16 +373,13 @@ const Dashboard = () => {
         mode="create"
         projectId="" />
 
-
       <ProjectModal
         project={null}
         division={activeDivision}
         isOpen={showCreateProject}
         onClose={() => setShowCreateProject(false)}
         mode="create" />
-
     </div>);
-
 };
 
 export default Dashboard;
