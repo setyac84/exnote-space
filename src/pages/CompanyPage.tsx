@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanies, useCreateCompany, useUpdateCompany, useDeleteCompany } from '@/hooks/useSupabaseData';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Pencil, Trash2, Save, X, Building2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Save, X, Building2, ChevronRight } from 'lucide-react';
 
 const CompanyPage = () => {
-  const { user, isSuperAdmin } = useAuth();
+  const { user, isSuperAdmin, isAdmin } = useAuth();
   const { data: companies = [] } = useCompanies();
   const createMutation = useCreateCompany();
   const updateMutation = useUpdateCompany();
@@ -18,11 +18,23 @@ const CompanyPage = () => {
 
   if (!user) return null;
 
+  const isHolding = user.company_id === null;
+  const canManage = isAdmin; // holding admins + scoped admins can add sub-companies
+
+  // Separate holdings (parent_id = null) and sub-companies
+  const holdings = companies.filter((c: any) => !c.parent_id);
+  const subCompanies = companies.filter((c: any) => c.parent_id);
+  const getChildren = (parentId: string) => subCompanies.filter((c: any) => c.parent_id === parentId);
+
   const inputCls = 'w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
 
   const handleCreate = async () => {
     if (!form.name.trim()) return;
-    await createMutation.mutateAsync({ name: form.name, description: form.description });
+    await createMutation.mutateAsync({
+      name: form.name,
+      description: form.description,
+      parent_id: isHolding ? null : user.company_id,
+    });
     setForm({ name: '', description: '' });
     setShowCreate(false);
   };
@@ -44,17 +56,67 @@ const CompanyPage = () => {
     setDeleteConfirm(null);
   };
 
+  const CompanyRow = ({ company, isChild = false, index = 0 }: { company: any; isChild?: boolean; index?: number }) => (
+    <motion.div key={company.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}
+      className={`glass-card rounded-xl p-5 ${isChild ? 'ml-8 border-l-2 border-primary/20' : ''}`}>
+      {editingId === company.id ? (
+        <div className="space-y-3">
+          <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={inputCls} />
+          <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={inputCls} />
+          <div className="flex gap-2">
+            <button onClick={() => handleSave(company.id)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+              <Save className="w-3.5 h-3.5" /> Save
+            </button>
+            <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {isChild && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+            <div className={`w-10 h-10 rounded-lg ${isChild ? 'bg-accent/50' : 'bg-primary/10'} flex items-center justify-center`}>
+              <Building2 className={`w-5 h-5 ${isChild ? 'text-accent-foreground' : 'text-primary'}`} />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">{company.name}</h3>
+              <p className="text-xs text-muted-foreground">{company.description}</p>
+            </div>
+          </div>
+          {isSuperAdmin && (
+            <div className="flex items-center gap-1">
+              <button onClick={() => handleEdit(company)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">
+                <Pencil className="w-4 h-4" />
+              </button>
+              {deleteConfirm === company.id ? (
+                <div className="flex items-center gap-1">
+                  <button onClick={() => handleDelete(company.id)} className="px-2 py-1 text-xs rounded bg-destructive text-destructive-foreground">Yes</button>
+                  <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 text-xs rounded bg-secondary text-secondary-foreground">No</button>
+                </div>
+              ) : (
+                <button onClick={() => setDeleteConfirm(company.id)} className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </motion.div>
+  );
+
   return (
     <div className="max-w-7xl mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Companies</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage companies for your projects</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isHolding ? 'Manage all holdings and sub-companies' : 'Manage sub-companies in your group'}
+          </p>
         </div>
-        {isSuperAdmin && (
+        {canManage && (
           <button onClick={() => { setShowCreate(true); setForm({ name: '', description: '' }); }}
             className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-            <Plus className="w-4 h-4" /> Add Company
+            <Plus className="w-4 h-4" /> {isHolding ? 'Add Holding' : 'Add Sub-Company'}
           </button>
         )}
       </motion.div>
@@ -64,7 +126,7 @@ const CompanyPage = () => {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
             className="glass-card rounded-xl p-5 mb-4 overflow-hidden">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-foreground">New Company</h3>
+              <h3 className="text-sm font-semibold text-foreground">{isHolding ? 'New Holding Company' : 'New Sub-Company'}</h3>
               <button onClick={() => setShowCreate(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-3">
@@ -80,52 +142,20 @@ const CompanyPage = () => {
       </AnimatePresence>
 
       <div className="space-y-3">
-        {companies.map((company, i) => (
-          <motion.div key={company.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-            className="glass-card rounded-xl p-5">
-            {editingId === company.id ? (
-              <div className="space-y-3">
-                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={inputCls} />
-                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={inputCls} />
-                <div className="flex gap-2">
-                  <button onClick={() => handleSave(company.id)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                    <Save className="w-3.5 h-3.5" /> Save
-                  </button>
-                  <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">{company.name}</h3>
-                    <p className="text-xs text-muted-foreground">{company.description}</p>
-                  </div>
-                </div>
-                {isSuperAdmin && (
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => handleEdit(company)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    {deleteConfirm === company.id ? (
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => handleDelete(company.id)} className="px-2 py-1 text-xs rounded bg-destructive text-destructive-foreground">Yes</button>
-                        <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 text-xs rounded bg-secondary text-secondary-foreground">No</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setDeleteConfirm(company.id)} className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </motion.div>
+        {holdings.map((holding, i) => (
+          <div key={holding.id} className="space-y-2">
+            <CompanyRow company={holding} index={i} />
+            {getChildren(holding.id).map((child, j) => (
+              <CompanyRow key={child.id} company={child} isChild index={i + j + 1} />
+            ))}
+          </div>
         ))}
+        {/* Show sub-companies that belong to user's holding but user isn't global */}
+        {!isHolding && subCompanies.length > 0 && holdings.length === 0 && (
+          subCompanies.map((child, j) => (
+            <CompanyRow key={child.id} company={child} isChild index={j} />
+          ))
+        )}
         {companies.length === 0 && <div className="text-center py-20 text-muted-foreground text-sm">No companies yet.</div>}
       </div>
     </div>

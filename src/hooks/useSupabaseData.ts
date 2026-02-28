@@ -17,8 +17,8 @@ export function useCompanies() {
 export function useCreateCompany() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string; description?: string }) => {
-      const { data, error } = await supabase.from('companies').insert(input).select().single();
+    mutationFn: async (input: { name: string; description?: string; parent_id?: string | null }) => {
+      const { data, error } = await supabase.from('companies').insert(input as any).select().single();
       if (error) throw error;
       return data;
     },

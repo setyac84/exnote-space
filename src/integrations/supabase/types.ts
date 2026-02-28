@@ -20,20 +20,31 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          parent_id: string | null
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
           name: string
+          parent_id?: string | null
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
           name?: string
+          parent_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -282,6 +293,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       is_admin_or_above: { Args: { _user_id: string }; Returns: boolean }
+      is_in_user_company_group: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       project_in_user_scope: {
         Args: { _project_id: string; _user_id: string }
