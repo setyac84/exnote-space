@@ -102,7 +102,7 @@ const Dashboard = () => {
     });
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-7xl mx-auto px-2 lg:px-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 lg:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -124,7 +124,7 @@ const Dashboard = () => {
       </motion.div>
 
       {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4 lg:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-5">
         {/* Left column: Stats + Team Members */}
         <div className="flex flex-col gap-4 lg:gap-5">
           {/* Stats 2x2 */}
