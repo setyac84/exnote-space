@@ -1,32 +1,34 @@
-## Plan: 4 Perubahan UI — Dashboard Width, Dark Mode, Spacing, Profile Edit
 
-### 1. Samakan lebar Dashboard dengan halaman lain
 
-- Dashboard saat ini `max-w-7xl`, halaman lain `max-w-5xl`
-- Ubah `max-w-7xl` → `max-w-8xl` di `Dashboard.tsx` line 114
+## Analysis
 
-### 2. Tambah spacing antara "Hello, super" dan "Today is"
+The root cause is the last migration added `OR is_admin_or_above(auth.uid())` to the companies SELECT policy, letting any admin see all companies. This breaks the multi-tenant isolation.
 
-- Tambah `mt-3` atau `gap-2` pada paragraf "Today is" di `Dashboard.tsx` line 119
+The correct architecture:
+- **Holding (company_id=NULL)**: sees all companies, can manage everything
+- **Scoped Super Admin (company_id=X)**: sees only their own company, can add companies for their group
+- **Scoped Admin (company_id=X)**: sees only their own company, cannot add/manage companies
+- **SKOR BOLD!** and **Evindo Global Putra** are isolated from each other
 
-### 3. Dark Mode Switch di Sidebar
+## Plan
 
-- Tambah dark mode support menggunakan `next-themes` (sudah terinstall)
-- Wrap app dengan `ThemeProvider` di `main.tsx`
-- Tambah toggle switch dark/light di Sidebar, di atas section account user (sebelum border-t)
-- Tambah CSS variabel dark mode di `index.css`
+### 1. Fix Companies RLS Policies (migration)
 
-### 4. Profile Edit Popup di Sidebar
+**SELECT**: Revert to only `(get_user_company(auth.uid()) IS NULL) OR (id = get_user_company(auth.uid()))` -- remove `is_admin_or_above`
 
-- Buat user name area di sidebar bisa di-klik → buka Dialog/Popover
-- Dialog berisi form: avatar/foto (initials saja dulu), nama, position
-- Gunakan `useUpdateProfile` yang sudah ada + `refreshProfile` dari AuthContext
-- Simpan perubahan ke database
+**INSERT**: Change from `is_admin_or_above` to `is_super_admin` -- only super_admin can create companies
 
-### Files yang Diubah
+**UPDATE**: Keep scoped to own company for super_admin only (change `is_admin_or_above` to `is_super_admin`)
 
-- `src/pages/Dashboard.tsx` — max-width + spacing
-- `src/index.css` — dark mode CSS variables
-- `src/main.tsx` — wrap ThemeProvider
-- `src/components/Sidebar.tsx` — dark mode toggle + profile edit popup
-- `src/contexts/AuthContext.tsx` — pastikan `refreshProfile` tersedia (sudah ada)
+**DELETE**: Keep as-is (already requires holding)
+
+### 2. Fix CompanyPage UI
+
+Change `isAdmin` check to `isSuperAdmin` for showing Add/Edit/Delete buttons, so regular admins cannot manage companies.
+
+### 3. Fix ProjectModal company dropdown
+
+For scoped admins: don't show dropdown, auto-assign their own company. Only holding (company_id=NULL) should see the company selector dropdown.
+
+Change condition from `isEditable && isAdmin` to `isEditable && isHolding` for the company dropdown.
+
