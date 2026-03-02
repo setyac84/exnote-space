@@ -1,10 +1,30 @@
-import React from 'react';
+import React, { useState as useStateReact, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjects, useTasks, useMembers, useCompanies, useCreateProject, useCreateTask, useUpdateTask, useUpdateProject, useDeleteTask, useUpdateProfile, useUpdateUserRole, useTaskAssignees, useNotes, useSetTaskAssignees } from '@/hooks/useSupabaseData';
 import { formatDate, formatDaysLeft, daysLeftColor } from '@/lib/formatDate';
 import { format, addDays, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { motion } from 'framer-motion';
 import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users, Plus, Pencil, Trash2, Save, ChevronDown, StickyNote, Filter, Copy } from 'lucide-react';
+
+const DigitalClock = () => {
+  const [time, setTime] = useStateReact(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const hours = format(time, 'HH');
+  const minutes = format(time, 'mm');
+  const seconds = format(time, 'ss');
+  return (
+    <div className="flex items-center gap-1 font-mono">
+      <span className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{hours}</span>
+      <span className="text-2xl sm:text-3xl font-bold text-primary animate-pulse">:</span>
+      <span className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{minutes}</span>
+      <span className="text-2xl sm:text-3xl font-bold text-primary animate-pulse">:</span>
+      <span className="text-2xl sm:text-3xl font-bold text-primary/60 tracking-tight">{seconds}</span>
+    </div>
+  );
+};
 import TaskCalendar from '@/components/TaskCalendar';
 import AvatarUpload from '@/components/AvatarUpload';
 import ProjectCard from '@/components/ProjectCard';
@@ -228,6 +248,10 @@ const Dashboard = () => {
             <p className="text-muted-foreground mt-2 text-sm">Today is <span className="font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md">{format(new Date(), 'EEEE, d MMM yyyy')}</span></p>
           </div>
         </div>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="glass-card rounded-xl px-4 py-2 flex items-center">
+            <DigitalClock />
+          </div>
         {isAdmin &&
         <div className="flex items-center gap-2">
             <button onClick={() => setShowCreateTask(true)} className="flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-md">
@@ -238,6 +262,7 @@ const Dashboard = () => {
             </button>
           </div>
         }
+        </div>
       </motion.div>
 
       {/* Two-column layout */}
