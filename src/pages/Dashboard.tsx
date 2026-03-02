@@ -273,9 +273,42 @@ const Dashboard = () => {
           </motion.div>
         </div>
 
-        {/* Right column: Calendar + Task Tabs */}
+        {/* Right column: Running Projects + Calendar + Task Tabs */}
         <div className="flex flex-col gap-4 lg:gap-5">
-          {/* Task Calendar - moved to top */}
+          {/* Running Projects */}
+          {(() => {
+            const runningProjects = divisionProjects.filter(p => p.status === 'ongoing' || p.status === 'planning').slice(0, 3);
+            if (runningProjects.length === 0) return null;
+            return (
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <FolderKanban className="w-4 h-4 text-muted-foreground" />
+                    <h2 className="text-sm font-semibold text-foreground">Running Projects</h2>
+                  </div>
+                  <button onClick={() => navigate('/projects')} className="text-xs text-primary hover:underline">View All</button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {runningProjects.map((project, i) => {
+                    const company = companies.find(c => c.id === project.company_id);
+                    return (
+                      <ProjectCard
+                        key={project.id}
+                        project={{ ...project, tasks: allTasks.filter(t => t.project_id === project.id) }}
+                        companyName={company?.name || '-'}
+                        index={i}
+                        onClick={() => navigate(`/projects`)}
+                        onNavigate={() => navigate(`/projects`)}
+                        isAdmin={isAdmin}
+                      />
+                    );
+                  })}
+                </div>
+              </motion.div>
+            );
+          })()}
+
+          {/* Task Calendar */}
           <TaskCalendar tasks={myTasks as any} members={allMembers} taskAssignees={allTaskAssignees} onTaskClick={setSelectedTask} />
 
           {/* Task View Tabs */}
