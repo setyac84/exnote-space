@@ -12,7 +12,6 @@ import StyledDropdown from '@/components/StyledDropdown';
 
 type ProjectStatus = 'planning' | 'ongoing' | 'completed' | 'archived';
 type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
-type Division = 'creative' | 'developer' | 'management';
 type ModalMode = 'view' | 'edit' | 'create';
 
 const statusOptions: { value: ProjectStatus; label: string }[] = [
@@ -27,7 +26,7 @@ const priorityOptions: { value: TaskPriority; label: string; cls: string }[] = [
 
 interface ProjectModalProps {
   project?: any;
-  division: Division;
+  division: string;
   isOpen: boolean;
   onClose: () => void;
   mode?: ModalMode;
@@ -44,7 +43,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
   const emptyForm = () => ({
     name: '', description: '', company_id: isHolding ? (companies[0]?.id || '') : (user?.company_id || ''),
     status: 'planning' as ProjectStatus, priority: 'medium' as TaskPriority,
-    division, start_date: new Date().toISOString().split('T')[0], end_date: '',
+    division_id: division, start_date: new Date().toISOString().split('T')[0], end_date: '',
   });
 
   const [mode, setMode] = useState<ModalMode>(initialMode);
@@ -60,7 +59,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
       setForm({
         name: project.name, description: project.description || '',
         company_id: project.company_id, status: project.status,
-        priority: project.priority, division: project.division,
+        priority: project.priority, division_id: project.division_id,
         start_date: project.start_date || '', end_date: project.end_date || '',
       });
     }
@@ -71,7 +70,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
     if (mode === 'create') {
       await createProject.mutateAsync({
         name: form.name, description: form.description, company_id: form.company_id,
-        division: form.division, status: form.status, priority: form.priority,
+        division_id: form.division_id, status: form.status, priority: form.priority,
         start_date: form.start_date || undefined, end_date: form.end_date || undefined,
       });
     } else if (project) {

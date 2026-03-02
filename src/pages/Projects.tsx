@@ -176,7 +176,7 @@ const Projects = () => {
 
       <ProjectModal
         project={selectedProject}
-        division={activeDivision}
+        division={activeDivision as string}
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         mode={modalMode}

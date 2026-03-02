@@ -88,19 +88,13 @@ const CompanyPage = () => {
 
   if (!user) return null;
 
-  const isHolding = user.company_id === null;
   const canManage = isAdmin;
-
-  const holdings = companies.filter((c: any) => !c.parent_id);
-  const subCompanies = companies.filter((c: any) => c.parent_id);
-  const getChildren = (parentId: string) => subCompanies.filter((c: any) => c.parent_id === parentId);
 
   const handleCreate = async () => {
     if (!form.name.trim()) return;
     await createMutation.mutateAsync({
       name: form.name,
       description: form.description,
-      parent_id: isHolding ? null : user.company_id,
     });
     setForm({ name: '', description: '' });
     setShowCreate(false);
@@ -139,14 +133,12 @@ const CompanyPage = () => {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Companies</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {isHolding ? 'Manage all holdings and sub-companies' : 'Manage sub-companies in your group'}
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Manage your companies</p>
         </div>
         {canManage && (
           <button onClick={() => { setShowCreate(true); setForm({ name: '', description: '' }); }}
             className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-            <Plus className="w-4 h-4" /> {isHolding ? 'Add Holding' : 'Add Sub-Company'}
+            <Plus className="w-4 h-4" /> Add Company
           </button>
         )}
       </motion.div>
@@ -156,7 +148,7 @@ const CompanyPage = () => {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
             className="glass-card rounded-xl p-5 mb-4 overflow-hidden">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-foreground">{isHolding ? 'New Holding Company' : 'New Sub-Company'}</h3>
+              <h3 className="text-sm font-semibold text-foreground">New Company</h3>
               <button onClick={() => setShowCreate(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-3">
@@ -172,19 +164,9 @@ const CompanyPage = () => {
       </AnimatePresence>
 
       <div className="space-y-3">
-        {holdings.map((holding, i) => (
-          <div key={holding.id} className="space-y-2">
-            <CompanyRow company={holding} index={i} {...rowProps} />
-            {getChildren(holding.id).map((child, j) => (
-              <CompanyRow key={child.id} company={child} isChild index={i + j + 1} {...rowProps} />
-            ))}
-          </div>
+        {companies.map((company, i) => (
+          <CompanyRow key={company.id} company={company} index={i} {...rowProps} />
         ))}
-        {!isHolding && subCompanies.length > 0 && holdings.length === 0 && (
-          subCompanies.map((child, j) => (
-            <CompanyRow key={child.id} company={child} isChild index={j} {...rowProps} />
-          ))
-        )}
         {companies.length === 0 && <div className="text-center py-20 text-muted-foreground text-sm">No companies yet.</div>}
       </div>
     </div>
