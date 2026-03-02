@@ -27,29 +27,24 @@ Deno.serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const { data: roleData } = await adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", caller.id)
-      .single();
 
-    // Allow admin and super_admin
-    if (roleData?.role !== "super_admin" && roleData?.role !== "admin") {
+    // Check caller's highest role via user_companies
+    const { data: callerRoles } = await adminClient
+      .from("user_companies")
+      .select("role, company_id")
+      .eq("user_id", caller.id);
+
+    const roleOrder: Record<string, number> = { owner: 0, super_admin: 1, admin: 2, member: 3 };
+    const sortedRoles = (callerRoles || []).sort((a, b) => (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9));
+    const highestRole = sortedRoles[0]?.role;
+
+    if (!highestRole || (highestRole !== "owner" && highestRole !== "super_admin" && highestRole !== "admin")) {
       return new Response(JSON.stringify({ error: "Forbidden: admin or above only" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Get caller's company_id
-    const { data: callerProfile } = await adminClient
-      .from("profiles")
-      .select("company_id")
-      .eq("id", caller.id)
-      .single();
-
-    const callerCompanyId = callerProfile?.company_id;
-
-    const { email, password, name, position, division, company_id, role } = await req.json();
+    const { email, password, name, position, division_id, company_ids, role } = await req.json();
 
     if (!email || !password || !name) {
       return new Response(JSON.stringify({ error: "email, password, and name are required" }), {
@@ -57,21 +52,26 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Determine target company_id:
-    // - Holding (company_id NULL): can specify any company_id, or leave null
-    // - Scoped: always use caller's company_id
-    const targetCompanyId = callerCompanyId === null
-      ? (company_id || null)
-      : callerCompanyId;
-
-    // Admin (non-super) can only create members, not other admins/super_admins
-    if (roleData?.role === "admin" && role && role !== "member") {
+    // Admin can only create members
+    if (highestRole === "admin" && role && role !== "member") {
       return new Response(JSON.stringify({ error: "Admin can only create members" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Create user via admin API
+    // Determine target companies
+    const callerCompanyIds = (callerRoles || []).map(r => r.company_id);
+    const targetCompanyIds: string[] = company_ids?.length
+      ? company_ids.filter((cid: string) => callerCompanyIds.includes(cid))
+      : callerCompanyIds.slice(0, 1); // Default: first company of caller
+
+    if (targetCompanyIds.length === 0) {
+      return new Response(JSON.stringify({ error: "No valid company to assign" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Create user
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -86,18 +86,23 @@ Deno.serve(async (req) => {
     }
 
     const userId = newUser.user.id;
+    const memberRole = role || "member";
 
-    // Update profile with additional info
+    // Assign to companies via user_companies
+    for (const cid of targetCompanyIds) {
+      await adminClient.from("user_companies").insert({
+        user_id: userId,
+        company_id: cid,
+        role: memberRole,
+      });
+    }
+
+    // Update profile
     await adminClient.from("profiles").update({
       position: position || null,
-      division: division || "creative",
-      company_id: targetCompanyId,
+      division_id: division_id || null,
+      company_id: targetCompanyIds[0], // Primary company
     }).eq("id", userId);
-
-    // Update role if not default member
-    if (role && role !== "member") {
-      await adminClient.from("user_roles").update({ role }).eq("user_id", userId);
-    }
 
     return new Response(JSON.stringify({ id: userId, email, name }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },

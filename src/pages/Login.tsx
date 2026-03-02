@@ -6,15 +6,12 @@ import { ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import logoImg from '@/assets/logo.png';
 
 const Login = () => {
-  const { login, signup, user, loading: authLoading } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [isSignup, setIsSignup] = useState(false);
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already logged in
@@ -26,22 +23,14 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
     if (!email.trim() || !password.trim()) { setError('Email dan password wajib diisi'); return; }
-    if (isSignup && !name.trim()) { setError('Nama wajib diisi'); return; }
     if (password.length < 6) { setError('Password minimal 6 karakter'); return; }
 
     setLoading(true);
     try {
-      if (isSignup) {
-        const err = await signup(email, password, name);
-        if (err) { setError(err); }
-        else { setSuccess('Akun berhasil dibuat! Silakan login.'); setIsSignup(false); }
-      } else {
-        const err = await login(email, password);
-        if (err) { setError(err); }
-        else { navigate('/dashboard'); }
-      }
+      const err = await login(email, password);
+      if (err) { setError(err); }
+      else { navigate('/dashboard'); }
     } finally {
       setLoading(false);
     }
@@ -56,22 +45,10 @@ const Login = () => {
         </div>
 
         <div className="glass-card rounded-2xl p-8">
-          <h2 className="text-xl font-semibold text-foreground mb-1">
-            {isSignup ? 'Buat akun baru' : 'Masuk ke akun Anda'}
-          </h2>
-          <p className="text-muted-foreground text-sm mb-6">
-            {isSignup ? 'Daftar untuk mulai mengelola project' : 'Kelola project dan task tim Anda'}
-          </p>
+          <h2 className="text-xl font-semibold text-foreground mb-1">Masuk ke akun Anda</h2>
+          <p className="text-muted-foreground text-sm mb-6">Kelola project dan task tim Anda</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isSignup && (
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Nama Lengkap</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg bg-input border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                  placeholder="Nama lengkap" />
-              </div>
-            )}
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)}
@@ -92,23 +69,19 @@ const Login = () => {
             </div>
 
             {error && <p className="text-destructive text-sm">{error}</p>}
-            {success && <p className="text-success text-sm">{success}</p>}
 
             <button type="submit" disabled={loading}
               className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-                <>{isSignup ? 'Daftar' : 'Masuk'} <ArrowRight className="w-4 h-4" /></>
+                <>Masuk <ArrowRight className="w-4 h-4" /></>
               )}
             </button>
           </form>
 
           <div className="mt-6 pt-6 border-t border-border text-center">
             <p className="text-sm text-muted-foreground">
-              {isSignup ? 'Sudah punya akun?' : 'Belum punya akun?'}{' '}
-              <button onClick={() => { setIsSignup(!isSignup); setError(''); setSuccess(''); }}
-                className="text-primary hover:underline font-medium">
-                {isSignup ? 'Masuk' : 'Daftar'}
-              </button>
+              Belum punya akun?{' '}
+              <a href="/register" className="text-primary hover:underline font-medium">Daftar sebagai Owner</a>
             </p>
           </div>
         </div>

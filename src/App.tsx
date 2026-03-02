@@ -7,12 +7,12 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import AppLayout from "@/components/AppLayout";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import TaskListPage from "./pages/TaskListPage";
 import CompanyPage from "./pages/CompanyPage";
 import MemberPage from "./pages/MemberPage";
-import RegisterCompany from "./pages/RegisterCompany";
 import NotepadPage from "./pages/NotepadPage";
 import NotFound from "./pages/NotFound";
 
@@ -28,12 +28,12 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
             <Route path="/projects" element={<AppLayout><Projects /></AppLayout>} />
             <Route path="/tasks" element={<AppLayout><TaskListPage /></AppLayout>} />
             <Route path="/company" element={<AppLayout><CompanyPage /></AppLayout>} />
             <Route path="/members" element={<AppLayout><MemberPage /></AppLayout>} />
-            <Route path="/register-company" element={<AppLayout><RegisterCompany /></AppLayout>} />
             <Route path="/notepad" element={<AppLayout><NotepadPage /></AppLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
