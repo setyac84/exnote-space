@@ -253,6 +253,8 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
 
   const isCreate = initialMode === 'create';
   const isEditing = mode === 'edit';
+  const isMemberEdit = readOnly && isEditing; // member can only edit deliverables
+  const isFullEdit = !readOnly && isEditing; // admin full edit
   const divisionMembers = allMembers.filter(u => u.division === division && u.role !== 'super_admin');
   const divisionProjects = allProjects.filter(p => p.division === division);
 
@@ -277,7 +279,8 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
   if (!isCreate && !task) return null;
 
   const canEdit = !readOnly;
-  const isEditable = isEditing || isCreate;
+  const isEditable = isFullEdit || isCreate;
+  const isDeliverableEditable = isEditable || isMemberEdit;
   const inputCls = 'w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
   const labelCls = 'text-xs font-medium text-muted-foreground mb-1.5 block';
 
@@ -289,6 +292,14 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
   };
 
   const handleSave = async () => {
+    if (isMemberEdit) {
+      // Member can only save deliverables
+      if (task) {
+        await updateTask.mutateAsync({ id: task.id, result_link: form.result_link });
+      }
+      setMode('view');
+      return;
+    }
     if (!form.title?.trim()) return;
     if (isCreate) {
       const taskProjectId = form.project_id || projectId || '';
@@ -550,27 +561,19 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                         )}
                       </div>
 
-                      {/* Deliverables - always editable inline */}
+                      {/* Deliverables - editable for members too */}
                       <div>
                         <label className={labelCls}>Deliverables</label>
-                        <div className="space-y-1.5">
-                          <input
+                        {isDeliverableEditable ? (
+                          <RichTextArea
                             value={form.result_link || ''}
-                            onChange={e => setForm((f: any) => ({ ...f, result_link: e.target.value }))}
-                            onBlur={e => {
-                              if (!isEditable && task && e.target.value !== task.result_link) {
-                                handleInlineFieldSave('result_link', e.target.value);
-                              }
-                            }}
+                            onChange={v => setForm((f: any) => ({ ...f, result_link: v }))}
                             className={inputCls}
-                            placeholder="Paste result link..."
+                            placeholder="Paste deliverables link or image..."
                           />
-                          {form.result_link && (
-                            <a href={form.result_link} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-xs text-primary hover:underline">
-                              <Link className="w-3 h-3" /> Open link
-                            </a>
-                          )}
-                        </div>
+                        ) : (
+                          <RichTextDisplay value={form.result_link || '-'} />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -615,25 +618,25 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 pt-4 border-t border-border">
-                  {mode === 'view' && canEdit && (
+                  {mode === 'view' && (
                     <>
                       <button onClick={() => setMode('edit')} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                        <Pencil className="w-3.5 h-3.5" /> Edit
+                        <Pencil className="w-3.5 h-3.5" /> {readOnly ? 'Edit Deliverables' : 'Edit'}
                       </button>
-                      {onDelete && (
+                      {canEdit && onDelete && (
                         <button onClick={() => setShowDeleteConfirm(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">
                           <Trash2 className="w-3.5 h-3.5" /> Delete
                         </button>
                       )}
                     </>
                   )}
-                  {isEditable && (
+                  {(isEditable || isMemberEdit) && (
                     <>
-                      <button onClick={handleSave} disabled={!form.title?.trim() || createTask.isPending || updateTask.isPending}
+                      <button onClick={handleSave} disabled={(!isMemberEdit && !form.title?.trim()) || createTask.isPending || updateTask.isPending}
                         className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
                         <Save className="w-3.5 h-3.5" /> Save
                       </button>
-                      {isEditing && (
+                      {(isEditing) && (
                         <button onClick={handleCancel} className="px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">Cancel</button>
                       )}
                     </>
