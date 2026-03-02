@@ -277,7 +277,7 @@ const Dashboard = () => {
         <div className="flex flex-col gap-4 lg:gap-5">
           {/* Running Projects */}
           {(() => {
-            const runningProjects = divisionProjects.filter(p => p.status === 'ongoing' || p.status === 'planning').slice(0, 3);
+            const runningProjects = divisionProjects.filter(p => p.status !== 'archived').slice(0, 3);
             if (runningProjects.length === 0) return null;
             return (
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
