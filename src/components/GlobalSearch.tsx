@@ -36,13 +36,13 @@ const GlobalSearch = () => {
   const q = query.toLowerCase().trim();
 
   const filteredProjects = q
-    ? projects.filter(p => p.division === activeDivision && p.name.toLowerCase().includes(q)).slice(0, 5)
+    ? projects.filter(p => p.division_id === activeDivision && p.name.toLowerCase().includes(q)).slice(0, 5)
     : [];
 
   const filteredTasks = q
     ? tasks.filter(t => {
         const project = projects.find(p => p.id === t.project_id);
-        return project?.division === activeDivision && t.title.toLowerCase().includes(q);
+        return project?.division_id === activeDivision && t.title.toLowerCase().includes(q);
       }).slice(0, 5)
     : [];
 

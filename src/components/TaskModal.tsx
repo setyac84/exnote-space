@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
-type Division = 'creative' | 'developer' | 'management';
+type Division = string | null;
 
 const priorityColors: Record<TaskPriority, string> = {
   low: 'text-muted-foreground bg-muted', medium: 'text-info bg-info/15', high: 'text-warning bg-warning/15', urgent: 'text-destructive bg-destructive/15',
@@ -255,8 +255,8 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
   const isEditing = mode === 'edit';
   const isMemberEdit = readOnly && isEditing; // member can only edit deliverables
   const isFullEdit = !readOnly && isEditing; // admin full edit
-  const divisionMembers = allMembers.filter(u => u.division === division && u.role !== 'super_admin');
-  const divisionProjects = allProjects.filter(p => p.division === division);
+  const divisionMembers = allMembers.filter(u => u.division_id === division && u.role !== 'super_admin');
+  const divisionProjects = allProjects.filter(p => p.division_id === division);
 
   useEffect(() => {
     setMode(initialMode);

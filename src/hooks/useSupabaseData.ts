@@ -1,6 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+
+// ─── Divisions ───
+export function useDivisions() {
+  return useQuery({
+    queryKey: ['divisions'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('divisions').select('*').order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+// ─── User Companies ───
+export function useUserCompanies() {
+  return useQuery({
+    queryKey: ['user_companies'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('user_companies').select('*');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
 
 // ─── Companies ───
 export function useCompanies() {
@@ -17,7 +40,7 @@ export function useCompanies() {
 export function useCreateCompany() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string; description?: string; parent_id?: string | null }) => {
+    mutationFn: async (input: { name: string; description?: string }) => {
       const { data, error } = await supabase.from('companies').insert(input as any).select().single();
       if (error) throw error;
       return data;
@@ -65,7 +88,7 @@ export function useCreateProject() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: {
-      name: string; description?: string; company_id: string; division: string;
+      name: string; description?: string; company_id: string; division_id: string;
       status?: string; priority?: string; start_date?: string; end_date?: string;
     }) => {
       const { data, error } = await supabase.from('projects').insert(input as any).select().single();
@@ -127,9 +150,7 @@ export function useSetTaskAssignees() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ taskId, assigneeIds }: { taskId: string; assigneeIds: string[] }) => {
-      // Delete existing assignees for this task
       await supabase.from('task_assignees').delete().eq('task_id', taskId);
-      // Insert new assignees
       if (assigneeIds.length > 0) {
         const rows = assigneeIds.map(aid => ({ task_id: taskId, assignee_id: aid }));
         const { error } = await supabase.from('task_assignees').insert(rows);
@@ -181,7 +202,7 @@ export function useDeleteTask() {
   });
 }
 
-// ─── Members (Profiles + Roles) ───
+// ─── Members (Profiles + Roles from user_companies) ───
 export function useMembers() {
   return useQuery({
     queryKey: ['members'],
@@ -189,12 +210,20 @@ export function useMembers() {
       const { data: profiles, error } = await supabase.from('profiles').select('*').order('name');
       if (error) throw error;
 
-      const { data: roles } = await supabase.from('user_roles').select('*');
-      const roleMap = new Map((roles || []).map(r => [r.user_id, r.role]));
+      const { data: userCompanies } = await supabase.from('user_companies').select('*');
+      const roleOrder: Record<string, number> = { owner: 0, super_admin: 1, admin: 2, member: 3 };
+      const roleMap = new Map<string, string>();
+
+      (userCompanies || []).forEach(uc => {
+        const existing = roleMap.get(uc.user_id);
+        if (!existing || (roleOrder[uc.role] ?? 9) < (roleOrder[existing] ?? 9)) {
+          roleMap.set(uc.user_id, uc.role);
+        }
+      });
 
       return (profiles || []).map(p => ({
         ...p,
-        role: (roleMap.get(p.id) as string) || 'member',
+        role: roleMap.get(p.id) || 'member',
       }));
     },
   });
@@ -203,7 +232,7 @@ export function useMembers() {
 export function useUpdateProfile() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...input }: { id: string; name?: string; email?: string; position?: string; division?: string; company_id?: string; avatar?: string }) => {
+    mutationFn: async ({ id, ...input }: { id: string; name?: string; email?: string; position?: string; division_id?: string | null; company_id?: string; avatar?: string }) => {
       const { data, error } = await supabase.from('profiles').update(input as any).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -216,7 +245,7 @@ export function useUpdateUserRole() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const { error } = await supabase.from('user_roles').update({ role: role as any }).eq('user_id', userId);
+      const { error } = await supabase.from('user_companies').update({ role: role as any }).eq('user_id', userId);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['members'] }),
@@ -228,7 +257,7 @@ export function useCreateMember() {
   return useMutation({
     mutationFn: async (input: {
       email: string; password: string; name: string;
-      position?: string; division?: string; company_id?: string; role?: string;
+      position?: string; division_id?: string; company_id?: string; role?: string;
     }) => {
       const { data, error } = await supabase.functions.invoke('create-member', { body: input });
       if (error) throw error;
@@ -236,21 +265,6 @@ export function useCreateMember() {
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['members'] }),
-  });
-}
-
-export function useRegisterCompany() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: {
-      company_name: string; email: string; password: string; name: string; position?: string;
-    }) => {
-      const { data, error } = await supabase.functions.invoke('register-company', { body: input });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['companies'] }),
   });
 }
 

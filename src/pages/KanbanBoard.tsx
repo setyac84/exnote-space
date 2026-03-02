@@ -38,7 +38,7 @@ const KanbanBoard = () => {
     if (!user) return [];
     let filtered = allTasks.filter(t => {
       const project = allProjects.find(p => p.id === t.project_id);
-      return project?.division === activeDivision;
+      return project?.division_id === activeDivision;
     });
     if (projectFilter) filtered = filtered.filter(t => t.project_id === projectFilter);
     if (!isAdmin) {

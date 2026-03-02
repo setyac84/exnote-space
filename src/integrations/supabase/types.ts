@@ -20,31 +20,38 @@ export type Database = {
           description: string | null
           id: string
           name: string
-          parent_id: string | null
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
           name: string
-          parent_id?: string | null
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
           name?: string
-          parent_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "companies_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      divisions: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       notes: {
         Row: {
@@ -78,7 +85,7 @@ export type Database = {
           avatar: string | null
           company_id: string | null
           created_at: string
-          division: Database["public"]["Enums"]["app_division"]
+          division_id: string | null
           email: string
           id: string
           name: string
@@ -89,7 +96,7 @@ export type Database = {
           avatar?: string | null
           company_id?: string | null
           created_at?: string
-          division?: Database["public"]["Enums"]["app_division"]
+          division_id?: string | null
           email: string
           id: string
           name: string
@@ -100,7 +107,7 @@ export type Database = {
           avatar?: string | null
           company_id?: string | null
           created_at?: string
-          division?: Database["public"]["Enums"]["app_division"]
+          division_id?: string | null
           email?: string
           id?: string
           name?: string
@@ -115,6 +122,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
         ]
       }
       projects: {
@@ -122,7 +136,7 @@ export type Database = {
           company_id: string
           created_at: string
           description: string | null
-          division: Database["public"]["Enums"]["app_division"]
+          division_id: string | null
           end_date: string | null
           id: string
           name: string
@@ -135,7 +149,7 @@ export type Database = {
           company_id: string
           created_at?: string
           description?: string | null
-          division?: Database["public"]["Enums"]["app_division"]
+          division_id?: string | null
           end_date?: string | null
           id?: string
           name: string
@@ -148,7 +162,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           description?: string | null
-          division?: Database["public"]["Enums"]["app_division"]
+          division_id?: string | null
           end_date?: string | null
           id?: string
           name?: string
@@ -163,6 +177,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
             referencedColumns: ["id"]
           },
         ]
@@ -293,46 +314,59 @@ export type Database = {
           },
         ]
       }
-      user_roles: {
+      user_companies: {
         Row: {
+          company_id: string
+          created_at: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          company_id: string
+          created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          company_id?: string
+          created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_companies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      get_user_company: { Args: { _user_id: string }; Returns: string }
-      get_user_division: {
-        Args: { _user_id: string }
-        Returns: Database["public"]["Enums"]["app_division"]
-      }
-      get_user_role: {
+      get_user_division_id: { Args: { _user_id: string }; Returns: string }
+      get_user_highest_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
-      is_admin_or_above: { Args: { _user_id: string }; Returns: boolean }
-      is_in_user_company_group: {
+      get_user_role_in_company: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      is_admin_or_above_in_company: {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
       }
-      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
-      project_in_user_scope: {
-        Args: { _project_id: string; _user_id: string }
+      is_owner_or_super: { Args: { _user_id: string }; Returns: boolean }
+      user_belongs_to_company: {
+        Args: { _company_id: string; _user_id: string }
         Returns: boolean
       }
       user_has_task_in_project: {
@@ -341,8 +375,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_division: "creative" | "developer" | "management"
-      app_role: "super_admin" | "admin" | "member"
+      app_role: "owner" | "super_admin" | "admin" | "member"
       project_status: "planning" | "ongoing" | "completed" | "archived"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "todo" | "doing" | "review" | "done"
@@ -473,8 +506,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_division: ["creative", "developer", "management"],
-      app_role: ["super_admin", "admin", "member"],
+      app_role: ["owner", "super_admin", "admin", "member"],
       project_status: ["planning", "ongoing", "completed", "archived"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["todo", "doing", "review", "done"],

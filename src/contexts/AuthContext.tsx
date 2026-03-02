@@ -1,9 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
-import { Division } from '@/types';
 
-type UserRole = 'super_admin' | 'admin' | 'member';
+type UserRole = 'owner' | 'super_admin' | 'admin' | 'member';
 
 export interface UserProfile {
   id: string;
@@ -11,7 +10,7 @@ export interface UserProfile {
   email: string;
   avatar?: string | null;
   role: UserRole;
-  division: Division;
+  division_id: string | null;
   company_id: string | null;
   position?: string | null;
 }
@@ -23,8 +22,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<string | null>;
   signup: (email: string, password: string, name: string) => Promise<string | null>;
   logout: () => Promise<void>;
-  activeDivision: Division;
-  setActiveDivision: (d: Division) => void;
+  activeDivision: string | null;
+  setActiveDivision: (d: string | null) => void;
+  isOwner: boolean;
   isSuperAdmin: boolean;
   isAdmin: boolean;
   refreshProfile: () => Promise<void>;
@@ -36,28 +36,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeDivision, setActiveDivision] = useState<Division>('creative');
+  const [activeDivision, setActiveDivision] = useState<string | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const [{ data: profile }, { data: roleData }] = await Promise.all([
+    const [{ data: profile }, { data: userCompanies }] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).single(),
-      supabase.from('user_roles').select('role').eq('user_id', userId).single(),
+      supabase.from('user_companies').select('role, company_id').eq('user_id', userId),
     ]);
 
     if (profile) {
+      const roles = userCompanies || [];
+      const roleOrder: Record<string, number> = { owner: 0, super_admin: 1, admin: 2, member: 3 };
+      roles.sort((a, b) => (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9));
+      const highestRole = (roles[0]?.role as UserRole) || 'member';
+
       const userProfile: UserProfile = {
         id: profile.id,
         name: profile.name,
         email: profile.email,
         avatar: profile.avatar,
-        role: (roleData?.role as UserRole) || 'member',
-        division: profile.division as Division,
+        role: highestRole,
+        division_id: profile.division_id,
         company_id: profile.company_id,
         position: profile.position,
       };
       setUser(userProfile);
-      // Super admin defaults to 'management', others to their profile division
-      setActiveDivision(userProfile.role === 'super_admin' ? 'management' : userProfile.division);
+      setActiveDivision(userProfile.division_id);
     }
   }, []);
 
@@ -111,11 +115,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const isSuperAdmin = user?.role === 'super_admin';
+  const isOwner = user?.role === 'owner';
+  const isSuperAdmin = user?.role === 'super_admin' || isOwner;
   const isAdmin = user?.role === 'admin' || isSuperAdmin;
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, login, signup, logout, activeDivision, setActiveDivision, isSuperAdmin, isAdmin, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, loading, login, signup, logout, activeDivision, setActiveDivision, isOwner, isSuperAdmin, isAdmin, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

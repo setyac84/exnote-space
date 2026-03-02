@@ -26,7 +26,7 @@ const Projects = () => {
   const [companyFilter, setCompanyFilter] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
 
-  const divisionProjects = useMemo(() => allProjects.filter(p => p.division === activeDivision), [allProjects, activeDivision]);
+  const divisionProjects = useMemo(() => allProjects.filter(p => p.division_id === activeDivision), [allProjects, activeDivision]);
 
   // Generate month options from project dates
   const monthOptions = useMemo(() => {

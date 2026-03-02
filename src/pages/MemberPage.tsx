@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMembers, useCompanies, useUpdateProfile, useUpdateUserRole, useCreateMember, useDeleteMember, useResetMemberPassword } from '@/hooks/useSupabaseData';
+import { useMembers, useCompanies, useUpdateProfile, useUpdateUserRole, useCreateMember, useDeleteMember, useResetMemberPassword, useDivisions } from '@/hooks/useSupabaseData';
 import { motion } from 'framer-motion';
 import { Pencil, Trash2, Save, UserPlus, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -9,14 +9,14 @@ import { toast } from 'sonner';
 import StyledDropdown from '@/components/StyledDropdown';
 import AvatarUpload from '@/components/AvatarUpload';
 
-type UserRole = 'super_admin' | 'admin' | 'member';
+type UserRole = 'owner' | 'super_admin' | 'admin' | 'member';
 const roleOptions: UserRole[] = ['super_admin', 'admin', 'member'];
 
 const MemberPage = () => {
   const { user, activeDivision, isAdmin, isSuperAdmin } = useAuth();
   const { data: allMembers = [] } = useMembers();
   const { data: companies = [] } = useCompanies();
-  const isHolding = user?.company_id === null;
+  const { data: divisions = [] } = useDivisions();
   const updateProfile = useUpdateProfile();
   const updateRole = useUpdateUserRole();
   const createMember = useCreateMember();
@@ -26,7 +26,7 @@ const MemberPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<any>({});
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [addForm, setAddForm] = useState<any>({ division: 'creative', role: 'member' });
+  const [addForm, setAddForm] = useState<any>({ division_id: null, role: 'member' });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [resetPasswordId, setResetPasswordId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
@@ -35,25 +35,26 @@ const MemberPage = () => {
 
   if (!user) return null;
 
-  const roleOrder: Record<string, number> = { super_admin: 0, admin: 1, member: 2 };
-  const divisionOrder: Record<string, number> = { management: 0, creative: 1, developer: 2 };
+  const roleOrder: Record<string, number> = { owner: 0, super_admin: 1, admin: 2, member: 3 };
+
+  const getDivisionName = (divisionId: string | null) => {
+    if (!divisionId) return '-';
+    return divisions.find(d => d.id === divisionId)?.name || '-';
+  };
+
+  const divisionOptions = divisions.map(d => ({ value: d.id, label: d.name }));
 
   const visibleMembers = (isSuperAdmin
     ? allMembers
     : isAdmin
-      ? allMembers.filter(u => u.division === activeDivision && u.role !== 'super_admin')
-      : allMembers.filter(u => u.division === user.division)
+      ? allMembers.filter(u => u.division_id === activeDivision && u.role !== 'super_admin')
+      : allMembers.filter(u => u.division_id === user.division_id)
   ).slice().sort((a, b) => {
-    // 1. Role
     const rDiff = (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9);
     if (rDiff !== 0) return rDiff;
-    // 2. Company
     const aCompany = companies.find(c => c.id === a.company_id)?.name || '';
     const bCompany = companies.find(c => c.id === b.company_id)?.name || '';
-    const cDiff = aCompany.localeCompare(bCompany);
-    if (cDiff !== 0) return cDiff;
-    // 3. Division
-    return (divisionOrder[a.division] ?? 9) - (divisionOrder[b.division] ?? 9);
+    return aCompany.localeCompare(bCompany);
   });
 
   const inputCls = 'bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
@@ -66,7 +67,7 @@ const MemberPage = () => {
           id: editingId,
           name: form.name,
           position: form.position,
-          division: form.division,
+          division_id: form.division_id,
         });
         if (form.role && isSuperAdmin) {
           await updateRole.mutateAsync({ userId: editingId, role: form.role });
@@ -89,7 +90,7 @@ const MemberPage = () => {
       await createMember.mutateAsync(addForm);
       toast.success('Member baru berhasil ditambahkan');
       setShowAddDialog(false);
-      setAddForm({ division: 'creative', role: 'member' });
+      setAddForm({ division_id: null, role: 'member' });
     } catch (err: any) {
       toast.error(err.message || 'Gagal menambahkan member');
     }
@@ -159,12 +160,8 @@ const MemberPage = () => {
         )}
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
-          <StyledDropdown value={form.division || activeDivision} onChange={(v) => setForm((f: any) => ({ ...f, division: v }))}
-            options={[
-              ...(form.role === 'super_admin' ? [{ value: 'management', label: 'Management' }] : []),
-              { value: 'creative', label: 'Creative' },
-              { value: 'developer', label: 'Developer' },
-            ]} />
+          <StyledDropdown value={form.division_id || ''} onChange={(v) => setForm((f: any) => ({ ...f, division_id: v }))}
+            options={divisionOptions} />
         </div>
       </div>
       <div className="flex gap-2">
@@ -183,7 +180,7 @@ const MemberPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Members</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isSuperAdmin ? 'All members' : `${activeDivision} division members`}
+            {isSuperAdmin ? 'All members' : `${getDivisionName(activeDivision)} division members`}
           </p>
         </div>
         {isAdmin && (
@@ -208,34 +205,23 @@ const MemberPage = () => {
                   <p className="text-sm font-medium text-foreground">{member.name}</p>
                   <p className="text-xs text-muted-foreground">{member.position || 'No position'}</p>
                   <p className="text-[11px] text-muted-foreground/70">{member.email}</p>
-                  {isHolding && isSuperAdmin && (() => {
-                    const memberCompany = companies.find((c: any) => c.id === member.company_id);
-                    const holdingCompany = memberCompany?.parent_id
-                      ? companies.find((c: any) => c.id === memberCompany.parent_id)
-                      : memberCompany;
-                    return holdingCompany ? (
-                      <p className="text-[11px] mt-0.5 text-accent-foreground/70 bg-accent/40 px-1.5 py-0.5 rounded-md inline-block">
-                        🏢 {holdingCompany.name}{memberCompany?.parent_id ? ` → ${memberCompany.name}` : ''}
-                      </p>
-                    ) : null;
-                  })()}
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className={cn(
                   'text-[10px] font-medium px-2.5 py-1 rounded-full capitalize',
-                  member.role === 'admin' || member.role === 'super_admin' ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'
+                  member.role === 'admin' || member.role === 'super_admin' || member.role === 'owner' ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'
                 )}>
-                  {member.role === 'super_admin' ? 'Super Admin' : member.role}
+                  {member.role === 'super_admin' ? 'Super Admin' : member.role === 'owner' ? 'Owner' : member.role}
                 </span>
-                <span className="text-xs text-muted-foreground capitalize">{member.division}</span>
-                {(isSuperAdmin || (isAdmin && member.role !== 'super_admin')) && (
+                <span className="text-xs text-muted-foreground capitalize">{getDivisionName(member.division_id)}</span>
+                {(isSuperAdmin || (isAdmin && member.role !== 'super_admin' && member.role !== 'owner')) && (
                   <button onClick={() => startEdit(member)} title="Edit"
                     className="p-1.5 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                 )}
-                {isAdmin && member.id !== user.id && member.role !== 'super_admin' && (
+                {isAdmin && member.id !== user.id && member.role !== 'super_admin' && member.role !== 'owner' && (
                   <>
                     <button onClick={() => setResetPasswordId(member.id)} title="Reset Password"
                       className="p-1.5 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
@@ -292,12 +278,8 @@ const MemberPage = () => {
               </div>
               <div className="col-span-2">
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Division</label>
-                <StyledDropdown value={addForm.division || 'creative'} onChange={(v) => setAddForm((f: any) => ({ ...f, division: v }))}
-                  options={[
-                    ...(addForm.role === 'super_admin' ? [{ value: 'management', label: 'Management' }] : []),
-                    { value: 'creative', label: 'Creative' },
-                    { value: 'developer', label: 'Developer' },
-                  ]} />
+                <StyledDropdown value={addForm.division_id || ''} onChange={(v) => setAddForm((f: any) => ({ ...f, division_id: v }))}
+                  options={divisionOptions} />
               </div>
             </div>
             <button onClick={handleAdd} disabled={createMember.isPending}
@@ -347,9 +329,9 @@ const MemberPage = () => {
       <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete Member</DialogTitle>
+            <DialogTitle>Hapus Member</DialogTitle>
             <DialogDescription>
-              Apakah kamu yakin ingin menghapus <strong>{memberToDelete?.name}</strong>? Akun dan semua data terkait akan dihapus permanen.
+              Apakah kamu yakin ingin menghapus <strong>{memberToDelete?.name}</strong>? Tindakan ini tidak bisa dibatalkan.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 justify-end mt-2">
@@ -359,7 +341,7 @@ const MemberPage = () => {
             </button>
             <button onClick={handleDelete} disabled={deleteMember.isPending}
               className="px-4 py-2 text-sm rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50">
-              {deleteMember.isPending ? 'Deleting...' : 'Delete'}
+              {deleteMember.isPending ? 'Deleting...' : 'Hapus'}
             </button>
           </div>
         </DialogContent>

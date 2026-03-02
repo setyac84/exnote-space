@@ -118,11 +118,11 @@ const TaskListPage = () => {
   };
 
   const divisionProjects = useMemo(() => {
-    return allProjects.filter(p => p.division === activeDivision);
+    return allProjects.filter(p => p.division_id === activeDivision);
   }, [allProjects, activeDivision]);
 
   const divisionMembers = useMemo(() => {
-    return allMembers.filter(m => m.division === activeDivision && m.role !== 'super_admin');
+    return allMembers.filter(m => m.division_id === activeDivision && m.role !== 'super_admin');
   }, [allMembers, activeDivision]);
 
   // Company filter options
@@ -136,7 +136,7 @@ const TaskListPage = () => {
     const months = new Set<string>();
     allTasks.forEach(t => {
       const project = allProjects.find(p => p.id === t.project_id);
-      if (project?.division !== activeDivision) return;
+      if (project?.division_id !== activeDivision) return;
       if (t.due_date) months.add(format(parseISO(t.due_date), 'yyyy-MM'));
       if (t.request_date) months.add(format(parseISO(t.request_date), 'yyyy-MM'));
     });
@@ -150,7 +150,7 @@ const TaskListPage = () => {
     if (!user) return [];
     let filtered = allTasks.filter(t => {
       const project = allProjects.find(p => p.id === t.project_id);
-      return project?.division === activeDivision;
+      return project?.division_id === activeDivision;
     });
     if (!isAdmin) {
       filtered = filtered.filter(t => {
@@ -275,7 +275,7 @@ const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: s
   const tabCounts = useMemo(() => {
     let base = allTasks.filter(t => {
       const project = allProjects.find(p => p.id === t.project_id);
-      return project?.division === activeDivision;
+      return project?.division_id === activeDivision;
     });
     if (!isAdmin && user) {
       base = base.filter(t => {

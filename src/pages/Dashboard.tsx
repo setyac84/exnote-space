@@ -84,10 +84,10 @@ const Dashboard = () => {
 
   if (!user) return null;
 
-  const divisionProjects = allProjects.filter((p) => p.division === activeDivision);
+  const divisionProjects = allProjects.filter((p) => p.division_id === activeDivision);
   const divisionTasks = allTasks.filter((t) => {
     const project = allProjects.find((p) => p.id === t.project_id);
-    return project?.division === activeDivision;
+    return project?.division_id === activeDivision;
   });
 
   const myTasks = isAdmin ? divisionTasks : divisionTasks.filter((t) => {
@@ -100,7 +100,7 @@ const Dashboard = () => {
   const overdueCount = myTasks.filter((t) => t.status !== 'done' && t.due_date && t.due_date < today).length;
   const urgentCount = myTasks.filter((t) => t.priority === 'urgent' && t.status !== 'done').length;
 
-  const divisionMembers = allMembers.filter((u) => u.division === activeDivision && u.role !== 'super_admin');
+  const divisionMembers = allMembers.filter((u) => u.division_id === activeDivision && u.role !== 'super_admin');
 
   const stats = [
   { label: 'High Priority', value: urgentCount, icon: AlertTriangle, color: 'text-destructive', bgColor: 'bg-destructive/10', onClick: () => navigate('/tasks?priority=urgent'), viewLabel: 'View tasks' },
