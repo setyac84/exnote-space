@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { generateTaskCode as generateTaskCodeFn } from '@/lib/taskCode';
 import { useProjects, useMembers, useCompanies, useCreateTask, useUpdateTask, useTaskAssignees, useSetTaskAssignees, useTasks } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
 import { X, Calendar as CalendarIcon, Flag, User, Link, AlertTriangle, Trash2, ChevronDown, Save, Pencil, Image, Check } from 'lucide-react';
@@ -242,38 +243,8 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
   const updateTask = useUpdateTask();
   const setTaskAssignees = useSetTaskAssignees();
 
-  const monthLetters = ['J','F','M','A','M','J','J','A','S','O','N','D'];
-
-  const getCompanyPrefix = (companyId: string) => {
-    const company = companies.find(c => c.id === companyId);
-    if (!company) return '';
-    const initial = company.name.charAt(0).toUpperCase();
-    // Find all companies with the same initial, sorted by created_at for stable ordering
-    const sameInitial = companies
-      .filter(c => c.name.charAt(0).toUpperCase() === initial)
-      .sort((a, b) => a.created_at.localeCompare(b.created_at));
-    const idx = sameInitial.findIndex(c => c.id === companyId);
-    // First company gets just the letter, subsequent ones get letter + index
-    return idx <= 0 ? initial : `${initial}${idx}`;
-  };
-
-  const generateTaskCode = (projectId: string) => {
-    const project = allProjects.find(p => p.id === projectId);
-    if (!project) return '';
-    const companyPrefix = getCompanyPrefix(project.company_id);
-    if (!companyPrefix) return '';
-    const now = new Date();
-    const monthLetter = monthLetters[now.getMonth()];
-    const monthNum = String(now.getMonth() + 1).padStart(2, '0');
-    const prefix = `${companyPrefix}${monthLetter}${monthNum}`;
-    // Count existing tasks with same prefix (same company + same month)
-    const companyProjectIds = allProjects.filter(p => p.company_id === project.company_id).map(p => p.id);
-    const existingCount = allTasks.filter(t =>
-      t.code && companyProjectIds.includes(t.project_id) && t.code.startsWith(prefix + '-')
-    ).length;
-    const nextNum = String(existingCount + 1).padStart(3, '0');
-    return `${prefix}-${nextNum}`;
-  };
+  const generateTaskCode = (projectId: string) =>
+    generateTaskCodeFn(projectId, allProjects, companies, allTasks);
 
   const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
   const [form, setForm] = useState<any>({});

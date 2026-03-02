@@ -15,6 +15,7 @@ import TaskModal from '@/components/TaskModal';
 import ProjectModal from '@/components/ProjectModal';
 import { cn } from '@/lib/utils';
 import StyledDropdown from '@/components/StyledDropdown';
+import { generateTaskCode as generateTaskCodeFn } from '@/lib/taskCode';
 
 type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 type UserRole = 'super_admin' | 'admin' | 'member';
@@ -104,39 +105,10 @@ const Dashboard = () => {
     updateTaskMutation.mutate({ id: taskId, status: newStatus });
   };
 
-  const monthLetters = ['J','F','M','A','M','J','J','A','S','O','N','D'];
-
-  const getCompanyPrefix = (companyId: string) => {
-    const company = companies.find(c => c.id === companyId);
-    if (!company) return '';
-    const initial = company.name.charAt(0).toUpperCase();
-    const sameInitial = companies
-      .filter(c => c.name.charAt(0).toUpperCase() === initial)
-      .sort((a, b) => a.created_at.localeCompare(b.created_at));
-    const idx = sameInitial.findIndex(c => c.id === companyId);
-    return idx <= 0 ? initial : `${initial}${idx}`;
-  };
-
-  const generateTaskCode = (projId: string) => {
-    const project = allProjects.find(p => p.id === projId);
-    if (!project) return '';
-    const companyPrefix = getCompanyPrefix(project.company_id);
-    if (!companyPrefix) return '';
-    const now = new Date();
-    const monthLetter = monthLetters[now.getMonth()];
-    const monthNum = String(now.getMonth() + 1).padStart(2, '0');
-    const prefix = `${companyPrefix}${monthLetter}${monthNum}`;
-    const companyProjectIds = allProjects.filter(p => p.company_id === project.company_id).map(p => p.id);
-    const existingCount = allTasks.filter(t =>
-      t.code && companyProjectIds.includes(t.project_id) && t.code.startsWith(prefix + '-')
-    ).length;
-    return `${prefix}-${String(existingCount + 1).padStart(3, '0')}`;
-  };
-
   const handleDuplicateTask = (task: any, e: React.MouseEvent) => {
     e.stopPropagation();
     const { id, created_at, updated_at, code, ...rest } = task;
-    const newCode = generateTaskCode(task.project_id);
+    const newCode = generateTaskCodeFn(task.project_id, allProjects, companies, allTasks);
     createTaskMutation.mutate(
       { ...rest, status: 'todo' as any, code: newCode },
       {
