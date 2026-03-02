@@ -60,6 +60,38 @@ export function useUserCompanies() {
   });
 }
 
+export function useAddUserToCompany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, companyId, role = 'member' }: { userId: string; companyId: string; role?: string }) => {
+      const { error } = await supabase.from('user_companies').insert({
+        user_id: userId,
+        company_id: companyId,
+        role: role as any,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['user_companies'] });
+      qc.invalidateQueries({ queryKey: ['members'] });
+    },
+  });
+}
+
+export function useRemoveUserFromCompany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, companyId }: { userId: string; companyId: string }) => {
+      const { error } = await supabase.from('user_companies').delete().eq('user_id', userId).eq('company_id', companyId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['user_companies'] });
+      qc.invalidateQueries({ queryKey: ['members'] });
+    },
+  });
+}
+
 // ─── Companies ───
 export function useCompanies() {
   return useQuery({
