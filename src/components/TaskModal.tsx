@@ -251,6 +251,8 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
   const [form, setForm] = useState<any>({});
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [requestDateOpen, setRequestDateOpen] = useState(false);
+  const [dueDateOpen, setDueDateOpen] = useState(false);
 
   const isCreate = initialMode === 'create';
   const isEditing = mode === 'edit';
@@ -438,7 +440,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                   <div>
                     <label className={labelCls}>Request Date</label>
                     {isEditable ? (
-                      <Popover>
+                      <Popover open={requestDateOpen} onOpenChange={setRequestDateOpen}>
                         <PopoverTrigger asChild>
                           <button type="button" className={cn(inputCls, 'flex items-center justify-between text-left', !form.request_date && 'text-muted-foreground')}>
                             <span>{form.request_date ? format(parseISO(form.request_date), 'd MMM yyyy') : 'Pick a date'}</span>
@@ -446,7 +448,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0 rounded-xl" align="start" sideOffset={4}>
-                          <Calendar mode="single" selected={form.request_date ? parseISO(form.request_date) : undefined} onSelect={(d) => setForm((f: any) => ({ ...f, request_date: d ? format(d, 'yyyy-MM-dd') : '' }))} initialFocus className="p-3 pointer-events-auto rounded-xl" />
+                          <Calendar mode="single" selected={form.request_date ? parseISO(form.request_date) : undefined} onSelect={(d) => { setForm((f: any) => ({ ...f, request_date: d ? format(d, 'yyyy-MM-dd') : '' })); setRequestDateOpen(false); }} initialFocus className="p-3 pointer-events-auto rounded-xl" />
                         </PopoverContent>
                       </Popover>
                     ) : (
@@ -456,7 +458,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                   <div>
                     <label className={labelCls}>Due Date</label>
                     {isEditable ? (
-                      <Popover>
+                      <Popover open={dueDateOpen} onOpenChange={setDueDateOpen}>
                         <PopoverTrigger asChild>
                           <button type="button" className={cn(inputCls, 'flex items-center justify-between text-left', !form.due_date && 'text-muted-foreground')}>
                             <span>{form.due_date ? format(parseISO(form.due_date), 'd MMM yyyy') : 'Pick a date'}</span>
@@ -464,7 +466,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0 rounded-xl" align="start" sideOffset={4}>
-                          <Calendar mode="single" selected={form.due_date ? parseISO(form.due_date) : undefined} onSelect={(d) => setForm((f: any) => ({ ...f, due_date: d ? format(d, 'yyyy-MM-dd') : '' }))} initialFocus className="p-3 pointer-events-auto rounded-xl" />
+                          <Calendar mode="single" selected={form.due_date ? parseISO(form.due_date) : undefined} onSelect={(d) => { setForm((f: any) => ({ ...f, due_date: d ? format(d, 'yyyy-MM-dd') : '' })); setDueDateOpen(false); }} initialFocus className="p-3 pointer-events-auto rounded-xl" />
                         </PopoverContent>
                       </Popover>
                     ) : (

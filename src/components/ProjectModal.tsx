@@ -49,6 +49,8 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
   const [mode, setMode] = useState<ModalMode>(initialMode);
   const [form, setForm] = useState(emptyForm());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [startDateOpen, setStartDateOpen] = useState(false);
+  const [endDateOpen, setEndDateOpen] = useState(false);
 
   useEffect(() => {
     setMode(initialMode);
@@ -145,7 +147,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
                   <div>
                     <label className={labelCls}>Start Date</label>
                     {isEditable ? (
-                      <Popover>
+                      <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
                         <PopoverTrigger asChild>
                           <button type="button" className={cn(inputCls, 'flex items-center justify-between text-left', !form.start_date && 'text-muted-foreground')}>
                             <span>{form.start_date ? format(parseISO(form.start_date), 'd MMM yyyy') : 'Pick a date'}</span>
@@ -153,7 +155,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0 rounded-xl" align="start">
-                          <Calendar mode="single" selected={form.start_date ? parseISO(form.start_date) : undefined} onSelect={(d) => setForm(f => ({ ...f, start_date: d ? format(d, 'yyyy-MM-dd') : '' }))} initialFocus className="p-3 pointer-events-auto rounded-xl" />
+                          <Calendar mode="single" selected={form.start_date ? parseISO(form.start_date) : undefined} onSelect={(d) => { setForm(f => ({ ...f, start_date: d ? format(d, 'yyyy-MM-dd') : '' })); setStartDateOpen(false); }} initialFocus className="p-3 pointer-events-auto rounded-xl" />
                         </PopoverContent>
                       </Popover>
                     ) : <p className="text-sm text-foreground">{formatDateFull(form.start_date)}</p>}
@@ -161,7 +163,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
                   <div>
                     <label className={labelCls}>End Date</label>
                     {isEditable ? (
-                      <Popover>
+                      <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
                         <PopoverTrigger asChild>
                           <button type="button" className={cn(inputCls, 'flex items-center justify-between text-left', !form.end_date && 'text-muted-foreground')}>
                             <span>{form.end_date ? format(parseISO(form.end_date), 'd MMM yyyy') : 'Pick a date'}</span>
@@ -169,7 +171,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0 rounded-xl" align="start">
-                          <Calendar mode="single" selected={form.end_date ? parseISO(form.end_date) : undefined} onSelect={(d) => setForm(f => ({ ...f, end_date: d ? format(d, 'yyyy-MM-dd') : '' }))} initialFocus className="p-3 pointer-events-auto rounded-xl" />
+                          <Calendar mode="single" selected={form.end_date ? parseISO(form.end_date) : undefined} onSelect={(d) => { setForm(f => ({ ...f, end_date: d ? format(d, 'yyyy-MM-dd') : '' })); setEndDateOpen(false); }} initialFocus className="p-3 pointer-events-auto rounded-xl" />
                         </PopoverContent>
                       </Popover>
                     ) : <p className="text-sm text-foreground">{formatDateFull(form.end_date)}</p>}
