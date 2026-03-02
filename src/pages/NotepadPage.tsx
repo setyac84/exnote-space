@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from '@/hooks/useSupabaseData';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, StickyNote, Search, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, StickyNote, Search, ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -55,11 +55,15 @@ const NotepadPage = () => {
     setEditContent(note.content);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (andClose = false) => {
     if (!selectedId) return;
     setSaving(true);
     try {
       await updateNote.mutateAsync({ id: selectedId, title: editTitle.trim() || 'Untitled', content: editContent });
+      if (andClose) {
+        setSelectedId(null);
+        toast.success('Note saved');
+      }
     } catch (e: any) {
       toast.error(e.message || 'Failed to save');
     } finally {
@@ -156,14 +160,14 @@ const NotepadPage = () => {
               <Input
                 value={editTitle}
                 onChange={e => setEditTitle(e.target.value)}
-                onBlur={handleSave}
+                onBlur={() => handleSave()}
                 placeholder="Note title..."
                 className="text-lg font-semibold border-none shadow-none focus-visible:ring-0 px-3 mb-2"
               />
               <Textarea
                 value={editContent}
                 onChange={e => setEditContent(e.target.value)}
-                onBlur={handleSave}
+                onBlur={() => handleSave()}
                 placeholder="Start writing..."
                 className="flex-1 border-none shadow-none focus-visible:ring-0 px-3 resize-none min-h-[300px] text-sm"
               />
@@ -171,7 +175,16 @@ const NotepadPage = () => {
                 <p className="text-[10px] text-muted-foreground">
                   Last updated: {format(new Date(selectedNote.updated_at), 'd MMM yyyy, HH:mm')}
                 </p>
-                <span className="text-[10px] text-muted-foreground">{saving ? 'Saving...' : 'Auto-saved'}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-muted-foreground">{saving ? 'Saving...' : 'Auto-saved'}</span>
+                  <button
+                    onClick={() => handleSave(true)}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    <Save className="w-3.5 h-3.5" /> Save & Close
+                  </button>
+                </div>
               </div>
             </>
           ) : (
