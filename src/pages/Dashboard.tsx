@@ -19,7 +19,7 @@ import { generateTaskCode as generateTaskCodeFn } from '@/lib/taskCode';
 
 type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 type UserRole = 'super_admin' | 'admin' | 'member';
-type TaskViewTab = 'today' | 'tomorrow' | 'all';
+type TaskViewTab = 'today' | 'tomorrow' | 'overdue' | 'all';
 
 const statusLabel: Record<TaskStatus, string> = { todo: 'To Do', doing: 'Doing', review: 'Review', done: 'Done' };
 const statusDot: Record<TaskStatus, string> = { todo: 'border-muted-foreground', doing: 'border-info', review: 'border-warning', done: 'border-success bg-success' };
@@ -140,6 +140,8 @@ const Dashboard = () => {
       filtered = filtered.filter(t => t.due_date === todayStr);
     } else if (taskViewTab === 'tomorrow') {
       filtered = filtered.filter(t => t.due_date === tomorrowStr);
+    } else if (taskViewTab === 'overdue') {
+      filtered = filtered.filter(t => t.due_date && t.due_date < todayStr);
     }
     
     if (filterProject !== 'all') {
@@ -174,10 +176,11 @@ const Dashboard = () => {
 
   const filteredTasks = getFilteredTasks();
 
-  const tabLabels: Record<TaskViewTab, string> = { today: 'Tasks Today!', tomorrow: 'Tasks Tomorrow', all: 'All Tasks' };
+  const tabLabels: Record<TaskViewTab, string> = { today: 'Tasks Today!', tomorrow: 'Tasks Tomorrow', overdue: 'Tasks Overdue', all: 'All Tasks' };
   const emptyMessages: Record<TaskViewTab, { emoji: string; title: string; subtitle: string }> = {
     today: { emoji: '🎉', title: 'Congrats! No task today!', subtitle: 'Enjoy your free time or get ahead on tomorrow\'s work.' },
     tomorrow: { emoji: '☀️', title: 'No tasks tomorrow!', subtitle: 'Tomorrow looks clear. Plan ahead or relax.' },
+    overdue: { emoji: '✅', title: 'No overdue tasks!', subtitle: 'Great job staying on track.' },
     all: { emoji: '✅', title: 'All caught up!', subtitle: 'No pending tasks right now.' },
   };
 
@@ -340,14 +343,20 @@ const Dashboard = () => {
 
           {/* Task View Tabs */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="glass-card rounded-xl p-5">
+            {/* Task heading above tabs */}
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">{tabLabels[taskViewTab]}</h2>
+            </div>
+
             {/* Tab bar + filter */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div className="flex bg-secondary rounded-lg p-0.5 text-xs">
-                {(['today', 'tomorrow', 'all'] as TaskViewTab[]).map(tab => (
+                {(['today', 'tomorrow', 'overdue', 'all'] as TaskViewTab[]).map(tab => (
                   <button key={tab} onClick={() => setTaskViewTab(tab)}
                     className={cn('px-3 py-1.5 rounded-md transition-colors whitespace-nowrap text-xs', 
                       taskViewTab === tab ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>
-                    {tabLabels[tab]}
+                    {tab === 'today' ? 'Today' : tab === 'tomorrow' ? 'Tomorrow' : tab === 'overdue' ? 'Overdue' : 'All Tasks'}
                   </button>
                 ))}
               </div>
@@ -373,12 +382,6 @@ const Dashboard = () => {
                   className="w-[160px]"
                 />
               </div>
-            </div>
-
-            {/* Task heading */}
-            <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">{tabLabels[taskViewTab]}</h2>
             </div>
 
             {/* Task list */}
