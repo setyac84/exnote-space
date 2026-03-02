@@ -96,11 +96,11 @@ const CompanyPage = () => {
     if (!addMemberDialog || !selectedMemberId) return;
     try {
       await addUserToCompany.mutateAsync({ userId: selectedMemberId, companyId: addMemberDialog });
-      toast.success('Member berhasil ditambahkan ke company');
+      toast.success('Member added to company successfully');
       setAddMemberDialog(null);
       setSelectedMemberId('');
     } catch (err: any) {
-      toast.error(err.message || 'Gagal menambahkan member');
+      toast.error(err.message || 'Failed to add member');
     }
   };
 
@@ -108,10 +108,10 @@ const CompanyPage = () => {
     if (!removeMemberConfirm) return;
     try {
       await removeUserFromCompany.mutateAsync(removeMemberConfirm);
-      toast.success('Member berhasil dihapus dari company');
+      toast.success('Member removed from company');
       setRemoveMemberConfirm(null);
     } catch (err: any) {
-      toast.error(err.message || 'Gagal menghapus member');
+      toast.error(err.message || 'Failed to remove member');
     }
   };
 
@@ -126,7 +126,7 @@ const CompanyPage = () => {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Companies</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your companies and their members</p>
+          <p className="text-sm text-muted-foreground mt-1">Manage your companies and team assignments</p>
         </div>
         {canManage && (
           <button onClick={() => { setShowCreate(true); setForm({ name: '', description: '' }); }}
@@ -289,12 +289,12 @@ const CompanyPage = () => {
           <DialogHeader>
             <DialogTitle>Add Member to Company</DialogTitle>
             <DialogDescription>
-              Tambahkan member yang sudah ada ke {companies.find(c => c.id === addMemberDialog)?.name}
+              Add a member to {companies.find(c => c.id === addMemberDialog)?.name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 mt-2">
             {addMemberDialog && getAvailableMembers(addMemberDialog).length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Semua member sudah tergabung di company ini</p>
+              <p className="text-sm text-muted-foreground text-center py-4">All members are already in this company</p>
             ) : (
               <>
                 <div>
@@ -306,7 +306,7 @@ const CompanyPage = () => {
                       value: m.id,
                       label: `${m.name} (${m.email})`,
                     }))}
-                    placeholder="Pilih member..."
+                    placeholder="Select member..."
                   />
                 </div>
                 <button onClick={handleAddMember} disabled={!selectedMemberId || addUserToCompany.isPending}
@@ -325,17 +325,17 @@ const CompanyPage = () => {
           <DialogHeader>
             <DialogTitle>Remove Member</DialogTitle>
             <DialogDescription>
-              Apakah Anda yakin ingin menghapus <strong>{allMembers.find(m => m.id === removeMemberConfirm?.userId)?.name}</strong> dari company <strong>{companies.find(c => c.id === removeMemberConfirm?.companyId)?.name}</strong>?
+              Are you sure you want to remove <strong>{allMembers.find(m => m.id === removeMemberConfirm?.userId)?.name}</strong> from <strong>{companies.find(c => c.id === removeMemberConfirm?.companyId)?.name}</strong>?
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 mt-2 justify-end">
             <button onClick={() => setRemoveMemberConfirm(null)}
               className="px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
-              Batal
+              Cancel
             </button>
             <button onClick={handleRemoveMember} disabled={removeUserFromCompany.isPending}
               className="px-4 py-2 text-sm rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50">
-              {removeUserFromCompany.isPending ? 'Removing...' : 'Hapus'}
+              {removeUserFromCompany.isPending ? 'Removing...' : 'Remove'}
             </button>
           </div>
         </DialogContent>

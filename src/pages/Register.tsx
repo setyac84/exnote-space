@@ -42,7 +42,7 @@ const Register = () => {
       });
 
       if (fnError || data?.error) {
-        setError(data?.error || fnError?.message || 'Registrasi gagal');
+        setError(data?.error || fnError?.message || 'Registration failed');
         return;
       }
 
@@ -73,7 +73,7 @@ const Register = () => {
 
         <div className="glass-card rounded-2xl p-8">
           <h2 className="text-xl font-semibold text-foreground mb-1">Create your workspace</h2>
-          <p className="text-muted-foreground text-sm mb-6">Set up your company and start managing your team in minutes</p>
+          <p className="text-muted-foreground text-sm mb-6">Set up your company and start managing your team</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

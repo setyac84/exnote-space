@@ -104,7 +104,7 @@ const DivisionsPage = () => {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Divisions</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage divisions and assign team members</p>
+          <p className="text-sm text-muted-foreground mt-1">Organize your team into divisions</p>
         </div>
         {isSuperAdmin && (
           <button onClick={() => setShowAddDialog(true)}

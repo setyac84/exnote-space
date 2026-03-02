@@ -90,9 +90,9 @@ const NotepadPage = () => {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
         <div className="flex items-center gap-3 mb-1">
           <StickyNote className="w-6 h-6 text-primary" />
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">My Notepad</h1>
+         <h1 className="text-xl sm:text-2xl font-bold text-foreground">My Notepad</h1>
         </div>
-        <p className="text-sm text-muted-foreground">Your private notes — only you can see them.</p>
+        <p className="text-sm text-muted-foreground">Your private notes — visible only to you.</p>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 lg:gap-5 min-h-[60vh]">
@@ -200,19 +200,19 @@ const NotepadPage = () => {
       <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Hapus Note</DialogTitle>
+            <DialogTitle>Delete Note</DialogTitle>
             <DialogDescription>
-              Apakah kamu yakin ingin menghapus note ini? Tindakan ini tidak bisa dibatalkan.
+              Are you sure you want to delete this note? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 justify-end mt-2">
             <button onClick={() => setDeleteConfirmId(null)}
               className="px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
-              Batal
+              Cancel
             </button>
             <button onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
               className="px-4 py-2 text-sm rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors">
-              Ya, Hapus
+              Delete
             </button>
           </div>
         </DialogContent>

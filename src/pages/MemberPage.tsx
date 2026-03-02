@@ -79,18 +79,18 @@ const MemberPage = () => {
         if (form.role && isSuperAdmin) {
           await updateRole.mutateAsync({ userId: editingId, role: form.role });
         }
-        toast.success('Member berhasil diupdate');
+        toast.success('Member updated successfully');
         setEditingId(null);
         setForm({});
       } catch (err: any) {
-        toast.error(err.message || 'Gagal update member');
+        toast.error(err.message || 'Failed to update member');
       }
     }
   };
 
   const handleAdd = async () => {
     if (!addForm.email?.trim() || !addForm.password?.trim() || !addForm.name?.trim()) {
-      toast.error('Email, password, dan nama wajib diisi');
+      toast.error('Name, email, and password are required');
       return;
     }
     try {
@@ -99,11 +99,11 @@ const MemberPage = () => {
         company_ids: addForm.company_ids?.length ? addForm.company_ids : myCompanyIds,
       };
       await createMember.mutateAsync(payload);
-      toast.success('Member baru berhasil ditambahkan');
+      toast.success('Member created successfully');
       setShowAddDialog(false);
       setAddForm({ division_id: null, role: 'member', company_ids: [] });
     } catch (err: any) {
-      toast.error(err.message || 'Gagal menambahkan member');
+      toast.error(err.message || 'Failed to create member');
     }
   };
 
@@ -111,26 +111,26 @@ const MemberPage = () => {
     if (!deleteConfirmId) return;
     try {
       await deleteMember.mutateAsync(deleteConfirmId);
-      toast.success('Member berhasil dihapus');
+      toast.success('Member deleted successfully');
       setDeleteConfirmId(null);
     } catch (err: any) {
-      toast.error(err.message || 'Gagal menghapus member');
+      toast.error(err.message || 'Failed to delete member');
     }
   };
 
   const handleResetPassword = async () => {
     if (!resetPasswordId || !newPassword.trim()) return;
     if (newPassword.length < 6) {
-      toast.error('Password minimal 6 karakter');
+      toast.error('Password must be at least 6 characters');
       return;
     }
     try {
       await resetPassword.mutateAsync({ userId: resetPasswordId, newPassword });
-      toast.success('Password berhasil direset');
+      toast.success('Password reset successfully');
       setResetPasswordId(null);
       setNewPassword('');
     } catch (err: any) {
-      toast.error(err.message || 'Gagal reset password');
+      toast.error(err.message || 'Failed to reset password');
     }
   };
 
@@ -191,7 +191,7 @@ const MemberPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Members</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isSuperAdmin ? 'All members' : `${getDivisionName(activeDivision)} division members`}
+           {isSuperAdmin ? 'Manage all team members across divisions' : `${getDivisionName(activeDivision)} division members`}
           </p>
         </div>
         {isAdmin && (
@@ -256,7 +256,7 @@ const MemberPage = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add New Member</DialogTitle>
-            <DialogDescription>Buat akun member baru. Member akan bisa login dengan email dan password yang ditentukan.</DialogDescription>
+            <DialogDescription>Create a new team member account. They'll be able to sign in with their email and password.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 mt-2">
             <div>
@@ -270,7 +270,7 @@ const MemberPage = () => {
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Password *</label>
               <div className="relative">
-                <input type={showAddPassword ? 'text' : 'password'} value={addForm.password || ''} onChange={e => setAddForm((f: any) => ({ ...f, password: e.target.value }))} className={cn(inputCls, 'w-full pr-10')} placeholder="Min 6 characters" />
+                <input type={showAddPassword ? 'text' : 'password'} value={addForm.password || ''} onChange={e => setAddForm((f: any) => ({ ...f, password: e.target.value }))} className={cn(inputCls, 'w-full pr-10')} placeholder="Min. 6 characters" />
                 <button type="button" onClick={() => setShowAddPassword(!showAddPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                   {showAddPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -299,9 +299,9 @@ const MemberPage = () => {
                     options={companyOptions}
                     selectedValues={addForm.company_ids || []}
                     onChange={(ids) => setAddForm((f: any) => ({ ...f, company_ids: ids }))}
-                    placeholder="Semua company Anda"
+                    placeholder="All your companies"
                   />
-                  <p className="text-[10px] text-muted-foreground mt-1">Kosongkan untuk assign ke semua company Anda</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Leave empty to assign to all your companies</p>
                 </div>
               )}
             </div>
@@ -319,15 +319,15 @@ const MemberPage = () => {
           <DialogHeader>
             <DialogTitle>Reset Password</DialogTitle>
             <DialogDescription>
-              Set password baru untuk <strong>{memberToReset?.name}</strong> ({memberToReset?.email})
+              Set a new password for <strong>{memberToReset?.name}</strong> ({memberToReset?.email})
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 mt-2">
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Password Baru *</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">New Password *</label>
               <div className="relative">
                 <input type={showResetPassword ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                  className={cn(inputCls, 'w-full pr-10')} placeholder="Min 6 karakter" />
+                  className={cn(inputCls, 'w-full pr-10')} placeholder="Min. 6 characters" />
                 <button type="button" onClick={() => setShowResetPassword(!showResetPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                   {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -337,7 +337,7 @@ const MemberPage = () => {
             <div className="flex gap-2 justify-end">
               <button onClick={() => { setResetPasswordId(null); setNewPassword(''); }}
                 className="px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
-                Batal
+                Cancel
               </button>
               <button onClick={handleResetPassword} disabled={resetPassword.isPending || newPassword.length < 6}
                 className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
@@ -352,19 +352,19 @@ const MemberPage = () => {
       <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Hapus Member</DialogTitle>
+            <DialogTitle>Delete Member</DialogTitle>
             <DialogDescription>
-              Apakah kamu yakin ingin menghapus <strong>{memberToDelete?.name}</strong>? Tindakan ini tidak bisa dibatalkan.
+              Are you sure you want to delete <strong>{memberToDelete?.name}</strong>? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 justify-end mt-2">
             <button onClick={() => setDeleteConfirmId(null)}
               className="px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
-              Batal
+              Cancel
             </button>
             <button onClick={handleDelete} disabled={deleteMember.isPending}
               className="px-4 py-2 text-sm rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50">
-              {deleteMember.isPending ? 'Deleting...' : 'Hapus'}
+              {deleteMember.isPending ? 'Deleting...' : 'Delete'}
             </button>
           </div>
         </DialogContent>

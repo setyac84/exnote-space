@@ -46,7 +46,7 @@ const Login = () => {
 
         <div className="glass-card rounded-2xl p-8">
           <h2 className="text-xl font-semibold text-foreground mb-1">Sign in to your account</h2>
-          <p className="text-muted-foreground text-sm mb-6">Manage your projects and team tasks</p>
+          <p className="text-muted-foreground text-sm mb-6">Welcome back. Manage your projects and tasks.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

@@ -183,12 +183,12 @@ const Dashboard = () => {
 
   const filteredTasks = getFilteredTasks();
 
-  const tabLabels: Record<TaskViewTab, string> = { today: 'Tasks Today!', tomorrow: 'Tasks Tomorrow', overdue: 'Tasks Overdue', all: 'All Tasks' };
+  const tabLabels: Record<TaskViewTab, string> = { today: 'Due Today', tomorrow: 'Due Tomorrow', overdue: 'Overdue', all: 'All Tasks' };
   const emptyMessages: Record<TaskViewTab, { emoji: string; title: string; subtitle: string }> = {
-    today: { emoji: '🎉', title: 'Congrats! No task today!', subtitle: 'Enjoy your free time or get ahead on tomorrow\'s work.' },
-    tomorrow: { emoji: '☀️', title: 'No tasks tomorrow!', subtitle: 'Tomorrow looks clear. Plan ahead or relax.' },
-    overdue: { emoji: '✅', title: 'No overdue tasks!', subtitle: 'Great job staying on track.' },
-    all: { emoji: '✅', title: 'All caught up!', subtitle: 'No pending tasks right now.' },
+    today: { emoji: '🎉', title: 'All clear for today!', subtitle: 'No tasks due today. Get ahead on tomorrow\'s work.' },
+    tomorrow: { emoji: '☀️', title: 'Nothing due tomorrow!', subtitle: 'Tomorrow looks clear. Plan ahead or take a break.' },
+    overdue: { emoji: '✅', title: 'No overdue tasks!', subtitle: 'Great job staying on schedule.' },
+    all: { emoji: '✅', title: 'All caught up!', subtitle: 'No pending tasks at the moment.' },
   };
 
   const projectFilterOptions = [
