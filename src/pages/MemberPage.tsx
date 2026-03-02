@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMembers, useCompanies, useUpdateProfile, useUpdateUserRole, useCreateMember, useDeleteMember, useResetMemberPassword, useDivisions } from '@/hooks/useSupabaseData';
+import { useMembers, useCompanies, useUpdateProfile, useUpdateUserRole, useCreateMember, useDeleteMember, useResetMemberPassword, useDivisions, useUserCompanies } from '@/hooks/useSupabaseData';
 import { motion } from 'framer-motion';
 import { Pencil, Trash2, Save, UserPlus, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,7 @@ const MemberPage = () => {
   const { data: allMembers = [] } = useMembers();
   const { data: companies = [] } = useCompanies();
   const { data: divisions = [] } = useDivisions();
+  const { data: userCompanies = [] } = useUserCompanies();
   const updateProfile = useUpdateProfile();
   const updateRole = useUpdateUserRole();
   const createMember = useCreateMember();
@@ -26,7 +27,7 @@ const MemberPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<any>({});
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [addForm, setAddForm] = useState<any>({ division_id: null, role: 'member' });
+  const [addForm, setAddForm] = useState<any>({ division_id: null, role: 'member', company_ids: [] });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [resetPasswordId, setResetPasswordId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
@@ -43,6 +44,11 @@ const MemberPage = () => {
   };
 
   const divisionOptions = divisions.map(d => ({ value: d.id, label: d.name }));
+  
+  // Get companies that the current user belongs to (for assigning new members)
+  const myCompanyIds = userCompanies.filter(uc => uc.user_id === user?.id).map(uc => uc.company_id);
+  const myCompanies = companies.filter(c => myCompanyIds.includes(c.id));
+  const companyOptions = myCompanies.map(c => ({ value: c.id, label: c.name }));
 
   const visibleMembers = (isSuperAdmin
     ? allMembers
@@ -87,10 +93,14 @@ const MemberPage = () => {
       return;
     }
     try {
-      await createMember.mutateAsync(addForm);
+      const payload = {
+        ...addForm,
+        company_ids: addForm.company_ids?.length ? addForm.company_ids : myCompanyIds,
+      };
+      await createMember.mutateAsync(payload);
       toast.success('Member baru berhasil ditambahkan');
       setShowAddDialog(false);
-      setAddForm({ division_id: null, role: 'member' });
+      setAddForm({ division_id: null, role: 'member', company_ids: [] });
     } catch (err: any) {
       toast.error(err.message || 'Gagal menambahkan member');
     }
@@ -281,6 +291,27 @@ const MemberPage = () => {
                 <StyledDropdown value={addForm.division_id || ''} onChange={(v) => setAddForm((f: any) => ({ ...f, division_id: v }))}
                   options={divisionOptions} />
               </div>
+              {myCompanies.length > 1 && (
+                <div className="col-span-2">
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Companies</label>
+                  <div className="space-y-1.5">
+                    {companyOptions.map(opt => (
+                      <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" checked={(addForm.company_ids || []).includes(opt.value)}
+                          onChange={(e) => {
+                            setAddForm((f: any) => {
+                              const ids = f.company_ids || [];
+                              return { ...f, company_ids: e.target.checked ? [...ids, opt.value] : ids.filter((id: string) => id !== opt.value) };
+                            });
+                          }}
+                          className="rounded border-border" />
+                        {opt.label}
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">Kosongkan untuk assign ke semua company Anda</p>
+                </div>
+              )}
             </div>
             <button onClick={handleAdd} disabled={createMember.isPending}
               className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 mt-2">

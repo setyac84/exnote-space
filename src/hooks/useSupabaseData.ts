@@ -257,14 +257,17 @@ export function useCreateMember() {
   return useMutation({
     mutationFn: async (input: {
       email: string; password: string; name: string;
-      position?: string; division_id?: string; company_id?: string; role?: string;
+      position?: string; division_id?: string; company_ids?: string[]; role?: string;
     }) => {
       const { data, error } = await supabase.functions.invoke('create-member', { body: input });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['members'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['members'] });
+      qc.invalidateQueries({ queryKey: ['user_companies'] });
+    },
   });
 }
 

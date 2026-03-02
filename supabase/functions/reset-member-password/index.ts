@@ -27,14 +27,19 @@ Deno.serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const { data: roleData } = await adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", caller.id)
-      .single();
 
-    if (roleData?.role !== "super_admin") {
-      return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
+    // Check caller role via user_companies - owner/super_admin can reset passwords
+    const { data: callerRoles } = await adminClient
+      .from("user_companies")
+      .select("role, company_id")
+      .eq("user_id", caller.id);
+
+    const hasAdminAccess = (callerRoles || []).some(r => 
+      ["owner", "super_admin", "admin"].includes(r.role)
+    );
+
+    if (!hasAdminAccess) {
+      return new Response(JSON.stringify({ error: "Forbidden: admin or above only" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -52,28 +57,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get caller's company_id
-    const { data: callerProfile } = await adminClient
-      .from("profiles")
+    // Verify caller and target share at least one company
+    const callerCompanyIds = (callerRoles || []).map(r => r.company_id);
+    const { data: targetCompanies } = await adminClient
+      .from("user_companies")
       .select("company_id")
-      .eq("id", caller.id)
-      .single();
+      .eq("user_id", user_id);
 
-    const callerCompanyId = callerProfile?.company_id;
-
-    // If scoped super admin, verify target is in same company
-    if (callerCompanyId !== null) {
-      const { data: targetProfile } = await adminClient
-        .from("profiles")
-        .select("company_id")
-        .eq("id", user_id)
-        .single();
-
-      if (!targetProfile || targetProfile.company_id !== callerCompanyId) {
-        return new Response(JSON.stringify({ error: "Forbidden: member not in your company" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    const sharedCompany = (targetCompanies || []).some(tc => callerCompanyIds.includes(tc.company_id));
+    if (!sharedCompany) {
+      return new Response(JSON.stringify({ error: "Forbidden: member not in your company" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { error } = await adminClient.auth.admin.updateUserById(user_id, {

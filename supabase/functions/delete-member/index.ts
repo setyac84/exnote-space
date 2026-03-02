@@ -27,13 +27,18 @@ Deno.serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const { data: roleData } = await adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", caller.id)
-      .single();
 
-    if (!['super_admin', 'admin'].includes(roleData?.role)) {
+    // Check caller role via user_companies
+    const { data: callerRoles } = await adminClient
+      .from("user_companies")
+      .select("role, company_id")
+      .eq("user_id", caller.id);
+
+    const roleOrder: Record<string, number> = { owner: 0, super_admin: 1, admin: 2, member: 3 };
+    const sorted = (callerRoles || []).sort((a, b) => (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9));
+    const highestRole = sorted[0]?.role;
+
+    if (!highestRole || !["owner", "super_admin", "admin"].includes(highestRole)) {
       return new Response(JSON.stringify({ error: "Forbidden: admin or above only" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -52,48 +57,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get caller's company_id
-    const { data: callerProfile } = await adminClient
-      .from("profiles")
+    // Check if target is an owner - owners cannot be deleted
+    const { data: targetRoles } = await adminClient
+      .from("user_companies")
+      .select("role")
+      .eq("user_id", user_id);
+
+    if ((targetRoles || []).some(r => r.role === "owner")) {
+      return new Response(JSON.stringify({ error: "Cannot delete an Owner" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Verify caller and target share at least one company
+    const callerCompanyIds = (callerRoles || []).map(r => r.company_id);
+    const { data: targetCompanies } = await adminClient
+      .from("user_companies")
       .select("company_id")
-      .eq("id", caller.id)
-      .single();
+      .eq("user_id", user_id);
 
-    const callerCompanyId = callerProfile?.company_id;
-
-    // If scoped admin, verify target is in same holding group
-    if (callerCompanyId !== null) {
-      const { data: targetProfile } = await adminClient
-        .from("profiles")
-        .select("company_id")
-        .eq("id", user_id)
-        .single();
-
-      if (!targetProfile) {
-        return new Response(JSON.stringify({ error: "Member not found" }), {
-          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Check if target is in same company or a sub-company
-      const targetCompanyId = targetProfile.company_id;
-      const sameCompany = targetCompanyId === callerCompanyId;
-
-      let inSubCompany = false;
-      if (!sameCompany && targetCompanyId) {
-        const { data: targetCompany } = await adminClient
-          .from("companies")
-          .select("parent_id")
-          .eq("id", targetCompanyId)
-          .single();
-        inSubCompany = targetCompany?.parent_id === callerCompanyId;
-      }
-
-      if (!sameCompany && !inSubCompany) {
-        return new Response(JSON.stringify({ error: "Forbidden: member not in your company group" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    const sharedCompany = (targetCompanies || []).some(tc => callerCompanyIds.includes(tc.company_id));
+    if (!sharedCompany) {
+      return new Response(JSON.stringify({ error: "Forbidden: member not in your company" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { error } = await adminClient.auth.admin.deleteUser(user_id);
