@@ -212,6 +212,7 @@ export type Database = {
           bug_severity: string | null
           content_asset_link: string | null
           created_at: string
+          deliverables: string | null
           description: string | null
           due_date: string | null
           environment: string | null
@@ -234,6 +235,7 @@ export type Database = {
           bug_severity?: string | null
           content_asset_link?: string | null
           created_at?: string
+          deliverables?: string | null
           description?: string | null
           due_date?: string | null
           environment?: string | null
@@ -256,6 +258,7 @@ export type Database = {
           bug_severity?: string | null
           content_asset_link?: string | null
           created_at?: string
+          deliverables?: string | null
           description?: string | null
           due_date?: string | null
           environment?: string | null

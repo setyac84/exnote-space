@@ -291,7 +291,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
         assignee_id: selectedAssignees[0] || undefined, status: form.status, priority: form.priority,
         request_date: form.request_date, due_date: form.due_date || undefined,
         moodboard_link: form.moodboard_link, aspect_ratio: form.aspect_ratio, brand_guidelines: form.brand_guidelines,
-        result_link: form.result_link, content_asset_link: form.content_asset_link,
+        result_link: form.result_link, content_asset_link: form.content_asset_link, deliverables: form.deliverables,
         repo_link: form.repo_link, environment: form.environment, bug_severity: form.bug_severity,
       });
       if (result?.id) {
@@ -537,7 +537,60 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                         )}
                       </div>
 
-                      {/* Result Link - always editable inline */}
+                      {/* Deliverables */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-medium text-muted-foreground">Deliverables</label>
+                          {isEditable && (
+                            <>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                id="deliverables-file-input"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  try {
+                                    const ext = file.type.split('/')[1] || 'png';
+                                    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                                    const filePath = `uploads/${fileName}`;
+                                    const { error } = await supabase.storage.from('task-images').upload(filePath, file);
+                                    if (error) throw error;
+                                    const { data: urlData } = supabase.storage.from('task-images').getPublicUrl(filePath);
+                                    const prev = form.deliverables || '';
+                                    setForm((f: any) => ({ ...f, deliverables: prev + (prev ? '\n' : '') + `[image: ${urlData.publicUrl}]` }));
+                                  } catch (err) {
+                                    console.error('Image upload failed:', err);
+                                  }
+                                  e.target.value = '';
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => document.getElementById('deliverables-file-input')?.click()}
+                                className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                <Image className="w-3.5 h-3.5" /> Tambah Gambar
+                              </button>
+                            </>
+                          )}
+                        </div>
+                        {isEditable ? (
+                          <div>
+                            <RichTextArea
+                              id="deliverables-textarea"
+                              value={form.deliverables || ''}
+                              onChange={v => setForm((f: any) => ({ ...f, deliverables: v }))}
+                              className={inputCls}
+                              placeholder="Tulis deliverables atau paste gambar di sini..."
+                            />
+                            <p className="text-[10px] text-muted-foreground mt-1">Tip: Paste images directly from clipboard (Ctrl+V / Cmd+V)</p>
+                          </div>
+                        ) : (
+                          <RichTextDisplay value={form.deliverables || '-'} />
+                        )}
+                      </div>
                       <div>
                         <label className={labelCls}>Result Link</label>
                         <div className="space-y-1.5">
