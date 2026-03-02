@@ -236,6 +236,8 @@ export type Database = {
           created_at: string
           deliverables: string | null
           description: string | null
+          dev_notes: string | null
+          done_if: string | null
           due_date: string | null
           environment: string | null
           id: string
@@ -248,6 +250,7 @@ export type Database = {
           status: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at: string
+          what_to_do: string | null
         }
         Insert: {
           archived?: boolean
@@ -260,6 +263,8 @@ export type Database = {
           created_at?: string
           deliverables?: string | null
           description?: string | null
+          dev_notes?: string | null
+          done_if?: string | null
           due_date?: string | null
           environment?: string | null
           id?: string
@@ -272,6 +277,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at?: string
+          what_to_do?: string | null
         }
         Update: {
           archived?: boolean
@@ -284,6 +290,8 @@ export type Database = {
           created_at?: string
           deliverables?: string | null
           description?: string | null
+          dev_notes?: string | null
+          done_if?: string | null
           due_date?: string | null
           environment?: string | null
           id?: string
@@ -296,6 +304,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
           updated_at?: string
+          what_to_do?: string | null
         }
         Relationships: [
           {

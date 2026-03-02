@@ -313,6 +313,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
         moodboard_link: form.moodboard_link, aspect_ratio: form.aspect_ratio, brand_guidelines: form.brand_guidelines,
         result_link: form.result_link, content_asset_link: form.content_asset_link,
         repo_link: form.repo_link, environment: form.environment, bug_severity: form.bug_severity,
+        what_to_do: form.what_to_do, done_if: form.done_if, dev_notes: form.dev_notes,
         code,
       });
       if (result?.id) {
@@ -586,6 +587,33 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                   <div className="border-t border-border pt-4">
                     <p className="text-xs font-medium text-muted-foreground mb-3">Developer Details</p>
                     <div className="space-y-3">
+                      {/* What To Do */}
+                      <div>
+                        <label className={labelCls}>🧠 What To Do</label>
+                        {isEditable ? (
+                          <RichTextArea value={form.what_to_do || ''} onChange={v => setForm((f: any) => ({ ...f, what_to_do: v }))} className={inputCls} placeholder="List singkat tapi jelas..." />
+                        ) : (
+                          <RichTextDisplay value={form.what_to_do || '-'} />
+                        )}
+                      </div>
+                      {/* Done If */}
+                      <div>
+                        <label className={labelCls}>✅ Done If</label>
+                        {isEditable ? (
+                          <RichTextArea value={form.done_if || ''} onChange={v => setForm((f: any) => ({ ...f, done_if: v }))} className={inputCls} placeholder="Acceptance criteria..." />
+                        ) : (
+                          <RichTextDisplay value={form.done_if || '-'} />
+                        )}
+                      </div>
+                      {/* Notes */}
+                      <div>
+                        <label className={labelCls}>🚨 Notes</label>
+                        {isEditable ? (
+                          <RichTextArea value={form.dev_notes || ''} onChange={v => setForm((f: any) => ({ ...f, dev_notes: v }))} className={inputCls} placeholder="Catatan tambahan..." />
+                        ) : (
+                          <RichTextDisplay value={form.dev_notes || '-'} />
+                        )}
+                      </div>
                       {isEditable ? (
                         <>
                           <div><label className={labelCls}>Repository Link</label><input value={form.repo_link || ''} onChange={e => setForm((f: any) => ({ ...f, repo_link: e.target.value }))} className={inputCls} placeholder="https://github.com/..." /></div>

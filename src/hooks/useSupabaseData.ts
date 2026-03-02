@@ -243,6 +243,7 @@ export function useCreateTask() {
       moodboard_link?: string; aspect_ratio?: string; brand_guidelines?: string;
       result_link?: string; content_asset_link?: string; repo_link?: string;
       environment?: string; bug_severity?: string; code?: string;
+      what_to_do?: string; done_if?: string; dev_notes?: string;
     }) => {
       const { data, error } = await supabase.from('tasks').insert(input as any).select().single();
       if (error) throw error;

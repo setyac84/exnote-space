@@ -67,4 +67,7 @@ export interface Task {
   repo_link?: string;
   environment?: 'staging' | 'production';
   bug_severity?: 'low' | 'medium' | 'high' | 'critical';
+  what_to_do?: string;
+  done_if?: string;
+  dev_notes?: string;
 }
