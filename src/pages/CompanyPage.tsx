@@ -42,8 +42,20 @@ const CompanyPage = () => {
   };
 
   const getMembersForCompany = (companyId: string) => {
-    const memberIds = userCompanies.filter(uc => uc.company_id === companyId).map(uc => uc.user_id);
-    return allMembers.filter(m => memberIds.includes(m.id));
+    const memberEntries = userCompanies.filter(uc => uc.company_id === companyId);
+    const memberIds = memberEntries.map(uc => uc.user_id);
+    let filtered = allMembers.filter(m => memberIds.includes(m.id));
+    
+    // Hide owner/super_admin from admin and member roles
+    if (!isSuperAdmin && user?.role !== 'owner') {
+      const hiddenRoles = ['owner', 'super_admin'];
+      filtered = filtered.filter(m => {
+        const role = memberEntries.find(uc => uc.user_id === m.id)?.role || 'member';
+        return !hiddenRoles.includes(role);
+      });
+    }
+    
+    return filtered;
   };
 
   const getMemberRole = (userId: string, companyId: string) => {
