@@ -16,7 +16,7 @@ const DigitalClock = () => {
   const minutes = format(time, 'mm');
   const seconds = format(time, 'ss');
   return (
-    <span className="inline-flex items-baseline gap-0.5 font-mono ml-3">
+    <span className="inline-flex items-baseline gap-0.5 tabular-nums ml-3">
       <span className="text-sm sm:text-base font-bold text-foreground tracking-tight">{hours}</span>
       <span className="text-sm sm:text-base font-bold text-foreground">:</span>
       <span className="text-sm sm:text-base font-bold text-foreground tracking-tight">{minutes}</span>
