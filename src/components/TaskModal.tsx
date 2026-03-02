@@ -118,8 +118,8 @@ const MultiAssigneeSelect = ({ selected, onChange, options }: {
 };
 
 // Rich textarea with image paste support
-const RichTextArea = ({ value, onChange, placeholder, className }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; className?: string;
+const RichTextArea = ({ value, onChange, placeholder, className, id }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; className?: string; id?: string;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -179,6 +179,7 @@ const RichTextArea = ({ value, onChange, placeholder, className }: {
   return (
     <div className="relative">
       <textarea
+        id={id}
         ref={textareaRef}
         value={value}
         onChange={e => onChange(e.target.value)}
@@ -521,33 +522,16 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                         )}
                       </div>
 
-                      {/* Deliverables (content_asset_link) */}
+                      {/* Asset Content */}
                       <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-medium text-muted-foreground">Deliverables</label>
-                          {isEditable && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const el = document.getElementById('deliverables-textarea');
-                                if (el) el.focus();
-                              }}
-                              className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              <Image className="w-3.5 h-3.5" /> Tambah Gambar
-                            </button>
-                          )}
-                        </div>
+                        <label className={labelCls}>Asset Content</label>
                         {isEditable ? (
-                          <div>
-                            <RichTextArea
-                              value={form.content_asset_link || ''}
-                              onChange={v => setForm((f: any) => ({ ...f, content_asset_link: v }))}
-                              className={inputCls}
-                              placeholder="Tulis deliverables atau paste gambar di sini..."
-                            />
-                            <p className="text-[10px] text-muted-foreground mt-1">Tip: Paste images directly from clipboard (Ctrl+V / Cmd+V)</p>
-                          </div>
+                          <RichTextArea
+                            value={form.content_asset_link || ''}
+                            onChange={v => setForm((f: any) => ({ ...f, content_asset_link: v }))}
+                            className={inputCls}
+                            placeholder="Type or paste content asset..."
+                          />
                         ) : (
                           <RichTextDisplay value={form.content_asset_link || '-'} />
                         )}
