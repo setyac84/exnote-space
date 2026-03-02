@@ -252,7 +252,8 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
     const companyInitial = company.name.charAt(0).toUpperCase();
     const now = new Date();
     const monthLetter = monthLetters[now.getMonth()];
-    const prefix = `${companyInitial}${monthLetter}`;
+    const monthNum = String(now.getMonth() + 1).padStart(2, '0');
+    const prefix = `${companyInitial}${monthLetter}${monthNum}`;
     // Count existing tasks with same prefix (same company + same month)
     const companyProjectIds = allProjects.filter(p => p.company_id === company.id).map(p => p.id);
     const existingCount = allTasks.filter(t =>
