@@ -481,7 +481,7 @@ const Dashboard = () => {
 
       <ProjectModal
         project={null}
-        division={activeDivision}
+        division={activeDivision as string}
         isOpen={showCreateProject}
         onClose={() => setShowCreateProject(false)}
         mode="create" />

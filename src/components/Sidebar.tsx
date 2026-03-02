@@ -5,7 +5,7 @@ import {
   Building2, ListTodo, Users, Menu, X, PlusCircle, Moon, Sun, StickyNote,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Division } from '@/types';
+import { useDivisions } from '@/hooks/useSupabaseData';
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTheme } from 'next-themes';
@@ -51,16 +51,11 @@ const Sidebar = () => {
       { to: '/company', icon: Building2, label: 'Company' },
       { to: '/members', icon: Users, label: 'Members' },
     ] : []),
-    ...(isSuperAdmin && !user.company_id ? [
-      { to: '/register-company', icon: PlusCircle, label: 'Register Company' },
-    ] : []),
   ];
 
-  const divisionOptions: { value: Division; label: string; icon: typeof Palette }[] = [
-    ...(isSuperAdmin ? [{ value: 'management' as Division, label: 'Management', icon: Building2 }] : []),
-    { value: 'creative', label: 'Creative', icon: Palette },
-    { value: 'developer', label: 'Developer', icon: Code2 },
-  ];
+  const { data: divisions = [] } = useDivisions();
+  const divisionIconMap: Record<string, typeof Palette> = { Creative: Palette, Developer: Code2, Management: Building2 };
+  const divisionOptions = divisions.map(d => ({ value: d.id, label: d.name, icon: divisionIconMap[d.name] || Building2 }));
 
   const handleLogout = async () => {
     await logout();
