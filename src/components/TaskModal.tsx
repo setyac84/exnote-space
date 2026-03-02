@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { generateTaskCode as generateTaskCodeFn } from '@/lib/taskCode';
-import { useProjects, useMembers, useCompanies, useCreateTask, useUpdateTask, useTaskAssignees, useSetTaskAssignees, useTasks } from '@/hooks/useSupabaseData';
+import { useProjects, useMembers, useCompanies, useCreateTask, useUpdateTask, useTaskAssignees, useSetTaskAssignees, useTasks, useDivisions } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
 import { X, Calendar as CalendarIcon, Flag, User, Link, AlertTriangle, Trash2, ChevronDown, Save, Pencil, Image, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -239,6 +239,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
   const { data: companies = [] } = useCompanies();
   const { data: allTaskAssignees = [] } = useTaskAssignees();
   const { data: allTasks = [] } = useTasks();
+  const { data: divisions = [] } = useDivisions();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const setTaskAssignees = useSetTaskAssignees();
@@ -255,6 +256,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
   const isEditing = mode === 'edit';
   const isMemberEdit = readOnly && isEditing; // member can only edit deliverables
   const isFullEdit = !readOnly && isEditing; // admin full edit
+  const divisionName = divisions.find(d => d.id === division)?.name?.toLowerCase() || '';
   const divisionMembers = allMembers.filter(u => u.division_id === division && u.role !== 'super_admin');
   const divisionProjects = allProjects.filter(p => p.division_id === division);
 
@@ -497,7 +499,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                 </div>
 
                 {/* Creative fields - Visual Brief */}
-                {division === 'creative' && (
+                {divisionName === 'creative' && (
                   <div className="border-t border-border pt-4">
                     <h3 className="text-sm font-bold text-foreground mb-4">Visual Brief</h3>
                     <div className="space-y-4">
@@ -580,7 +582,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                 )}
 
                 {/* Developer fields */}
-                {division === 'developer' && (
+                {divisionName === 'developer' && (
                   <div className="border-t border-border pt-4">
                     <p className="text-xs font-medium text-muted-foreground mb-3">Developer Details</p>
                     <div className="space-y-3">
