@@ -34,14 +34,14 @@ interface ProjectModalProps {
 
 const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 'view' }: ProjectModalProps) => {
   const { isAdmin, user } = useAuth();
-  const isHolding = user?.company_id === null;
+  
   const { data: companies = [] } = useCompanies();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
 
   const emptyForm = () => ({
-    name: '', description: '', company_id: isHolding ? (companies[0]?.id || '') : (user?.company_id || ''),
+    name: '', description: '', company_id: user?.company_id || '',
     status: 'planning' as ProjectStatus, priority: 'medium' as TaskPriority,
     division_id: division, start_date: new Date().toISOString().split('T')[0], end_date: '',
   });
@@ -115,7 +115,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
               <div className="px-6 pb-6 space-y-4">
                 <div>
                   <label className={labelCls}>Company</label>
-                  {isEditable && (isHolding || companies.length > 1) ? (
+                  {isEditable ? (
                     <StyledDropdown value={form.company_id} onChange={(v) => setForm(f => ({ ...f, company_id: v }))}
                       options={companies.map(c => ({ value: c.id, label: c.name }))} placeholder="Select company..." />
                   ) : (
