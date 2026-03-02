@@ -76,11 +76,26 @@ export function useCreateCompany() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { name: string; description?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase.from('companies').insert(input as any).select().single();
       if (error) throw error;
+
+      // Auto-assign current user as owner in user_companies
+      const { error: ucError } = await supabase.from('user_companies').insert({
+        user_id: user.id,
+        company_id: data.id,
+        role: 'owner' as any,
+      });
+      if (ucError) throw ucError;
+
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['companies'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['companies'] });
+      qc.invalidateQueries({ queryKey: ['user_companies'] });
+    },
   });
 }
 
