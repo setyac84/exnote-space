@@ -244,18 +244,30 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
 
   const monthLetters = ['J','F','M','A','M','J','J','A','S','O','N','D'];
 
+  const getCompanyPrefix = (companyId: string) => {
+    const company = companies.find(c => c.id === companyId);
+    if (!company) return '';
+    const initial = company.name.charAt(0).toUpperCase();
+    // Find all companies with the same initial, sorted by created_at for stable ordering
+    const sameInitial = companies
+      .filter(c => c.name.charAt(0).toUpperCase() === initial)
+      .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    const idx = sameInitial.findIndex(c => c.id === companyId);
+    // First company gets just the letter, subsequent ones get letter + index
+    return idx <= 0 ? initial : `${initial}${idx}`;
+  };
+
   const generateTaskCode = (projectId: string) => {
     const project = allProjects.find(p => p.id === projectId);
     if (!project) return '';
-    const company = companies.find(c => c.id === project.company_id);
-    if (!company) return '';
-    const companyInitial = company.name.charAt(0).toUpperCase();
+    const companyPrefix = getCompanyPrefix(project.company_id);
+    if (!companyPrefix) return '';
     const now = new Date();
     const monthLetter = monthLetters[now.getMonth()];
     const monthNum = String(now.getMonth() + 1).padStart(2, '0');
-    const prefix = `${companyInitial}${monthLetter}${monthNum}`;
+    const prefix = `${companyPrefix}${monthLetter}${monthNum}`;
     // Count existing tasks with same prefix (same company + same month)
-    const companyProjectIds = allProjects.filter(p => p.company_id === company.id).map(p => p.id);
+    const companyProjectIds = allProjects.filter(p => p.company_id === project.company_id).map(p => p.id);
     const existingCount = allTasks.filter(t =>
       t.code && companyProjectIds.includes(t.project_id) && t.code.startsWith(prefix + '-')
     ).length;
