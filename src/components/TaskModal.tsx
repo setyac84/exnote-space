@@ -471,30 +471,116 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                   )}
                 </div>
 
-                {/* Creative fields */}
+                {/* Creative fields - Visual Brief */}
                 {division === 'creative' && (
                   <div className="border-t border-border pt-4">
-                    <p className="text-xs font-medium text-muted-foreground mb-3">Creative Details</p>
-                    <div className="space-y-3">
-                      {creativeTextFields.map(field => (
-                        <div key={field}>
-                          <label className={labelCls}>{creativeFieldLabels[field]}</label>
-                          {isEditable ? (
-                            <RichTextArea
-                              value={form[field] || ''}
-                              onChange={v => setForm((f: any) => ({ ...f, [field]: v }))}
-                              className={inputCls}
-                              placeholder="Type or paste image..."
-                            />
-                          ) : (
-                            <RichTextDisplay value={form[field] || '-'} />
+                    <h3 className="text-sm font-bold text-foreground mb-4">Visual Brief</h3>
+                    <div className="space-y-4">
+                      {/* Assignee inside Visual Brief */}
+                      <div>
+                        <label className={labelCls}>Assignee</label>
+                        {isEditable ? (
+                          <MultiAssigneeSelect
+                            selected={selectedAssignees}
+                            onChange={setSelectedAssignees}
+                            options={assigneeOptions}
+                          />
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {selectedAssigneeNames.length > 0 ? selectedAssigneeNames.map((a: any) => (
+                              <div key={a.id} className="flex items-center gap-1.5 bg-secondary/50 rounded-full px-2 py-1">
+                                <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center text-[7px] font-bold text-primary">
+                                  {a.name.split(' ').map((n: string) => n[0]).join('')}
+                                </div>
+                                <span className="text-xs text-foreground">{a.name.split(' ')[0]}</span>
+                              </div>
+                            )) : (
+                              <p className="text-sm text-muted-foreground">No assignee</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Visual Notes (moodboard_link + brand_guidelines) */}
+                      <div>
+                        <label className={labelCls}>Visual Notes</label>
+                        {isEditable ? (
+                          <RichTextArea
+                            value={form.brand_guidelines || ''}
+                            onChange={v => setForm((f: any) => ({ ...f, brand_guidelines: v }))}
+                            className={inputCls}
+                            placeholder="Describe visual needs, reference, sizes, colors..."
+                          />
+                        ) : (
+                          <RichTextDisplay value={form.brand_guidelines || '-'} />
+                        )}
+                      </div>
+
+                      {/* Deliverables (content_asset_link) */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-medium text-muted-foreground">Deliverables</label>
+                          {isEditable && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const el = document.getElementById('deliverables-textarea');
+                                if (el) el.focus();
+                              }}
+                              className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <Image className="w-3.5 h-3.5" /> Tambah Gambar
+                            </button>
                           )}
                         </div>
-                      ))}
+                        {isEditable ? (
+                          <div>
+                            <RichTextArea
+                              value={form.content_asset_link || ''}
+                              onChange={v => setForm((f: any) => ({ ...f, content_asset_link: v }))}
+                              className={inputCls}
+                              placeholder="Tulis deliverables atau paste gambar di sini..."
+                            />
+                            <p className="text-[10px] text-muted-foreground mt-1">Tip: Paste images directly from clipboard (Ctrl+V / Cmd+V)</p>
+                          </div>
+                        ) : (
+                          <RichTextDisplay value={form.content_asset_link || '-'} />
+                        )}
+                      </div>
+
+                      {/* Reference (moodboard_link) */}
+                      <div>
+                        <label className={labelCls}>Reference</label>
+                        {isEditable ? (
+                          <RichTextArea
+                            value={form.moodboard_link || ''}
+                            onChange={v => setForm((f: any) => ({ ...f, moodboard_link: v }))}
+                            className={inputCls}
+                            placeholder="Paste reference link or image..."
+                          />
+                        ) : (
+                          <RichTextDisplay value={form.moodboard_link || '-'} />
+                        )}
+                      </div>
+
+                      {/* Aspect Ratio */}
+                      <div>
+                        <label className={labelCls}>Aspect Ratio</label>
+                        {isEditable ? (
+                          <input
+                            value={form.aspect_ratio || ''}
+                            onChange={e => setForm((f: any) => ({ ...f, aspect_ratio: e.target.value }))}
+                            className={inputCls}
+                            placeholder="e.g. 16:9, 1:1, 9:16..."
+                          />
+                        ) : (
+                          <p className="text-sm text-foreground">{form.aspect_ratio || '-'}</p>
+                        )}
+                      </div>
 
                       {/* Result Link - always editable inline */}
                       <div>
-                        <label className={labelCls}>{creativeFieldLabels.result_link}</label>
+                        <label className={labelCls}>Result Link</label>
                         <div className="space-y-1.5">
                           <input
                             value={form.result_link || ''}
