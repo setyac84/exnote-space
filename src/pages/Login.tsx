@@ -81,7 +81,7 @@ const Login = () => {
           <div className="mt-6 pt-6 border-t border-border text-center">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <a href="/register" className="text-primary hover:underline font-medium">Get started for free</a>
+              <a href="/register" className="text-primary hover:underline font-medium">Create your workspace</a>
             </p>
           </div>
         </div>
