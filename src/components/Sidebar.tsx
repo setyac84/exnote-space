@@ -50,6 +50,8 @@ const Sidebar = () => {
     ...(isAdmin ? [
       { to: '/company', icon: Building2, label: 'Company' },
       { to: '/members', icon: Users, label: 'Members' },
+    ] : []),
+    ...(isSuperAdmin ? [
       { to: '/divisions', icon: Layers, label: 'Divisions' },
     ] : []),
   ];
