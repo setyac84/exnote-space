@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { formatDate, formatDaysLeft, daysLeftColor } from '@/lib/formatDate';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, ChevronDown, Check } from 'lucide-react';
+import FilterDropdown from '@/components/FilterDropdown';
+import { format, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 
 type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 type TabView = 'all' | 'done' | 'archive';
@@ -78,6 +80,8 @@ const TaskListPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const hasFilters = searchParams.has('status') || searchParams.has('member') || searchParams.has('priority');
   const [activeTab, setActiveTab] = useState<TabView>(hasFilters ? 'all' : 'all');
+  const [companyFilter, setCompanyFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
 
   const { data: allProjects = [] } = useProjects();
   const { data: allTasks = [] } = useTasks();
@@ -121,6 +125,27 @@ const TaskListPage = () => {
     return allMembers.filter(m => m.division === activeDivision && m.role !== 'super_admin');
   }, [allMembers, activeDivision]);
 
+  // Company filter options
+  const companyOptions = useMemo(() => {
+    const ids = new Set(divisionProjects.map(p => p.company_id));
+    return companies.filter(c => ids.has(c.id)).map(c => ({ value: c.id, label: c.name }));
+  }, [divisionProjects, companies]);
+
+  // Month filter options from task due_dates
+  const monthOptions = useMemo(() => {
+    const months = new Set<string>();
+    allTasks.forEach(t => {
+      const project = allProjects.find(p => p.id === t.project_id);
+      if (project?.division !== activeDivision) return;
+      if (t.due_date) months.add(format(parseISO(t.due_date), 'yyyy-MM'));
+      if (t.request_date) months.add(format(parseISO(t.request_date), 'yyyy-MM'));
+    });
+    return Array.from(months).sort().reverse().map(m => ({
+      value: m,
+      label: format(parseISO(`${m}-01`), 'MMMM yyyy'),
+    }));
+  }, [allTasks, allProjects, activeDivision]);
+
   const filteredTasks = useMemo(() => {
     if (!user) return [];
     let filtered = allTasks.filter(t => {
@@ -151,6 +176,27 @@ const TaskListPage = () => {
       });
     }
 
+    // Company filter
+    if (companyFilter) {
+      filtered = filtered.filter(t => {
+        const project = allProjects.find(p => p.id === t.project_id);
+        return project?.company_id === companyFilter;
+      });
+    }
+
+    // Month filter - task due_date falls within selected month
+    if (monthFilter) {
+      const mStart = startOfMonth(parseISO(`${monthFilter}-01`));
+      const mEnd = endOfMonth(mStart);
+      filtered = filtered.filter(t => {
+        if (t.due_date) {
+          const d = parseISO(t.due_date);
+          return d >= mStart && d <= mEnd;
+        }
+        return false;
+      });
+    }
+
     // Status filter from URL params (e.g. ?status=todo)
     if (statusFilter) {
       filtered = filtered.filter(t => t.status === statusFilter);
@@ -178,7 +224,7 @@ const TaskListPage = () => {
       return (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4);
     });
     return filtered;
-  }, [allTasks, allProjects, activeDivision, isAdmin, user, memberFilter, priorityFilter, statusFilter, projectFilter, assigneeFilter, activeTab, allTaskAssignees]);
+  }, [allTasks, allProjects, activeDivision, isAdmin, user, memberFilter, priorityFilter, statusFilter, projectFilter, assigneeFilter, activeTab, allTaskAssignees, companyFilter, monthFilter]);
 
 const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: string; name: string }[]; value: string; onChange: (v: string) => void }) => {
   const [open, setOpen] = useState(false);
@@ -293,7 +339,7 @@ const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: s
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {isAdmin && (
             <AssigneeFilterDropdown
               members={divisionMembers}
@@ -305,6 +351,20 @@ const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: s
             projects={divisionProjects}
             value={projectFilter}
             onChange={handleProjectFilterChange}
+          />
+          <FilterDropdown
+            options={companyOptions}
+            value={companyFilter}
+            onChange={setCompanyFilter}
+            placeholder="Filter by company"
+            allLabel="All Companies"
+          />
+          <FilterDropdown
+            options={monthOptions}
+            value={monthFilter}
+            onChange={setMonthFilter}
+            placeholder="Filter by month"
+            allLabel="All Months"
           />
         </div>
       </div>
