@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjects, useTasks, useMembers, useCompanies, useCreateProject, useCreateTask, useUpdateTask, useUpdateProject, useDeleteTask, useUpdateProfile, useUpdateUserRole, useTaskAssignees, useNotes } from '@/hooks/useSupabaseData';
 import { formatDate, formatDaysLeft, daysLeftColor } from '@/lib/formatDate';
-import { format, addDays } from 'date-fns';
+import { format, addDays, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { motion } from 'framer-motion';
 import { FolderKanban, CheckCircle2, Clock, AlertTriangle, Users, Plus, Pencil, Trash2, Save, ChevronDown, StickyNote, Filter } from 'lucide-react';
 import TaskCalendar from '@/components/TaskCalendar';
@@ -70,6 +70,7 @@ const Dashboard = () => {
   const [taskViewTab, setTaskViewTab] = useState<TaskViewTab>('today');
   const [filterProject, setFilterProject] = useState<string>('all');
   const [filterAssignee, setFilterAssignee] = useState<string>('all');
+  const [filterMonth, setFilterMonth] = useState<string>('all');
 
   if (!user) return null;
 
@@ -131,6 +132,18 @@ const Dashboard = () => {
         return taIds.includes(filterAssignee) || t.assignee_id === filterAssignee;
       });
     }
+
+    if (filterMonth !== 'all') {
+      const mStart = startOfMonth(parseISO(`${filterMonth}-01`));
+      const mEnd = endOfMonth(mStart);
+      filtered = filtered.filter(t => {
+        if (t.due_date) {
+          const d = parseISO(t.due_date);
+          return d >= mStart && d <= mEnd;
+        }
+        return false;
+      });
+    }
     
     return filtered.sort((a, b) => {
       if (!a.due_date) return 1;
@@ -157,6 +170,22 @@ const Dashboard = () => {
     { value: 'all', label: 'All Assignees' },
     ...divisionMembers.map(m => ({ value: m.id, label: m.name }))
   ];
+
+  // Month filter options from task due_dates
+  const monthFilterOptions = (() => {
+    const months = new Set<string>();
+    myTasks.forEach(t => {
+      if (t.due_date) months.add(format(parseISO(t.due_date), 'yyyy-MM'));
+      if (t.request_date) months.add(format(parseISO(t.request_date as string), 'yyyy-MM'));
+    });
+    return [
+      { value: 'all', label: 'All Months' },
+      ...Array.from(months).sort().reverse().map(m => ({
+        value: m,
+        label: format(parseISO(`${m}-01`), 'MMMM yyyy'),
+      }))
+    ];
+  })();
 
   return (
     <div className="max-w-7xl mx-auto px-2 lg:px-6">
@@ -302,7 +331,7 @@ const Dashboard = () => {
                   </button>
                 ))}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {isAdmin && (
                   <StyledDropdown
                     value={filterAssignee}
@@ -315,6 +344,12 @@ const Dashboard = () => {
                   value={filterProject}
                   onChange={(v) => setFilterProject(v)}
                   options={projectFilterOptions}
+                  className="w-[160px]"
+                />
+                <StyledDropdown
+                  value={filterMonth}
+                  onChange={(v) => setFilterMonth(v)}
+                  options={monthFilterOptions}
                   className="w-[160px]"
                 />
               </div>
@@ -345,7 +380,12 @@ const Dashboard = () => {
                     <div key={task.id} onClick={() => setSelectedTask(task)} className="py-3 hover:bg-secondary/30 cursor-pointer transition-colors">
                       <p className="text-[10px] text-muted-foreground mb-1">{projectName} · {companyName}</p>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-foreground">{task.title}</span>
+                        <div className="flex items-center gap-2">
+                          {(task as any).code && (
+                            <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{(task as any).code}</span>
+                          )}
+                          <span className="text-sm font-medium text-foreground">{task.title}</span>
+                        </div>
                         <span className={cn('text-[10px] font-semibold capitalize px-2 py-0.5 rounded-md', priorityBadge[task.priority])}>{task.priority}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{task.description}</p>
