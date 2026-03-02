@@ -29,10 +29,11 @@ interface RunningProjectsProps {
   companies: any[];
   isAdmin?: boolean;
   onNavigate: () => void;
+  onViewTasks?: (projectId: string) => void;
 }
 
-const MiniProjectCard = ({ project, companyName, tasks, isAdmin, index }: {
-  project: any; companyName: string; tasks: any[]; isAdmin?: boolean; index: number;
+const MiniProjectCard = ({ project, companyName, tasks, isAdmin, index, onViewTasks }: {
+  project: any; companyName: string; tasks: any[]; isAdmin?: boolean; index: number; onViewTasks?: () => void;
 }) => {
   const doneTasks = tasks.filter(t => t.status === 'done').length;
   const totalTasks = tasks.length;
@@ -131,12 +132,18 @@ const MiniProjectCard = ({ project, companyName, tasks, isAdmin, index }: {
             </div>
           )}
         </div>
+        {onViewTasks && (
+          <button onClick={onViewTasks}
+            className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-primary transition-colors">
+            View tasks <ChevronRight className="w-3 h-3" />
+          </button>
+        )}
       </div>
     </motion.div>
   );
 };
 
-const RunningProjects = ({ projects, tasks, companies, isAdmin, onNavigate }: RunningProjectsProps) => {
+const RunningProjects = ({ projects, tasks, companies, isAdmin, onNavigate, onViewTasks }: RunningProjectsProps) => {
   const runningProjects = projects
     .filter(p => p.status === 'ongoing' || p.status === 'planning')
     .sort((a, b) => {
@@ -177,6 +184,7 @@ const RunningProjects = ({ projects, tasks, companies, isAdmin, onNavigate }: Ru
                 tasks={projectTasks}
                 isAdmin={isAdmin}
                 index={i}
+                onViewTasks={onViewTasks ? () => onViewTasks(project.id) : undefined}
               />
             );
           })}

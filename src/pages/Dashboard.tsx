@@ -283,6 +283,7 @@ const Dashboard = () => {
             companies={companies}
             isAdmin={isAdmin}
             onNavigate={() => navigate('/projects')}
+            onViewTasks={(projectId) => navigate(`/tasks?project=${projectId}`)}
           />
 
           {/* Task Calendar */}

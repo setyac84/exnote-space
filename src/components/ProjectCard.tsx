@@ -148,7 +148,7 @@ const ProjectCard = ({ project, companyName, index, onClick, onNavigate, showArc
         {onNavigate && (
           <button onClick={(e) => { e.stopPropagation(); onNavigate(); }}
             className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors">
-            View all <ChevronRight className="w-3.5 h-3.5" />
+            View tasks <ChevronRight className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
