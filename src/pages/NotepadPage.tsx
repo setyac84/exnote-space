@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, StickyNote, Search, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -22,6 +23,7 @@ const NotepadPage = () => {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   if (!user) return null;
 
@@ -74,6 +76,8 @@ const NotepadPage = () => {
       toast.success('Note deleted');
     } catch (e: any) {
       toast.error(e.message || 'Failed to delete');
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -126,7 +130,7 @@ const NotepadPage = () => {
                         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{note.content || 'No content'}</p>
                         <p className="text-[10px] text-muted-foreground mt-1">{format(new Date(note.updated_at), 'd MMM yyyy, HH:mm')}</p>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); handleDelete(note.id); }}
+                      <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(note.id); }}
                         className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -178,6 +182,28 @@ const NotepadPage = () => {
           )}
         </motion.div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Hapus Note</DialogTitle>
+            <DialogDescription>
+              Apakah kamu yakin ingin menghapus note ini? Tindakan ini tidak bisa dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end mt-2">
+            <button onClick={() => setDeleteConfirmId(null)}
+              className="px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
+              Batal
+            </button>
+            <button onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+              className="px-4 py-2 text-sm rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors">
+              Ya, Hapus
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
