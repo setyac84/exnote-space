@@ -476,32 +476,7 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                   <div className="border-t border-border pt-4">
                     <h3 className="text-sm font-bold text-foreground mb-4">Visual Brief</h3>
                     <div className="space-y-4">
-                      {/* Assignee inside Visual Brief */}
-                      <div>
-                        <label className={labelCls}>Assignee</label>
-                        {isEditable ? (
-                          <MultiAssigneeSelect
-                            selected={selectedAssignees}
-                            onChange={setSelectedAssignees}
-                            options={assigneeOptions}
-                          />
-                        ) : (
-                          <div className="flex flex-wrap gap-1.5">
-                            {selectedAssigneeNames.length > 0 ? selectedAssigneeNames.map((a: any) => (
-                              <div key={a.id} className="flex items-center gap-1.5 bg-secondary/50 rounded-full px-2 py-1">
-                                <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center text-[7px] font-bold text-primary">
-                                  {a.name.split(' ').map((n: string) => n[0]).join('')}
-                                </div>
-                                <span className="text-xs text-foreground">{a.name.split(' ')[0]}</span>
-                              </div>
-                            )) : (
-                              <p className="text-sm text-muted-foreground">No assignee</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Visual Notes (moodboard_link + brand_guidelines) */}
+                      {/* Visual Notes (brand_guidelines) */}
                       <div>
                         <label className={labelCls}>Visual Notes</label>
                         {isEditable ? (
