@@ -476,6 +476,36 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                   <div className="border-t border-border pt-4">
                     <h3 className="text-sm font-bold text-foreground mb-4">Visual Brief</h3>
                     <div className="space-y-4">
+                      {/* Reference (moodboard_link) */}
+                      <div>
+                        <label className={labelCls}>Reference</label>
+                        {isEditable ? (
+                          <RichTextArea
+                            value={form.moodboard_link || ''}
+                            onChange={v => setForm((f: any) => ({ ...f, moodboard_link: v }))}
+                            className={inputCls}
+                            placeholder="Paste reference link or image..."
+                          />
+                        ) : (
+                          <RichTextDisplay value={form.moodboard_link || '-'} />
+                        )}
+                      </div>
+
+                      {/* Aspect Ratio */}
+                      <div>
+                        <label className={labelCls}>Aspect Ratio</label>
+                        {isEditable ? (
+                          <input
+                            value={form.aspect_ratio || ''}
+                            onChange={e => setForm((f: any) => ({ ...f, aspect_ratio: e.target.value }))}
+                            className={inputCls}
+                            placeholder="e.g. 16:9, 1:1, 9:16..."
+                          />
+                        ) : (
+                          <p className="text-sm text-foreground">{form.aspect_ratio || '-'}</p>
+                        )}
+                      </div>
+
                       {/* Visual Notes (brand_guidelines) */}
                       <div>
                         <label className={labelCls}>Visual Notes</label>
@@ -520,36 +550,6 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
                           </div>
                         ) : (
                           <RichTextDisplay value={form.content_asset_link || '-'} />
-                        )}
-                      </div>
-
-                      {/* Reference (moodboard_link) */}
-                      <div>
-                        <label className={labelCls}>Reference</label>
-                        {isEditable ? (
-                          <RichTextArea
-                            value={form.moodboard_link || ''}
-                            onChange={v => setForm((f: any) => ({ ...f, moodboard_link: v }))}
-                            className={inputCls}
-                            placeholder="Paste reference link or image..."
-                          />
-                        ) : (
-                          <RichTextDisplay value={form.moodboard_link || '-'} />
-                        )}
-                      </div>
-
-                      {/* Aspect Ratio */}
-                      <div>
-                        <label className={labelCls}>Aspect Ratio</label>
-                        {isEditable ? (
-                          <input
-                            value={form.aspect_ratio || ''}
-                            onChange={e => setForm((f: any) => ({ ...f, aspect_ratio: e.target.value }))}
-                            className={inputCls}
-                            placeholder="e.g. 16:9, 1:1, 9:16..."
-                          />
-                        ) : (
-                          <p className="text-sm text-foreground">{form.aspect_ratio || '-'}</p>
                         )}
                       </div>
 
