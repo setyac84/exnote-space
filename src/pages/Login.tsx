@@ -23,8 +23,8 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!email.trim() || !password.trim()) { setError('Email dan password wajib diisi'); return; }
-    if (password.length < 6) { setError('Password minimal 6 karakter'); return; }
+    if (!email.trim() || !password.trim()) { setError('Email and password are required'); return; }
+    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
 
     setLoading(true);
     try {
@@ -45,8 +45,8 @@ const Login = () => {
         </div>
 
         <div className="glass-card rounded-2xl p-8">
-          <h2 className="text-xl font-semibold text-foreground mb-1">Masuk ke akun Anda</h2>
-          <p className="text-muted-foreground text-sm mb-6">Kelola project dan task tim Anda</p>
+          <h2 className="text-xl font-semibold text-foreground mb-1">Sign in to your account</h2>
+          <p className="text-muted-foreground text-sm mb-6">Manage your projects and team tasks</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -73,15 +73,15 @@ const Login = () => {
             <button type="submit" disabled={loading}
               className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-                <>Masuk <ArrowRight className="w-4 h-4" /></>
+                <>Sign In <ArrowRight className="w-4 h-4" /></>
               )}
             </button>
           </form>
 
           <div className="mt-6 pt-6 border-t border-border text-center">
             <p className="text-sm text-muted-foreground">
-              Belum punya akun?{' '}
-              <a href="/register" className="text-primary hover:underline font-medium">Daftar sebagai Owner</a>
+              Don't have an account?{' '}
+              <a href="/register" className="text-primary hover:underline font-medium">Get started for free</a>
             </p>
           </div>
         </div>

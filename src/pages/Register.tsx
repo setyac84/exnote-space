@@ -27,11 +27,11 @@ const Register = () => {
     setError('');
 
     if (!name.trim() || !email.trim() || !password || !companyName.trim()) {
-      setError('Semua field wajib diisi');
+      setError('All fields are required');
       return;
     }
     if (password.length < 6) {
-      setError('Password minimal 6 karakter');
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -49,13 +49,13 @@ const Register = () => {
       // Auto-login after registration
       const { error: loginError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (loginError) {
-        setError('Akun berhasil dibuat. Silakan login manual.');
+        setError('Account created successfully. Please sign in manually.');
         return;
       }
 
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Terjadi kesalahan');
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -72,13 +72,13 @@ const Register = () => {
         </div>
 
         <div className="glass-card rounded-2xl p-8">
-          <h2 className="text-xl font-semibold text-foreground mb-1">Daftar sebagai Owner</h2>
-          <p className="text-muted-foreground text-sm mb-6">Buat akun dan perusahaan baru untuk mulai mengelola tim Anda</p>
+          <h2 className="text-xl font-semibold text-foreground mb-1">Create your workspace</h2>
+          <p className="text-muted-foreground text-sm mb-6">Set up your company and start managing your team in minutes</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Nama Lengkap</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} className={inputCls} placeholder="Nama lengkap" />
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Full Name</label>
+              <input type="text" value={name} onChange={e => setName(e.target.value)} className={inputCls} placeholder="John Doe" />
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
@@ -97,9 +97,9 @@ const Register = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">
-                <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" /> Nama Perusahaan</span>
+                <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" /> Company Name</span>
               </label>
-              <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} className={inputCls} placeholder="PT Contoh Indonesia" />
+              <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} className={inputCls} placeholder="Acme Inc." />
             </div>
 
             {error && <p className="text-destructive text-sm">{error}</p>}
@@ -107,15 +107,15 @@ const Register = () => {
             <button type="submit" disabled={loading}
               className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-                <>Daftar & Buat Perusahaan <ArrowRight className="w-4 h-4" /></>
+                <>Create Account <ArrowRight className="w-4 h-4" /></>
               )}
             </button>
           </form>
 
           <div className="mt-6 pt-6 border-t border-border text-center">
             <p className="text-sm text-muted-foreground">
-              Sudah punya akun?{' '}
-              <Link to="/" className="text-primary hover:underline font-medium">Masuk</Link>
+              Already have an account?{' '}
+              <Link to="/" className="text-primary hover:underline font-medium">Sign in</Link>
             </p>
           </div>
         </div>
