@@ -242,17 +242,24 @@ const TaskModal = ({ task, division, isOpen, onClose, onDelete, readOnly, mode: 
   const updateTask = useUpdateTask();
   const setTaskAssignees = useSetTaskAssignees();
 
+  const monthLetters = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+
   const generateTaskCode = (projectId: string) => {
     const project = allProjects.find(p => p.id === projectId);
     if (!project) return '';
     const company = companies.find(c => c.id === project.company_id);
     if (!company) return '';
     const companyInitial = company.name.charAt(0).toUpperCase();
-    // Count existing tasks across all projects of the same company
+    const now = new Date();
+    const monthLetter = monthLetters[now.getMonth()];
+    const prefix = `${companyInitial}${monthLetter}`;
+    // Count existing tasks with same prefix (same company + same month)
     const companyProjectIds = allProjects.filter(p => p.company_id === company.id).map(p => p.id);
-    const existingCount = allTasks.filter(t => companyProjectIds.includes(t.project_id) && t.code).length;
+    const existingCount = allTasks.filter(t =>
+      t.code && companyProjectIds.includes(t.project_id) && t.code.startsWith(prefix + '-')
+    ).length;
     const nextNum = String(existingCount + 1).padStart(3, '0');
-    return `${companyInitial}-${nextNum}`;
+    return `${prefix}-${nextNum}`;
   };
 
   const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
