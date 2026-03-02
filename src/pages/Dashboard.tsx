@@ -27,24 +27,31 @@ const priorityDot: Record<string, string> = { low: 'bg-muted-foreground', medium
 const priorityLabel: Record<string, string> = { low: 'text-muted-foreground', medium: 'text-info', high: 'text-warning', urgent: 'text-destructive' };
 const priorityBadge: Record<string, string> = { low: 'bg-muted text-muted-foreground', medium: 'bg-info/15 text-info', high: 'bg-warning/15 text-warning', urgent: 'bg-destructive/15 text-destructive' };
 
+const statusBadgeStyle: Record<TaskStatus, string> = {
+  todo: 'bg-muted text-muted-foreground',
+  doing: 'bg-info/15 text-info',
+  review: 'bg-warning/15 text-warning',
+  done: 'bg-success/15 text-success',
+};
+
 const InlineStatusDropdown = ({ value, onChange }: {value: TaskStatus;onChange: (s: TaskStatus) => void;}) => {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative" onClick={(e) => e.stopPropagation()}>
-      <button onClick={() => setOpen(!open)} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-        <span className={cn('w-3 h-3 rounded-full border-2 shrink-0', statusDot[value])} />
+      <button onClick={() => setOpen(!open)} className={cn('inline-flex items-center gap-1.5 text-[10px] font-semibold capitalize px-2.5 py-1 rounded-full transition-colors', statusBadgeStyle[value])}>
         {statusLabel[value]}
         <ChevronDown className="w-3 h-3" />
       </button>
       {open &&
       <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-50 py-1 min-w-[120px]">
+          <div className="absolute top-full right-0 mt-1.5 bg-popover border border-border rounded-2xl shadow-xl z-50 p-2 min-w-[130px] space-y-0.5">
             {(Object.keys(statusLabel) as TaskStatus[]).map((s) =>
           <button key={s} onClick={() => {onChange(s);setOpen(false);}}
-          className={cn('w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary/50 transition-colors', value === s && 'font-medium')}>
-                <span className={cn('w-3 h-3 rounded-full border-2 shrink-0', statusDot[s])} />
-                {statusLabel[s]}
+          className={cn('w-full flex items-center gap-2 px-3 py-2 text-sm rounded-xl hover:bg-secondary/50 transition-colors', value === s && 'font-medium')}>
+                <span className={cn('inline-flex items-center text-[10px] font-semibold capitalize px-2 py-0.5 rounded-full', statusBadgeStyle[s])}>
+                  {statusLabel[s]}
+                </span>
               </button>
           )}
           </div>
@@ -392,7 +399,7 @@ const Dashboard = () => {
                 <p className="text-xs text-muted-foreground mt-1">{emptyMessages[taskViewTab].subtitle}</p>
               </div>
             ) : (
-              <div className="space-y-0 divide-y divide-border/50">
+              <div className="space-y-3">
                 {filteredTasks.map((task) => {
                   const taskAssigneeIds = allTaskAssignees.filter(ta => ta.task_id === task.id).map(ta => ta.assignee_id);
                   const assignees = taskAssigneeIds.length > 0
@@ -400,8 +407,8 @@ const Dashboard = () => {
                     : (task.assignee_id ? [allMembers.find(u => u.id === task.assignee_id)].filter(Boolean) : []);
                   const { projectName, companyName } = getProjectCompany(task.project_id);
                   return (
-                    <div key={task.id} onClick={() => setSelectedTask(task)} className="py-3 hover:bg-secondary/30 cursor-pointer transition-colors">
-                      <div className="flex items-center justify-between mb-1">
+                    <div key={task.id} onClick={() => setSelectedTask(task)} className="border border-border rounded-xl p-4 hover:border-primary/30 hover:shadow-sm cursor-pointer transition-all bg-card">
+                      <div className="flex items-center justify-between mb-2">
                         <p className="text-[10px] text-muted-foreground">{projectName} · {companyName}</p>
                         <button
                           onClick={(e) => handleDuplicateTask(task, e)}
@@ -411,14 +418,23 @@ const Dashboard = () => {
                           <Copy className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                      {(task as any).code && (
-                        <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded inline-block mb-1">{(task as any).code}</span>
-                      )}
+                      {/* Code + Due date row */}
+                      <div className="flex items-center gap-2 mb-1.5">
+                        {(task as any).code && (
+                          <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{(task as any).code}</span>
+                        )}
+                        {task.due_date && (
+                          <span className="text-[10px] text-muted-foreground">{formatDate(task.due_date)}</span>
+                        )}
+                        {taskViewTab === 'all' && task.due_date && formatDaysLeft(task.due_date) && (
+                          <span className={cn('text-[10px] font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
+                        )}
+                      </div>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-foreground">{task.title}</span>
-                        <span className={cn('text-[10px] font-semibold capitalize px-2 py-0.5 rounded-md', priorityBadge[task.priority])}>{task.priority}</span>
+                        <span className={cn('text-[10px] font-semibold capitalize px-2 py-0.5 rounded-full', priorityBadge[task.priority])}>{task.priority}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{task.description}</p>
+                      {task.description && <p className="text-xs text-muted-foreground mb-3 line-clamp-1">{task.description}</p>}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           {assignees.length > 0 && (
@@ -434,14 +450,6 @@ const Dashboard = () => {
                                 {assignees.length <= 2 ? assignees.map((a: any) => a.name.split(' ')[0]).join(', ') : `${assignees.length} assignees`}
                               </span>
                             </div>
-                          )}
-                          {task.due_date && (
-                            <>
-                              <span className="text-[10px] text-muted-foreground">· {formatDate(task.due_date)}</span>
-                              {taskViewTab === 'all' && formatDaysLeft(task.due_date) && (
-                                <span className={cn('text-[10px] font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
-                              )}
-                            </>
                           )}
                         </div>
                         <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
