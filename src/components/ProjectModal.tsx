@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCompanies, useCreateProject, useUpdateProject, useDeleteProject } from '@/hooks/useSupabaseData';
+import { useCompanies, useCreateProject, useUpdateProject, useDeleteProject, useUserCompanies } from '@/hooks/useSupabaseData';
 import { X, Pencil, Trash2, Save, Calendar as CalendarIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -37,9 +37,15 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
   const { isAdmin, user } = useAuth();
   
   const { data: companies = [] } = useCompanies();
+  const { data: userCompanies = [] } = useUserCompanies();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+
+  // Filter companies where user has admin+ role (can create projects)
+  const adminCompanies = companies.filter(c => 
+    userCompanies.some(uc => uc.company_id === c.id && uc.user_id === user?.id && ['owner', 'super_admin', 'admin'].includes(uc.role))
+  );
 
   const emptyForm = () => ({
     name: '', description: '', company_id: user?.company_id || '',
@@ -126,7 +132,7 @@ const ProjectModal = ({ project, division, isOpen, onClose, mode: initialMode = 
                   <label className={labelCls}>Company</label>
                   {isEditable ? (
                     <StyledDropdown value={form.company_id} onChange={(v) => setForm(f => ({ ...f, company_id: v }))}
-                      options={companies.map(c => ({ value: c.id, label: c.name }))} placeholder="Select company..." />
+                      options={adminCompanies.map(c => ({ value: c.id, label: c.name }))} placeholder="Select company..." />
                   ) : (
                     <p className="text-sm text-foreground">{company?.name || '-'}</p>
                   )}
