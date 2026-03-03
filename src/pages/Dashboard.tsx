@@ -390,9 +390,6 @@ const Dashboard = () => {
             onViewTasks={(projectId) => navigate(`/tasks?project=${projectId}`)}
           />
 
-          {/* Task Calendar */}
-          <TaskCalendar tasks={myTasks as any} members={allMembers} taskAssignees={allTaskAssignees} onTaskClick={setSelectedTask} />
-
           {/* Task View Tabs */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="glass-card rounded-xl p-5">
             {/* Task heading above tabs */}
@@ -505,6 +502,9 @@ const Dashboard = () => {
               </div>
             )}
           </motion.div>
+
+          {/* Task Calendar */}
+          <TaskCalendar tasks={myTasks as any} members={allMembers} taskAssignees={allTaskAssignees} onTaskClick={setSelectedTask} />
         </div>
       </div>
 
