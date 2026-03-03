@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProjects, useTasks, useMembers, useCompanies, useUpdateTask, useDeleteTask, useTaskAssignees } from '@/hooks/useSupabaseData';
+import { useProjects, useTasks, useMembers, useCompanies, useUpdateTask, useDeleteTask, useTaskAssignees, useCreateTask, useSetTaskAssignees } from '@/hooks/useSupabaseData';
 import TaskModal from '@/components/TaskModal';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatDate, formatDaysLeft, daysLeftColor } from '@/lib/formatDate';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, ChevronDown, Check } from 'lucide-react';
+import { Plus, ChevronDown, Check, Copy } from 'lucide-react';
+import { generateTaskCode as generateTaskCodeFn } from '@/lib/taskCode';
 import FilterDropdown from '@/components/FilterDropdown';
 import { format, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 
@@ -90,6 +91,25 @@ const TaskListPage = () => {
   const { data: allTaskAssignees = [] } = useTaskAssignees();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
+  const createTaskMutation = useCreateTask();
+  const setTaskAssigneesMutation = useSetTaskAssignees();
+
+  const handleDuplicateTask = (task: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const { id, created_at, updated_at, code, ...rest } = task;
+    const newCode = generateTaskCodeFn(task.project_id, allProjects, companies, allTasks);
+    createTaskMutation.mutate(
+      { ...rest, status: 'todo' as any, code: newCode },
+      {
+        onSuccess: (newTask: any) => {
+          const taIds = allTaskAssignees.filter(ta => ta.task_id === task.id).map(ta => ta.assignee_id);
+          if (taIds.length > 0 && newTask?.id) {
+            setTaskAssigneesMutation.mutate({ taskId: newTask.id, assigneeIds: taIds });
+          }
+        },
+      }
+    );
+  };
 
   const statusFilter = searchParams.get('status') as TaskStatus | null;
   const memberFilter = searchParams.get('member');
@@ -382,6 +402,13 @@ const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: s
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] text-muted-foreground">{projectName} · {companyName}</p>
                   <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={(e) => handleDuplicateTask(task, e)}
+                      className="p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                      title="Duplicate task"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
                     <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
                     <span className={cn('text-[10px] font-medium capitalize', priorityLabel[task.priority])}>{task.priority}</span>
                   </div>
