@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { generateTaskCode as generateTaskCodeFn } from '@/lib/taskCode';
 import { useProjects, useMembers, useCompanies, useCreateTask, useUpdateTask, useTaskAssignees, useSetTaskAssignees, useTasks, useDivisions } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
-import { X, Calendar as CalendarIcon, Flag, User, Link, AlertTriangle, Trash2, ChevronDown, Save, Pencil, Image, Check } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Flag, User, Link, AlertTriangle, Trash2, ChevronDown, Save, Pencil, Image, Check, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/formatDate';
 import { format, parseISO } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
 type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -199,26 +200,70 @@ const RichTextArea = ({ value, onChange, placeholder, className, id }: {
 
 // Render rich text content (text + images)
 const RichTextDisplay = ({ value }: { value: string }) => {
+  const [viewImage, setViewImage] = useState<string | null>(null);
+
   if (!value || value === '-') return <p className="text-sm text-foreground">-</p>;
+
+  const handleDownload = async (url: string) => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `image-${Date.now()}.png`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch {
+      window.open(url, '_blank');
+    }
+  };
 
   const parts = value.split(/(\[image: [^\]]+\])/g);
   return (
-    <div className="space-y-2">
-      {parts.map((part, i) => {
-        const imageMatch = part.match(/^\[image: ([^\]]+)\]$/);
-        if (imageMatch) {
+    <>
+      <div className="space-y-2">
+        {parts.map((part, i) => {
+          const imageMatch = part.match(/^\[image: ([^\]]+)\]$/);
+          if (imageMatch) {
+            return (
+              <img
+                key={i}
+                src={imageMatch[1]}
+                alt="Pasted"
+                className="max-w-full max-h-[200px] rounded-lg border border-border object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => setViewImage(imageMatch[1])}
+              />
+            );
+          }
+          if (!part.trim()) return null;
           return (
-            <a key={i} href={imageMatch[1]} target="_blank" rel="noreferrer">
-              <img src={imageMatch[1]} alt="Pasted" className="max-w-full max-h-[200px] rounded-lg border border-border object-contain" />
-            </a>
+            <p key={i} className="text-sm text-foreground whitespace-pre-wrap break-words">{part}</p>
           );
-        }
-        if (!part.trim()) return null;
-        return (
-          <p key={i} className="text-sm text-foreground whitespace-pre-wrap break-words">{part}</p>
-        );
-      })}
-    </div>
+        })}
+      </div>
+
+      <Dialog open={!!viewImage} onOpenChange={() => setViewImage(null)}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-2 flex flex-col items-center gap-2">
+          <DialogTitle className="sr-only">Image Preview</DialogTitle>
+          {viewImage && (
+            <>
+              <img
+                src={viewImage}
+                alt="Preview"
+                className="max-w-full max-h-[75vh] object-contain rounded-lg"
+              />
+              <button
+                onClick={() => handleDownload(viewImage)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </button>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
