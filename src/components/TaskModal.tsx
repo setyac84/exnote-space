@@ -187,8 +187,8 @@ const RichTextArea = ({ value, onChange, placeholder, className, id }: {
   }, [textOnly]);
 
   return (
-    <div className="space-y-2">
-      <div className="relative">
+    <div className="space-y-2 w-full">
+      <div className="relative w-full">
         <textarea
           id={id}
           ref={textareaRef}
