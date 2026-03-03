@@ -410,10 +410,12 @@ const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: s
                     <Copy className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  {(task as any).code && (
-                    <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{(task as any).code}</span>
-                  )}
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    {(task as any).code && (
+                      <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{(task as any).code}</span>
+                    )}
+                  </div>
                   <span className={cn('text-[10px] font-semibold capitalize px-2 py-0.5 rounded-full', priorityBadge[task.priority])}>{task.priority}</span>
                 </div>
                 <h3 className="text-sm font-medium text-foreground mb-1">{task.title}</h3>
