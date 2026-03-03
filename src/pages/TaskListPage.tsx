@@ -16,6 +16,7 @@ type TabView = 'all' | 'done' | 'archive';
 
 const priorityDot: Record<string, string> = { low: 'bg-muted-foreground', medium: 'bg-info', high: 'bg-warning', urgent: 'bg-destructive' };
 const priorityLabel: Record<string, string> = { low: 'text-muted-foreground', medium: 'text-info', high: 'text-warning', urgent: 'text-destructive' };
+const priorityBadge: Record<string, string> = { low: 'bg-muted text-muted-foreground', medium: 'bg-info/15 text-info', high: 'bg-warning/15 text-warning', urgent: 'bg-destructive/15 text-destructive' };
 const statusLabel: Record<TaskStatus, string> = { todo: 'To Do', doing: 'Doing', review: 'Review', done: 'Done' };
 const statusDot: Record<TaskStatus, string> = { todo: 'border-muted-foreground', doing: 'border-info', review: 'border-warning', done: 'border-success bg-success' };
 
@@ -401,25 +402,29 @@ const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: s
                 onClick={() => setSelectedTask(task)} className="glass-card rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all overflow-visible relative">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] text-muted-foreground">{projectName} · {companyName}</p>
-                  <div className="flex items-center gap-1.5">
-                    <div className={cn('w-2 h-2 rounded-full shrink-0', priorityDot[task.priority])} />
-                    <span className={cn('text-[10px] font-medium capitalize', priorityLabel[task.priority])}>{task.priority}</span>
-                    <button
-                      onClick={(e) => handleDuplicateTask(task, e)}
-                      className="p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                      title="Duplicate task"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={(e) => handleDuplicateTask(task, e)}
+                    className="p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                    title="Duplicate task"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                {(task as any).code && (
-                  <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded inline-block mb-1">{(task as any).code}</span>
-                )}
+                <div className="flex items-center gap-2 mb-1.5">
+                  {(task as any).code && (
+                    <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{(task as any).code}</span>
+                  )}
+                  <span className={cn('text-[10px] font-semibold capitalize px-2 py-0.5 rounded-full', priorityBadge[task.priority])}>{task.priority}</span>
+                </div>
                 <h3 className="text-sm font-medium text-foreground mb-1">{task.title}</h3>
                 <p className="text-xs text-muted-foreground mb-3">{task.description}</p>
                 <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                  <span className="text-[10px] text-muted-foreground">{formatDate(task.due_date)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground">{formatDate(task.due_date)}</span>
+                    {task.due_date && formatDaysLeft(task.due_date) && (
+                      <span className={cn('text-[10px] font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
+                    )}
+                  </div>
                   <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
                 </div>
                 <div className="flex items-center justify-between mt-2">
@@ -434,9 +439,6 @@ const AssigneeFilterDropdown = ({ members, value, onChange }: { members: { id: s
                       </div>
                       <span>{assignees.length > 0 ? (assignees.length <= 2 ? assignees.map((a: any) => a.name.split(' ')[0]).join(', ') : `${assignees.length} assignees`) : 'Unassigned'}</span>
                     </div>
-                    {task.due_date && formatDaysLeft(task.due_date) && (
-                      <span className={cn('font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
-                    )}
                   </div>
                   {(activeTab === 'done' || activeTab === 'archive') && isAdmin && (
                     <button

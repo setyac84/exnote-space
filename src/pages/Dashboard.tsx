@@ -460,13 +460,10 @@ const Dashboard = () => {
                           <Copy className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                      {/* Code + Due date row */}
+                      {/* Code + daysLeft row */}
                       <div className="flex items-center gap-2 mb-1.5">
                         {(task as any).code && (
                           <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{(task as any).code}</span>
-                        )}
-                        {task.due_date && (
-                          <span className="text-[10px] text-muted-foreground">{formatDate(task.due_date)}</span>
                         )}
                         {taskViewTab === 'all' && task.due_date && formatDaysLeft(task.due_date) && (
                           <span className={cn('text-[10px] font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
@@ -479,6 +476,9 @@ const Dashboard = () => {
                       {task.description && <p className="text-xs text-muted-foreground mb-3 line-clamp-1">{task.description}</p>}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
+                          {task.due_date && (
+                            <span className="text-[10px] text-muted-foreground">{formatDate(task.due_date)}</span>
+                          )}
                           {assignees.length > 0 && (
                             <div className="flex items-center gap-1.5">
                               <div className="flex -space-x-1.5">
