@@ -460,13 +460,10 @@ const Dashboard = () => {
                           <Copy className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                      {/* Code + daysLeft row */}
+                      {/* Code row */}
                       <div className="flex items-center gap-2 mb-1.5">
                         {(task as any).code && (
                           <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{(task as any).code}</span>
-                        )}
-                        {taskViewTab === 'all' && task.due_date && formatDaysLeft(task.due_date) && (
-                          <span className={cn('text-[10px] font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
                         )}
                       </div>
                       <div className="flex items-center justify-between mb-1">
@@ -474,27 +471,34 @@ const Dashboard = () => {
                         <span className={cn('text-[10px] font-semibold capitalize px-2 py-0.5 rounded-full', priorityBadge[task.priority])}>{task.priority}</span>
                       </div>
                       {task.description && <p className="text-xs text-muted-foreground mb-3 line-clamp-1">{task.description}</p>}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      <div className="border-t border-border/50 pt-3 mt-1">
+                        <div className="flex items-center gap-2 mb-2">
                           {task.due_date && (
                             <span className="text-[10px] text-muted-foreground">{formatDate(task.due_date)}</span>
                           )}
-                          {assignees.length > 0 && (
-                            <div className="flex items-center gap-1.5">
-                              <div className="flex -space-x-1.5">
-                                {assignees.slice(0, 3).map((a: any) => (
-                                  <div key={a.id} className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-semibold text-primary border border-card">
-                                    {a.name.split(' ').map((n: string) => n[0]).join('')}
-                                  </div>
-                                ))}
-                              </div>
-                              <span className="text-[11px] text-muted-foreground">
-                                {assignees.length <= 2 ? assignees.map((a: any) => a.name.split(' ')[0]).join(', ') : `${assignees.length} assignees`}
-                              </span>
-                            </div>
+                          {task.due_date && formatDaysLeft(task.due_date) && (
+                            <span className={cn('text-[10px] font-medium', daysLeftColor(task.due_date))}>{formatDaysLeft(task.due_date)}</span>
                           )}
                         </div>
-                        <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {assignees.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex -space-x-1.5">
+                                  {assignees.slice(0, 3).map((a: any) => (
+                                    <div key={a.id} className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-semibold text-primary border border-card">
+                                      {a.name.split(' ').map((n: string) => n[0]).join('')}
+                                    </div>
+                                  ))}
+                                </div>
+                                <span className="text-[11px] text-muted-foreground">
+                                  {assignees.length <= 2 ? assignees.map((a: any) => a.name.split(' ')[0]).join(', ') : `${assignees.length} assignees`}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <InlineStatusDropdown value={task.status as TaskStatus} onChange={(s) => handleStatusChange(task.id, s)} />
+                        </div>
                       </div>
                     </div>
                   );
