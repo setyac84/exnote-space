@@ -132,7 +132,8 @@ const RichTextArea = ({ value, onChange, placeholder, className, id }: {
     const m = p.match(/^\[image: ([^\]]+)\]$/);
     return m ? m[1] : '';
   });
-  const textOnly = value.replace(imageRegex, '').replace(/\n{3,}/g, '\n\n').replace(/^\n+/, '');
+  // Remove image tags AND their surrounding newlines so textarea doesn't get extra blank lines
+  const textOnly = value.replace(/\n?\[image: [^\]]+\]\n?/g, '').replace(/^\n+|\n+$/g, '');
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData?.items;
