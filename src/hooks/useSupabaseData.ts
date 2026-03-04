@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // ─── Divisions ───
 export function useDivisions() {
@@ -333,7 +333,9 @@ export function useCreateMember() {
       email: string; password: string; name: string;
       position?: string; division_id?: string; company_ids?: string[]; role?: string;
     }) => {
-      const { data, error } = await supabase.functions.invoke('create-member', { body: input });
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers = session ? { Authorization: `Bearer ${session.access_token}` } : {};
+      const { data, error } = await supabase.functions.invoke('create-member', { body: input, headers });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
@@ -349,7 +351,9 @@ export function useDeleteMember() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (userId: string) => {
-      const { data, error } = await supabase.functions.invoke('delete-member', { body: { user_id: userId } });
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers = session ? { Authorization: `Bearer ${session.access_token}` } : {};
+      const { data, error } = await supabase.functions.invoke('delete-member', { body: { user_id: userId }, headers });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
@@ -361,8 +365,11 @@ export function useDeleteMember() {
 export function useResetMemberPassword() {
   return useMutation({
     mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers = session ? { Authorization: `Bearer ${session.access_token}` } : {};
       const { data, error } = await supabase.functions.invoke('reset-member-password', {
         body: { user_id: userId, new_password: newPassword },
+        headers,
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
